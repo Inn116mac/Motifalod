@@ -1,0 +1,33 @@
+diff --git a/node_modules/react-native-nodemediaclient/android/build.gradle b/node_modules/react-native-nodemediaclient/android/build.gradle
+index 187c2d7..45e5316 100644
+--- a/node_modules/react-native-nodemediaclient/android/build.gradle
++++ b/node_modules/react-native-nodemediaclient/android/build.gradle
+@@ -5,7 +5,7 @@ buildscript {
+   }
+ 
+   dependencies {
+-    classpath "com.android.tools.build:gradle:7.2.1"
++    classpath "com.android.tools.build:gradle:8.4.0"
+   }
+ }
+ 
+@@ -38,7 +38,7 @@ def supportsNamespace() {
+ 
+ android {
+   if (supportsNamespace()) {
+-    namespace "cn.nodemediaclient"
++    namespace "cn.nodemedia.react_native_nodemediaclient"
+ 
+     sourceSets {
+       main {
+@@ -66,8 +66,8 @@ android {
+   }
+ 
+   compileOptions {
+-    sourceCompatibility JavaVersion.VERSION_1_8
+-    targetCompatibility JavaVersion.VERSION_1_8
++    sourceCompatibility JavaVersion.VERSION_17
++    targetCompatibility JavaVersion.VERSION_17
+   }
+ }
+ 

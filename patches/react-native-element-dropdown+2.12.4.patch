@@ -1,0 +1,53 @@
+diff --git a/node_modules/react-native-element-dropdown/src/components/Dropdown/index.tsx b/node_modules/react-native-element-dropdown/src/components/Dropdown/index.tsx
+index 2a73f2f..2566cb5 100644
+--- a/node_modules/react-native-element-dropdown/src/components/Dropdown/index.tsx
++++ b/node_modules/react-native-element-dropdown/src/components/Dropdown/index.tsx
+@@ -22,6 +22,7 @@ import {
+   Keyboard,
+   KeyboardEvent,
+   Modal,
++  Platform,
+   StatusBar,
+   StyleSheet,
+   Text,
+@@ -615,13 +616,11 @@ const DropdownComponent = React.forwardRef<IDropdownRef, DropdownProps<any>>(
+         };
+ 
+         return (
+-          <TouchableWithoutFeedback>
+             <View style={styles.flexShrink}>
+               {isInverted && _renderListHelper()}
+               {renderSearch()}
+               {!isInverted && _renderListHelper()}
+             </View>
+-          </TouchableWithoutFeedback>
+         );
+       },
+       [
+@@ -669,7 +668,7 @@ const DropdownComponent = React.forwardRef<IDropdownRef, DropdownProps<any>>(
+             isTopPosition &&
+             dropdownPosition === 'auto'
+           ) {
+-            extendHeight = keyboardHeight;
++            extendHeight = Platform.OS === 'ios' && keyboardHeight;
+           }
+ 
+           return (
+diff --git a/node_modules/react-native-element-dropdown/src/components/TextInput/index.tsx b/node_modules/react-native-element-dropdown/src/components/TextInput/index.tsx
+index df3ec78..2f78ca5 100644
+--- a/node_modules/react-native-element-dropdown/src/components/TextInput/index.tsx
++++ b/node_modules/react-native-element-dropdown/src/components/TextInput/index.tsx
+@@ -2,11 +2,11 @@
+ import React, { useEffect, useState } from 'react';
+ import {
+   Image,
++  StyleSheet,
+   TextInput,
+   TouchableOpacity,
+-  View,
+   TouchableWithoutFeedback,
+-  StyleSheet,
++  View,
+ } from 'react-native';
+ import type { CTextInput } from './model';
+ import { styles } from './styles';

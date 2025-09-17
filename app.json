@@ -1,4 +1,8 @@
 {
   "name": "Motifalod",
-  "displayName": "Motifalod"
+  "displayName": "Motifalod",
+  "plugins": [
+    "expo-asset",
+    "expo-font"
+  ]
 }

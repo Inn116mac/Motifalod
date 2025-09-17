@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">Motifalod</string>
+    <string name="app_name">Moti Falod</string>
+    <string name="facebook_app_id">1173536437853030</string>
+    <string name="facebook_client_token">42287478117b5d26dc2d1146fd799b77</string>
 </resources>

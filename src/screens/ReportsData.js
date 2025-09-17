@@ -1,0 +1,1132 @@
+import {
+  View,
+  Text,
+  useWindowDimensions,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  TouchableWithoutFeedback,
+} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {useNetworkStatus} from '../connection/UseNetworkStatus';
+import COLORS from '../theme/Color';
+import {useNavigation} from '@react-navigation/native';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import Offline from '../components/root/Offline';
+import CustomHeader from '../components/root/CustomHeader';
+import Loader from '../components/root/Loader';
+import FONTS from '../theme/Fonts';
+import {NOTIFY_MESSAGE} from '../constant/Module';
+import NetInfo from '@react-native-community/netinfo';
+import httpClient from '../connection/httpClient';
+import NoDataFound from '../components/root/NoDataFound';
+import {
+  heightPercentageToDP,
+  widthPercentageToDP,
+} from 'react-native-responsive-screen';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import {IMAGE_URL} from '../connection/Config';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+
+const ReportsData = ({route}) => {
+  const {width, height} = useWindowDimensions();
+
+  const allowedEventFilter = [
+    'RSVPs Completed',
+    'Event Attendees',
+    'RSVPed but Did Not Attend',
+    'Attended Event Without RSVP',
+    'Event Expenses',
+    'RSVP Yes Responses',
+    'RSVP No Responses',
+    'RSVP May be Responses',
+  ];
+
+  const allowedCategories = ['Event Expenses'];
+
+  const styles = StyleSheet.create({
+    listContainer: {
+      marginHorizontal: 10,
+      borderRadius: 10,
+      flexGrow: 1,
+    },
+    pkgLbl: {
+      fontFamily: FONTS.FONT_FAMILY.REGULAR,
+      fontSize: FONTS.FONTSIZE.SMALL,
+      color: COLORS.PRIMARYBLACK,
+    },
+    titleText: {
+      fontFamily: FONTS.FONT_FAMILY.REGULAR,
+      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+      color: COLORS.PRIMARYBLACK,
+      width: '48%',
+      marginRight: 4,
+    },
+    text: {
+      fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+      color: COLORS.PRIMARYBLACK,
+      width: '50%',
+      textAlign: 'left',
+    },
+    paginationText: {
+      fontSize: FONTS.FONTSIZE.SMALL,
+      color: 'blue',
+      textAlign: 'center',
+      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+    },
+    tableContainer: {
+      borderRadius: 10,
+      overflow: 'hidden',
+      marginHorizontal: 10,
+      marginVertical: 10,
+      borderRadius: 5,
+    },
+    header: {
+      backgroundColor: COLORS.TABLEROWCOLOR,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: COLORS.LIGHTGREY,
+    },
+    headerText: {
+      fontSize: FONTS.FONTSIZE.SMALL,
+      fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+      color: COLORS.TABLELABELTEXTCOLOR,
+      flex: 1,
+      paddingTop: 15,
+      paddingVertical: 15,
+      textAlign: 'center',
+      alignSelf: 'stretch',
+      borderRightWidth: 1,
+      borderRightColor: COLORS.TABLEBORDER,
+    },
+    icon: {
+      alignSelf: 'center',
+      padding: 8,
+    },
+    eventModalContainer: {
+      flex: 1,
+      alignItems: 'center',
+      overflow: 'hidden',
+      justifyContent: 'center',
+    },
+    eventModalContent: {
+      width: width / 1.2,
+      maxHeight: height / 1.2,
+      backgroundColor: COLORS.PRIMARYWHITE,
+      borderRadius: 8,
+    },
+    filterContainer: {
+      backgroundColor: COLORS.LABELCOLOR,
+      borderRadius: 10,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    modalContainer: {
+      flex: 1,
+      alignItems: 'flex-start',
+      overflow: 'hidden',
+    },
+    modalContent: {
+      width: widthPercentageToDP(42),
+      backgroundColor: COLORS.PRIMARYWHITE,
+      borderRadius: 8,
+      top: heightPercentageToDP(14),
+      left: widthPercentageToDP(5),
+    },
+    backdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    buttonText: {
+      color: COLORS.PRIMARYWHITE,
+      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+      fontFamily: FONTS.FONT_FAMILY.REGULAR,
+      textAlign: 'center',
+    },
+    paginationContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: 8,
+      backgroundColor: 'transparent',
+      marginHorizontal: 10,
+    },
+    paginationButton: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      marginHorizontal: 4,
+      backgroundColor: COLORS.grey500,
+    },
+    activeButton: {
+      backgroundColor: COLORS.LABELCOLOR,
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+    },
+  });
+
+  const {isConnected, networkLoading} = useNetworkStatus();
+  const navigation = useNavigation();
+  const {item1, selectedEventFromList} = route?.params;
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [reportsData, setReportsData] = useState([]);
+
+  const [additionalData, setAdditionalData] = useState(null);
+
+  const [eventData, setEventData] = useState([]);
+
+  const [filterLoading, setFilterLoading] = useState(false);
+  const [isEventDataModal, setIsEventDataModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+
+  const [downloadLoading, setDownloadLoading] = useState(false);
+
+  const [totalPages, setTotalpages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageNumber, setPageNumber] = useState(1);
+
+  const [total, setTotal] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+
+  const loadMore = () => {
+    setOpenIndex(null);
+    if (hasMore) {
+      setPageNumber(prevPage => prevPage + 1);
+    }
+  };
+
+  const PAGE_SIZE = 20;
+
+  useEffect(() => {
+    onEventFilter();
+  }, [selectedEventFromList]);
+
+  useEffect(() => {
+    setPageNumber(1);
+    setReportsData([]);
+  }, [selectedEvent]);
+
+  function onEventFilter() {
+    NetInfo.fetch().then(state => {
+      if (state.isConnected) {
+        setFilterLoading(true);
+        httpClient
+          .get(
+            `module/configuration/dropdown?contentType=EVENT&moduleName=Reports`,
+          )
+          .then(response => {
+            const {data} = response;
+            const {status, message, result} = data;
+
+            if (status || (status == true && result)) {
+              // const newEvent = {
+              //   id: 0,
+              //   name: 'All',
+              // };
+              // result.unshift(newEvent);
+              const filterEvent = result?.find(
+                item => item?.name === selectedEventFromList?.name,
+              );
+
+              setSelectedEvent(filterEvent);
+              setEventData(result);
+              setFilterLoading(false);
+            } else {
+              NOTIFY_MESSAGE(message);
+              setFilterLoading(false);
+            }
+          })
+          .catch(err => {
+            setFilterLoading(false);
+            NOTIFY_MESSAGE(err ? 'Something Went Wrong.' : null);
+            navigation.goBack();
+          });
+      } else {
+        NOTIFY_MESSAGE('Please check your internet connectivity');
+      }
+    });
+  }
+
+  useEffect(() => {
+    if (pageNumber && selectedEvent) {
+      getViewData();
+    }
+  }, [item1, selectedEvent, pageNumber]);
+
+  const getFileLink = () => {
+    let data = {
+      reportType: item1?.label,
+      keyword: '',
+      eventId: selectedEvent ? selectedEvent?.id : 0,
+      isDownload: true,
+      pageNumber: 0,
+      pageSize: 0,
+    };
+
+    NetInfo.fetch().then(state => {
+      if (state.isConnected) {
+        setDownloadLoading(true);
+        httpClient
+          .post(`Report/Get`, data)
+          .then(async response => {
+            if (response.data.status) {
+              const filePath = response.data.result;
+              // const downloadUrl = `${IMAGE_URL}/${filePath}`;
+              // console.log('original : ',`${IMAGE_URL}${filePath}`);
+
+              // await handleDownload(downloadUrl, fileId);
+              navigation.navigate('FileViewer', {
+                fileUrl: `${IMAGE_URL}${filePath}`,
+              });
+            } else {
+              NOTIFY_MESSAGE(response?.data?.message);
+            }
+          })
+          .catch(error => {
+            setDownloadLoading(false);
+            NOTIFY_MESSAGE(
+              error || error.message ? 'Something Went Wrong' : null,
+            );
+            navigation.goBack();
+          })
+          .finally(() => {
+            setDownloadLoading(false);
+          });
+      } else {
+        NOTIFY_MESSAGE('Please check your internet connectivity');
+      }
+    });
+  };
+
+  const getViewData = useCallback(() => {
+    let data = {
+      reportType: item1?.label,
+      keyword: '',
+      eventId: selectedEvent ? selectedEvent?.id : 0,
+      isDownload: false,
+      pageNumber: pageNumber,
+      pageSize: PAGE_SIZE,
+    };
+
+    NetInfo.fetch().then(state => {
+      if (state.isConnected) {
+        setIsLoading(true);
+        httpClient
+          .post(`Report/Get`, data)
+          .then(response => {
+            if (response.data.status) {
+              // const totalPages = Math.ceil(
+              //   response?.data?.totalRecords / PAGE_SIZE,
+              // );
+              const totalRecords = response?.data?.totalRecords || 0;
+
+              const calculatedTotalPages = Math.ceil(totalRecords / PAGE_SIZE);
+
+              if (response.data.additionalData) {
+                setAdditionalData(response.data.additionalData);
+              }
+
+              // setTotalpages(totalPages);
+              setTotal(response?.data?.total ?? response?.data?.totalRecords);
+              const newData = response?.data?.result;
+              if (newData?.length > 0) {
+                setReportsData(newData);
+              } else {
+                setReportsData([]);
+              }
+              const canLoadMore =
+                pageNumber < calculatedTotalPages && newData.length > 0;
+              setHasMore(canLoadMore);
+            } else {
+              NOTIFY_MESSAGE(response?.data?.message);
+            }
+          })
+          .catch(error => {
+            setIsLoading(false);
+            NOTIFY_MESSAGE(
+              error || error.message ? 'Something Went Wrong' : null,
+            );
+            navigation.goBack();
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
+      } else {
+        NOTIFY_MESSAGE('Please check your internet connectivity');
+      }
+    });
+  }, [item1, navigation, selectedEvent, pageNumber, PAGE_SIZE]);
+
+  // const [tableData, setTableData] = useState({headers: [], rows: []});
+
+  // useEffect(() => {
+  //   if (reportsData.length === 0) return;
+  //   const headers = Object.keys(reportsData[0]).map(key => ({
+  //     key,
+  //     label: key,
+  //   }));
+
+  //   const rows = reportsData.map(user => {
+  //     const rowData = {...user};
+  //     return rowData;
+  //   });
+
+  //   setTableData({headers, rows});
+  // }, [reportsData]);
+
+  // const renderTableHeader = () => {
+  //   if (!tableData.headers || tableData.headers.length === 0) {
+  //     return null;
+  //   }
+  //   return (
+  //     <View style={styles.header}>
+  //       {tableData.headers.map(({key, label}) => {
+  //         const finalLabel =
+  //           label == 'emailAddress'
+  //             ? 'email Address'
+  //             : label == 'phoneNumber'
+  //             ? 'phone Number'
+  //             : label == 'familyMembers'
+  //             ? 'family Members'
+  //             : label;
+
+  //         return (
+  //           <Text
+  //             key={key}
+  //             style={[
+  //               styles.headerText,
+  //               {
+  //                 width: widthPercentageToDP('60%'),
+  //                 textTransform: 'capitalize',
+  //               },
+  //             ]}>
+  //             {finalLabel}
+  //           </Text>
+  //         );
+  //       })}
+  //     </View>
+  //   );
+  // };
+
+  // const renderTableRows = () => {
+  //   return tableData.rows.map((row, index) => {
+  //     const isLastRow = index === tableData.rows.length - 1;
+  //     return (
+  //       <View
+  //         key={`row_${index}`}
+  //         style={{
+  //           flexDirection: 'row',
+  //           justifyContent: 'center',
+  //           alignItems: 'center',
+  //           backgroundColor:
+  //             isLastRow && allowedCategories.includes(item1?.label)
+  //               ? 'yellow'
+  //               : index % 2 === 0
+  //               ? COLORS.PRIMARYWHITE
+  //               : COLORS.TABLEROWCOLOR,
+  //           borderLeftWidth: 1,
+  //           borderColor: COLORS.LIGHTGREY,
+  //           borderRightWidth: 1,
+  //           borderBottomWidth: 1,
+  //         }}>
+  //         {tableData.headers.map(({key}) => {
+  //           const cellData = row[key];
+
+  //           return (
+  //             <View
+  //               key={`cell_${key}_${index}`}
+  //               style={{
+  //                 width: widthPercentageToDP('60%'),
+  //                 flex: 1,
+  //                 overflow: 'hidden',
+  //                 textAlign: 'center',
+  //                 alignSelf: 'stretch',
+  //                 padding: 5,
+  //                 alignItems: 'center',
+  //               }}>
+  //               {Array.isArray(cellData) ? (
+  //                 key == 'familyMembers' ? (
+  //                   cellData.map((item, itemIndex) => {
+  //                     return (
+  //                       <View
+  //                         key={`nested_${key}_${index}_${itemIndex}`}
+  //                         style={{
+  //                           flexDirection: 'row',
+  //                           marginBottom: 5,
+  //                           width: '100%',
+  //                           alignItems: 'flex-start',
+  //                         }}>
+  //                         <View style={{width: 32, marginRight: 4, flex: 0.2}}>
+  //                           <Text
+  //                             style={{
+  //                               fontSize: FONTS.FONTSIZE.EXTRASMALL,
+  //                               fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+  //                               color: COLORS.TABLEROW,
+  //                               textAlign: 'right',
+  //                             }}>
+  //                             {itemIndex + 1}.
+  //                           </Text>
+  //                         </View>
+  //                         <View style={{flex: 0.8}}>
+  //                           <Text
+  //                             style={{
+  //                               fontSize: FONTS.FONTSIZE.EXTRASMALL,
+  //                               fontFamily: FONTS.FONT_FAMILY.REGULAR,
+  //                               color: COLORS.TABLEROW,
+  //                               textAlign: 'left',
+  //                             }}>
+  //                             <Text
+  //                               style={{
+  //                                 color: COLORS.PLACEHOLDERCOLOR,
+  //                                 fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+  //                               }}>
+  //                               Name:
+  //                             </Text>{' '}
+  //                             {item.member}
+  //                             {'\n'}
+  //                             <Text
+  //                               style={{
+  //                                 color: COLORS.PLACEHOLDERCOLOR,
+  //                                 fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+  //                               }}>
+  //                               Email:
+  //                             </Text>{' '}
+  //                             {item.emailAddress || '-'} {'\n'}
+  //                             <Text
+  //                               style={{
+  //                                 color: COLORS.PLACEHOLDERCOLOR,
+  //                                 fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+  //                               }}>
+  //                               Phone:
+  //                             </Text>{' '}
+  //                             {item.phoneNumber || '-'}
+  //                             {item?.relationship ? '\n' : null}
+  //                             {item?.relationship && (
+  //                               <>
+  //                                 <Text
+  //                                   style={{
+  //                                     color: COLORS.PLACEHOLDERCOLOR,
+  //                                     fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+  //                                   }}>
+  //                                   Relationship:
+  //                                 </Text>{' '}
+  //                                 <Text>{item.relationship || '-'}</Text>
+  //                               </>
+  //                             )}
+  //                             {item?.membershipAmount !== undefined &&
+  //                             item?.membershipAmount !== null
+  //                               ? '\n'
+  //                               : null}
+  //                             {item?.membershipAmount !== undefined &&
+  //                               item?.membershipAmount !== null && (
+  //                                 <>
+  //                                   <Text
+  //                                     style={{
+  //                                       color: COLORS.PLACEHOLDERCOLOR,
+  //                                       fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+  //                                     }}>
+  //                                     Membership Amount:
+  //                                   </Text>{' '}
+  //                                   <Text>{item.membershipAmount || 0}</Text>
+  //                                 </>
+  //                               )}
+  //                           </Text>
+  //                         </View>
+  //                       </View>
+  //                     );
+  //                   })
+  //                 ) : (
+  //                   cellData.map((item, itemIndex) => (
+  //                     <View
+  //                       key={`nested_${key}_${index}_${itemIndex}`}
+  //                       style={{marginBottom: 5, width: '100%'}}>
+  //                       {Object.entries(item).map(([subKey, subValue]) => (
+  //                         <Text
+  //                           key={`${subKey}_${itemIndex}`}
+  //                           style={{
+  //                             fontSize: FONTS.FONTSIZE.EXTRASMALL,
+  //                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
+  //                             color: COLORS.TABLEROW,
+  //                             textAlign: 'center',
+  //                           }}>
+  //                           <Text
+  //                             style={{
+  //                               fontSize: FONTS.FONTSIZE.EXTRASMALL,
+  //                               fontFamily: FONTS.FONT_FAMILY.REGULAR,
+  //                               color: COLORS.TABLEROW,
+  //                               textAlign: 'center',
+  //                             }}>
+  //                             {subKey}:
+  //                           </Text>{' '}
+  //                           {subValue || '-'}
+  //                         </Text>
+  //                       ))}
+  //                     </View>
+  //                   ))
+  //                 )
+  //               ) : (
+  //                 <Text
+  //                   numberOfLines={2}
+  //                   style={{
+  //                     width: widthPercentageToDP('40%'),
+  //                     fontSize: FONTS.FONTSIZE.EXTRASMALL,
+  //                     fontFamily: FONTS.FONT_FAMILY.REGULAR,
+  //                     color: COLORS.TABLEROW,
+  //                     textAlign: 'center',
+  //                   }}>
+  //                   {cellData || '-'}
+  //                 </Text>
+  //               )}
+  //             </View>
+  //           );
+  //         })}
+  //       </View>
+  //     );
+  //   });
+  // };
+
+  // const handlePageClick = page => {
+  //   setCurrentPage(page);
+  // };
+
+  // const handlePageChange = direction => {
+  //   if (direction === 'left' && currentPage > 1) {
+  //     handlePageClick(currentPage - 1);
+  //   } else if (direction === 'right' && currentPage < totalPages) {
+  //     handlePageClick(currentPage + 1);
+  //   }
+  // };
+
+  // const renderPaginationButtons = () => {
+  //   const buttons = [];
+  //   const maxButtonsToShow = 5;
+  //   const totalPagesToShow = Math.min(totalPages, maxButtonsToShow);
+
+  //   let startPage = Math.max(1, currentPage - Math.floor(totalPagesToShow / 2));
+  //   let endPage = Math.min(totalPages, startPage + totalPagesToShow - 1);
+
+  //   if (endPage - startPage < totalPagesToShow - 1) {
+  //     startPage = Math.max(1, endPage - totalPagesToShow + 1);
+  //   }
+
+  //   if (startPage > 1) {
+  //     buttons.push(
+  //       <TouchableOpacity
+  //         key={1}
+  //         onPress={() => handlePageClick(1)}
+  //         style={styles.paginationButton}>
+  //         <Text style={styles.buttonText}>1</Text>
+  //       </TouchableOpacity>,
+  //     );
+  //     if (startPage > 2) {
+  //       buttons.push(
+  //         <Text
+  //           key="ellipsis-start"
+  //           style={{
+  //             color: COLORS.PRIMARYBLACK,
+  //             fontSize: FONTS.FONTSIZE.MEDIUM,
+  //             fontFamily: FONTS.FONT_FAMILY.REGULAR,
+  //           }}>
+  //           ...
+  //         </Text>,
+  //       );
+  //     }
+  //   }
+
+  //   for (let i = startPage; i <= endPage; i++) {
+  //     buttons.push(
+  //       <TouchableOpacity
+  //         key={i}
+  //         onPress={() => handlePageClick(i)}
+  //         style={[
+  //           styles.paginationButton,
+  //           i === currentPage ? styles.activeButton : null,
+  //         ]}>
+  //         <Text style={styles.buttonText}>{i}</Text>
+  //       </TouchableOpacity>,
+  //     );
+  //   }
+
+  //   if (endPage < totalPages) {
+  //     if (endPage < totalPages - 1) {
+  //       buttons.push(
+  //         <Text
+  //           key="ellipsis-end"
+  //           style={{
+  //             color: COLORS.PRIMARYBLACK,
+  //             fontSize: FONTS.FONTSIZE.MEDIUM,
+  //             fontFamily: FONTS.FONT_FAMILY.REGULAR,
+  //           }}>
+  //           ...
+  //         </Text>,
+  //       );
+  //     }
+  //     buttons.push(
+  //       <TouchableOpacity
+  //         key={totalPages}
+  //         onPress={() => handlePageClick(totalPages)}
+  //         style={styles.paginationButton}>
+  //         <Text style={styles.buttonText}>{totalPages}</Text>
+  //       </TouchableOpacity>,
+  //     );
+  //   }
+
+  //   return (
+  //     <ScrollView
+  //       contentContainerStyle={{
+  //         alignItems: 'center',
+  //         paddingHorizontal: 10,
+  //       }}
+  //       horizontal
+  //       showsHorizontalScrollIndicator={false}>
+  //       {buttons}
+  //     </ScrollView>
+  //   );
+  // };
+
+  const [openIndex, setOpenIndex] = useState(null);
+
+  const renderItem = ({item, index}) => {
+    const number1 = (pageNumber - 1) * PAGE_SIZE + index + 1;
+    const number = number1 <= 9 ? `0${number1}` : `${number1}`;
+    // console.log(JSON.stringify(item));
+
+    const member =
+      item1?.label == 'Donation'
+        ? item[`donar's Name`]
+        : item1?.label == 'Event Expenses'
+        ? item['event']
+        : item['Member'] || item['member'] || '-';
+
+    // const member = item['Member'] || '-';
+    const total = item['Total'];
+
+    const keys = Object.keys(item);
+
+    const handleToggle = index => {
+      setOpenIndex(openIndex === index ? null : index);
+    };
+
+    return (
+      <View
+        style={{
+          backgroundColor: COLORS.PRIMARYWHITE,
+          flex: 1,
+          overflow: 'hidden',
+          borderRadius: 10,
+          padding: 6,
+          marginVertical: 8,
+        }}
+        key={index}>
+        <TouchableOpacity
+          onPress={() => {
+            handleToggle(index);
+          }}
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              width: width / 1.4,
+            }}>
+            <View
+              style={{
+                backgroundColor: COLORS.LABELCOLOR,
+                maxWidth: '30%',
+                padding: 6,
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderRadius: 10,
+              }}>
+              <Text style={[styles.pkgLbl, {color: COLORS.PRIMARYWHITE}]}>
+                {number}
+              </Text>
+            </View>
+            <View style={{}}>
+              <Text
+                numberOfLines={2}
+                style={{
+                  fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                  fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                  color: COLORS.PLACEHOLDERCOLOR,
+                }}>
+                {member ? member : '-'} {total ? ` (${total})` : ''}
+              </Text>
+            </View>
+          </View>
+          {openIndex === index ? (
+            <AntDesign name="up" size={20} color={COLORS.LABELCOLOR} />
+          ) : (
+            <AntDesign name="down" size={20} color={COLORS.LABELCOLOR} />
+          )}
+        </TouchableOpacity>
+        {openIndex === index && (
+          <View
+            key={index.toString()}
+            style={{
+              paddingVertical: 10,
+              paddingHorizontal: 4,
+            }}>
+            <View style={{gap: 4}}>
+              {keys.map(key => {
+                if (
+                  (item1?.label == 'Donation' && key == `donar's Name`) ||
+                  (item1?.label == 'Event Expenses' && key == 'event') ||
+                  key?.toLocaleLowerCase() === 'member' ||
+                  key?.toLocaleLowerCase() == 'total'
+                ) {
+                  return null;
+                }
+
+                let value = item[key];
+                let isArray = Array.isArray(value);
+
+                let finalKey = key == 'FamilyMembers' ? 'family Members' : key;
+
+                return (
+                  <View
+                    style={{
+                      flexDirection: isArray ? null : 'row',
+                    }}
+                    key={key}>
+                    <Text
+                      style={[
+                        styles.titleText,
+                        {textTransform: 'capitalize'},
+                      ]}>{`${finalKey} :`}</Text>
+                    {isArray ? (
+                      <View>
+                        {value.length === 0 ? (
+                          <Text style={styles.text}>-</Text>
+                        ) : (
+                          value.map((arrItem, arrIdx) => (
+                            <View
+                              key={arrIdx}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'flex-start',
+                                marginBottom: 2,
+                              }}>
+                              {/* Index */}
+                              <Text
+                                style={{
+                                  fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                                  fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                  color: COLORS.PRIMARYBLACK,
+                                  marginRight: 4,
+                                }}>
+                                {arrIdx + 1}.
+                              </Text>
+                              {/* Key-value pairs in the same row */}
+                              {typeof arrItem === 'object' &&
+                              arrItem !== null ? (
+                                <View style={{}}>
+                                  {Object.entries(arrItem).map(([k, v], i) => (
+                                    <View
+                                      key={i}
+                                      style={{
+                                        flexDirection: 'row',
+                                        marginBottom: 2,
+                                        alignItems: 'flex-start',
+                                      }}>
+                                      <Text
+                                        style={{
+                                          fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                                          fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                          color: COLORS.PRIMARYBLACK,
+                                          marginRight: 2,
+                                          width: '45%',
+                                        }}>
+                                        {k} :
+                                      </Text>
+                                      <Text
+                                        style={{
+                                          fontFamily:
+                                            FONTS.FONT_FAMILY.SEMI_BOLD,
+                                          fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                          color: COLORS.PLACEHOLDERCOLOR,
+                                          marginLeft: 4,
+                                          width: '50%',
+                                        }}>
+                                        {v ? v : '-'}
+                                      </Text>
+                                    </View>
+                                  ))}
+                                </View>
+                              ) : (
+                                <Text style={styles.text}>{arrItem}</Text>
+                              )}
+                            </View>
+                          ))
+                        )}
+                      </View>
+                    ) : (
+                      <Text style={styles.text}>
+                        {value !== null && value !== undefined && value !== ''
+                          ? value.toString()
+                          : '-'}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  // console.log(additionalData);
+
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: COLORS.BACKGROUNDCOLOR,
+      }}>
+      <CustomHeader
+        leftIcon={
+          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+        }
+        title={item1?.label}
+        leftOnPress={() => navigation.goBack()}
+        rightIcon={
+          reportsData.length > 0 && (
+            <MaterialCommunityIcons
+              name="microsoft-excel"
+              size={34}
+              color={COLORS.PRIMARYGREEN}
+            />
+          )
+        }
+        rightOnPress={() => {
+          if (downloadLoading) return;
+          getFileLink();
+        }}
+      />
+      {networkLoading || isLoading || filterLoading ? (
+        <Loader />
+      ) : isConnected ? (
+        <View style={{flex: 1}}>
+          <View
+            style={{
+              marginHorizontal: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              marginBottom: 10,
+            }}>
+            {allowedEventFilter.includes(item1?.label) && (
+              <TouchableOpacity
+                activeOpacity={0.35}
+                onPress={() => setIsEventDataModal(true)}
+                style={styles.filterContainer}>
+                <Text
+                  style={{
+                    fontSize: FONTS.FONTSIZE.SMALL,
+                    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                    color: COLORS.PRIMARYWHITE,
+                  }}>
+                  {selectedEvent?.name || 'Events'}
+                </Text>
+                <AntDesign name="down" size={18} color={COLORS.PRIMARYWHITE} />
+              </TouchableOpacity>
+            )}
+          </View>
+          {reportsData.length > 0 && (
+            <Text
+              style={{
+                marginHorizontal: 10,
+                color: COLORS.TITLECOLOR,
+                fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+              }}>
+              Total {item1?.label} : {total || 0}
+            </Text>
+          )}
+          {/* {additionalData && (
+            <View style={{marginHorizontal: 10}}>
+              <Text
+                style={{
+                  fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                  fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                  color: COLORS.TITLECOLOR,
+                }}>
+                Additional Adults : {additionalData?.numberOfAdult || 0}
+              </Text>
+              <Text
+                style={{
+                  fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                  fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                  color: COLORS.TITLECOLOR,
+                }}>
+                Additional Kids : {additionalData?.numberOfKids || 0}
+              </Text>
+            </View>
+          )} */}
+
+          {reportsData?.length > 0 ? (
+            <FlatList
+              data={reportsData}
+              initialNumToRender={10}
+              maxToRenderPerBatch={20}
+              windowSize={10}
+              removeClippedSubviews={true}
+              keyExtractor={(item, index) => index?.toString()}
+              renderItem={renderItem}
+              contentContainerStyle={styles.listContainer}
+            />
+          ) : (
+            <NoDataFound />
+          )}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: heightPercentageToDP('1%'),
+              paddingHorizontal: widthPercentageToDP('5%'),
+              gap: 30,
+            }}>
+            {pageNumber > 1 && (
+              <TouchableOpacity
+                onPress={() => {
+                  setOpenIndex(null);
+                  setPageNumber(prevPage => Math.max(prevPage - 1, 1));
+                }}
+                style={{}}>
+                <Text style={styles.paginationText}>Previous</Text>
+              </TouchableOpacity>
+            )}
+            {hasMore && (
+              <TouchableOpacity onPress={loadMore} style={{}}>
+                <Text style={styles.paginationText}>Load More</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* {reportsData.length > 0 ? (
+            <View style={{flex: 1}}>
+              <ScrollView horizontal style={{paddingBottom: 8}}>
+                <View style={styles.tableContainer}>
+                  {renderTableHeader()}
+                  <ScrollView contentContainerStyle={{flexGrow: 1}}>
+                    {renderTableRows()}
+                  </ScrollView>
+                </View>
+              </ScrollView>
+            </View>
+          ) : (
+            <NoDataFound />
+          )} */}
+
+          <Modal
+            animationType="none"
+            transparent={true}
+            visible={isEventDataModal}
+            onRequestClose={() => setIsEventDataModal(false)}
+            style={{flex: 1}}>
+            <View style={styles.eventModalContainer}>
+              <TouchableWithoutFeedback
+                onPress={() => setIsEventDataModal(false)}>
+                <View style={styles.backdrop} />
+              </TouchableWithoutFeedback>
+
+              <View style={styles.eventModalContent}>
+                <FlatList
+                  removeClippedSubviews={true}
+                  maxToRenderPerBatch={30}
+                  updateCellsBatchingPeriod={200}
+                  windowSize={40}
+                  initialNumToRender={10}
+                  data={eventData}
+                  keyExtractor={item => item.id.toString()}
+                  contentContainerStyle={{flexGrow: 1}}
+                  renderItem={({item: item1}) => (
+                    <TouchableOpacity
+                      style={{
+                        borderBottomWidth: 0.5,
+                        borderBottomColor: COLORS.LIGHTGREY,
+                        padding: 10,
+                      }}
+                      onPress={() => {
+                        setSelectedEvent(item1);
+                        setIsEventDataModal(false);
+                      }}>
+                      <Text
+                        style={{
+                          color: COLORS.TABLEROW,
+                          fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                          fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                        }}>
+                        {item1?.name}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  ListEmptyComponent={
+                    <View style={{flex: 1, height: 40}}>
+                      <NoDataFound />
+                    </View>
+                  }
+                />
+              </View>
+            </View>
+          </Modal>
+        </View>
+      ) : (
+        <Offline />
+      )}
+      {/* {isConnected && totalPages > 1 && (
+        <View style={styles.paginationContainer}>
+          <TouchableOpacity
+            onPress={() => handlePageChange('left')}
+            disabled={currentPage === 1}
+            style={styles.arrowButton}>
+            <AntDesign
+              name="caretleft"
+              size={24}
+              color={currentPage === 1 ? 'gray' : COLORS.PRIMARYBLACK}
+            />
+          </TouchableOpacity>
+
+          {renderPaginationButtons()}
+
+          <TouchableOpacity
+            onPress={() => handlePageChange('right')}
+            disabled={currentPage === totalPages}
+            style={styles.arrowButton}>
+            <AntDesign
+              name="caretright"
+              size={24}
+              color={currentPage === totalPages ? 'gray' : COLORS.PRIMARYBLACK}
+            />
+          </TouchableOpacity>
+        </View>
+      )} */}
+    </View>
+  );
+};
+
+export default ReportsData;

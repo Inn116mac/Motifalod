@@ -1,3 +1,4 @@
+require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
@@ -7,6 +8,7 @@ require Pod::Executable.execute_command('node', ['-p',
 
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
+codegen_enabled = false
 
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
@@ -15,8 +17,43 @@ if linkage != nil
 end
 
 target 'Motifalod' do
-  config = use_native_modules!
+  # Manual pod specifications for packages that need it
+  pod 'react-native-fbsdk-next', :path => '../node_modules/react-native-fbsdk-next'
+  pod 'react-native-nodemediaclient', :path => '../node_modules/react-native-nodemediaclient'
+  
+  use_expo_modules!
+  
+  # Video caching support for react-native-video
+  if ENV['RNV_SAMPLE_VIDEO_CACHING']
+    $RNVideoUseVideoCaching = true
+  end
+  
+  # Expo modules post integration
+  post_integrate do |installer|
+    begin
+      expo_patch_react_imports!(installer)
+    rescue => e
+      Pod::UI.warn e
+    end
+  end
 
+  if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
+    config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
+  else
+    config_command = [
+      'node',
+      '--no-warnings',
+      '--eval',
+      'require(require.resolve(\'expo-modules-autolinking\', { paths: [require.resolve(\'expo/package.json\')] }))(process.argv.slice(1))',
+      'react-native-config',
+      '--json',
+      '--platform',
+      'ios'
+    ]
+  end
+
+  config = use_native_modules!(config_command)
+  use_frameworks! :linkage => :static
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
@@ -24,7 +61,17 @@ target 'Motifalod' do
   )
 
   post_install do |installer|
-    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
+    # MapLibre post install (for @maplibre/maplibre-react-native)
+    $MLRN.post_install(installer) if defined?($MLRN)
+  
+    # Ensure DEBUG_INFORMATION_FORMAT is set for all pods
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
+      end
+    end
+  
+    # React Native post install
     react_native_post_install(
       installer,
       config[:reactNativePath],

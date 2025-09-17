@@ -1,0 +1,964 @@
+diff --git a/node_modules/react-native-fbsdk-next/android/.classpath b/node_modules/react-native-fbsdk-next/android/.classpath
+new file mode 100644
+index 0000000..bbe97e5
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/.classpath
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<classpath>
++	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17/"/>
++	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
++	<classpathentry kind="output" path="bin/default"/>
++</classpath>
+diff --git a/node_modules/react-native-fbsdk-next/android/.project b/node_modules/react-native-fbsdk-next/android/.project
+new file mode 100644
+index 0000000..4354af8
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/.project
+@@ -0,0 +1,34 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<projectDescription>
++	<name>react-native-fbsdk-next</name>
++	<comment>Project react-native-fbsdk-next created by Buildship.</comment>
++	<projects>
++	</projects>
++	<buildSpec>
++		<buildCommand>
++			<name>org.eclipse.jdt.core.javabuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++		<buildCommand>
++			<name>org.eclipse.buildship.core.gradleprojectbuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++	</buildSpec>
++	<natures>
++		<nature>org.eclipse.jdt.core.javanature</nature>
++		<nature>org.eclipse.buildship.core.gradleprojectnature</nature>
++	</natures>
++	<filteredResources>
++		<filter>
++			<id>1749116801432</id>
++			<name></name>
++			<type>30</type>
++			<matcher>
++				<id>org.eclipse.core.resources.regexFilterMatcher</id>
++				<arguments>node_modules|\.git|__CREATED_BY_JAVA_LANGUAGE_SERVER__</arguments>
++			</matcher>
++		</filter>
++	</filteredResources>
++</projectDescription>
+diff --git a/node_modules/react-native-fbsdk-next/android/.settings/org.eclipse.buildship.core.prefs b/node_modules/react-native-fbsdk-next/android/.settings/org.eclipse.buildship.core.prefs
+new file mode 100644
+index 0000000..1675490
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/.settings/org.eclipse.buildship.core.prefs
+@@ -0,0 +1,2 @@
++connection.project.dir=../../../android
++eclipse.preferences.version=1
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/build.gradle b/node_modules/react-native-fbsdk-next/android/bin/build.gradle
+new file mode 100644
+index 0000000..4bcebea
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/bin/build.gradle
+@@ -0,0 +1,57 @@
++def safeExtGet(prop, fallback) {
++    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
++}
++
++buildscript {
++    // The Android Gradle plugin is only required when opening the android folder stand-alone.
++    // This avoids unnecessary downloads and potential conflicts when the library is included as a
++    // module dependency in an application project.
++    if (project == rootProject) {
++        repositories {
++            mavenCentral()
++            google()
++        }
++        dependencies {
++            classpath 'com.android.tools.build:gradle:7.3.0'
++        }
++    }
++}
++
++apply plugin: 'com.android.library'
++
++android {
++    compileSdkVersion safeExtGet('compileSdkVersion', 33)
++    defaultConfig {
++        minSdkVersion safeExtGet('minSdkVersion', 16)
++        targetSdkVersion safeExtGet('targetSdkVersion', 31)
++    }
++    lintOptions {
++        abortOnError false
++    }
++    def agpVersion = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION
++    if (agpVersion.tokenize('.')[0].toInteger() >= 7) {
++        namespace "com.facebook.reactnative.androidsdk"
++    }
++}
++
++repositories {
++    mavenLocal()
++    maven {
++        // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
++        url "$rootDir/../node_modules/react-native/android"
++    }
++    maven {
++        // Android JSC is installed from npm
++        url "$rootDir/../node_modules/jsc-android/dist"
++    }
++    mavenCentral()
++    google()
++}
++
++def FACEBOOK_SDK_VERSION = safeExtGet('facebookSdkVersion', '16.+')
++
++dependencies {
++    //noinspection GradleDynamicVersion
++    implementation "com.facebook.react:react-native:+"  // From node_modules
++    implementation "com.facebook.android:facebook-android-sdk:${FACEBOOK_SDK_VERSION}"
++}
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/build/generated/source/buildConfig/debug/com/facebook/reactnative/androidsdk/BuildConfig.class b/node_modules/react-native-fbsdk-next/android/bin/build/generated/source/buildConfig/debug/com/facebook/reactnative/androidsdk/BuildConfig.class
+new file mode 100644
+index 0000000..e251451
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/build/generated/source/buildConfig/debug/com/facebook/reactnative/androidsdk/BuildConfig.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/build/generated/source/buildConfig/release/com/facebook/reactnative/androidsdk/BuildConfig.class b/node_modules/react-native-fbsdk-next/android/bin/build/generated/source/buildConfig/release/com/facebook/reactnative/androidsdk/BuildConfig.class
+new file mode 100644
+index 0000000..e77f9b8
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/build/generated/source/buildConfig/release/com/facebook/reactnative/androidsdk/BuildConfig.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/AndroidManifest.xml b/node_modules/react-native-fbsdk-next/android/bin/src/main/AndroidManifest.xml
+new file mode 100644
+index 0000000..1390726
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/bin/src/main/AndroidManifest.xml
+@@ -0,0 +1,23 @@
++<!--
++    Copyright (c) 2014-present, Facebook, Inc. All rights reserved.
++
++    You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
++    copy, modify, and distribute this software in source code or binary form for use
++    in connection with the web services and APIs provided by Facebook.
++
++    As with any software that integrates with the Facebook platform, your use of
++    this software is subject to the Facebook Developer Principles and Policies
++    [http://developers.facebook.com/policy/]. This copyright notice shall be
++    included in all copies or substantial portions of the software.
++
++    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
++    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
++    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
++    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
++    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++-->
++
++<manifest
++    package="com.facebook.reactnative.androidsdk">
++</manifest>
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBAccessTokenModule.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBAccessTokenModule.class
+new file mode 100644
+index 0000000..121ba25
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBAccessTokenModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBActivityEventListener.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBActivityEventListener.class
+new file mode 100644
+index 0000000..097b4e2
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBActivityEventListener.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBAppEventsLoggerModule.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBAppEventsLoggerModule.class
+new file mode 100644
+index 0000000..6f38282
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBAppEventsLoggerModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBAppLinkModule.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBAppLinkModule.class
+new file mode 100644
+index 0000000..5612842
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBAppLinkModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule$GameRequestDialogCallback.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule$GameRequestDialogCallback.class
+new file mode 100644
+index 0000000..f24545a
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule$GameRequestDialogCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule.class
+new file mode 100644
+index 0000000..d444649
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestBatchCallback.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestBatchCallback.class
+new file mode 100644
+index 0000000..780ab5f
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestBatchCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestCallback.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestCallback.class
+new file mode 100644
+index 0000000..c03b6b7
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGraphRequestModule.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGraphRequestModule.class
+new file mode 100644
+index 0000000..2ba40f0
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBGraphRequestModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBLoginButtonManager.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBLoginButtonManager.class
+new file mode 100644
+index 0000000..9aec1ad
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBLoginButtonManager.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBLoginManagerModule$LoginManagerCallback.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBLoginManagerModule$LoginManagerCallback.class
+new file mode 100644
+index 0000000..a581562
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBLoginManagerModule$LoginManagerCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBLoginManagerModule.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBLoginManagerModule.class
+new file mode 100644
+index 0000000..97ddebe
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBLoginManagerModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBMessageDialogModule$MessageDialogCallback.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBMessageDialogModule$MessageDialogCallback.class
+new file mode 100644
+index 0000000..9c7b4f1
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBMessageDialogModule$MessageDialogCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBMessageDialogModule.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBMessageDialogModule.class
+new file mode 100644
+index 0000000..cfd0467
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBMessageDialogModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBProfileModule.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBProfileModule.class
+new file mode 100644
+index 0000000..6e455f3
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBProfileModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBSDKCallbackManagerBaseJavaModule.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBSDKCallbackManagerBaseJavaModule.class
+new file mode 100644
+index 0000000..04e36e4
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBSDKCallbackManagerBaseJavaModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBSDKPackage.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBSDKPackage.class
+new file mode 100644
+index 0000000..00e449b
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBSDKPackage.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBSendButtonManager.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBSendButtonManager.class
+new file mode 100644
+index 0000000..9d1d725
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBSendButtonManager.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBSettingsModule.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBSettingsModule.class
+new file mode 100644
+index 0000000..344d909
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBSettingsModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBShareButtonManager.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBShareButtonManager.class
+new file mode 100644
+index 0000000..e6c912c
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBShareButtonManager.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBShareDialogModule$ShareDialogCallback.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBShareDialogModule$ShareDialogCallback.class
+new file mode 100644
+index 0000000..4906303
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBShareDialogModule$ShareDialogCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBShareDialogModule.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBShareDialogModule.class
+new file mode 100644
+index 0000000..fa131ae
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/FBShareDialogModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/RCTLoginButton.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/RCTLoginButton.class
+new file mode 100644
+index 0000000..2495c3a
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/RCTLoginButton.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/ReactNativeFacebookSDKCallback.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/ReactNativeFacebookSDKCallback.class
+new file mode 100644
+index 0000000..90ffcc6
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/ReactNativeFacebookSDKCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/Utility.class b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/Utility.class
+new file mode 100644
+index 0000000..7c36473
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/bin/src/main/java/com/facebook/reactnative/androidsdk/Utility.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build.gradle b/node_modules/react-native-fbsdk-next/android/build.gradle
+index 4bcebea..a6e6543 100644
+--- a/node_modules/react-native-fbsdk-next/android/build.gradle
++++ b/node_modules/react-native-fbsdk-next/android/build.gradle
+@@ -48,7 +48,7 @@ repositories {
+     google()
+ }
+ 
+-def FACEBOOK_SDK_VERSION = safeExtGet('facebookSdkVersion', '16.+')
++def FACEBOOK_SDK_VERSION = safeExtGet('facebookSdkVersion', '18.1.3')
+ 
+ dependencies {
+     //noinspection GradleDynamicVersion
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6807aff2e37dee1b433d6c237ca4cccd/results.bin b/node_modules/react-native-fbsdk-next/android/build/.transforms/6807aff2e37dee1b433d6c237ca4cccd/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/.transforms/6807aff2e37dee1b433d6c237ca4cccd/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6807aff2e37dee1b433d6c237ca4cccd/transformed/classes/classes_dex/classes.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6807aff2e37dee1b433d6c237ca4cccd/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..4379255
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6807aff2e37dee1b433d6c237ca4cccd/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/results.bin b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/results.bin
+new file mode 100644
+index 0000000..7ed749e
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/results.bin
+@@ -0,0 +1 @@
++o/bundleLibRuntimeToDirDebug
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/BuildConfig.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/BuildConfig.dex
+new file mode 100644
+index 0000000..1306ff0
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/BuildConfig.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAccessTokenModule$1.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAccessTokenModule$1.dex
+new file mode 100644
+index 0000000..b4be69d
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAccessTokenModule$1.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAccessTokenModule$2.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAccessTokenModule$2.dex
+new file mode 100644
+index 0000000..a9373c3
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAccessTokenModule$2.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAccessTokenModule.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAccessTokenModule.dex
+new file mode 100644
+index 0000000..435d9f4
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAccessTokenModule.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBActivityEventListener.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBActivityEventListener.dex
+new file mode 100644
+index 0000000..963fad2
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBActivityEventListener.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAppEventsLoggerModule.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAppEventsLoggerModule.dex
+new file mode 100644
+index 0000000..f0c431c
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAppEventsLoggerModule.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAppLinkModule$1.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAppLinkModule$1.dex
+new file mode 100644
+index 0000000..6bdc7a0
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAppLinkModule$1.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAppLinkModule.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAppLinkModule.dex
+new file mode 100644
+index 0000000..48803ef
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBAppLinkModule.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule$GameRequestDialogCallback.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule$GameRequestDialogCallback.dex
+new file mode 100644
+index 0000000..d8358b9
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule$GameRequestDialogCallback.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule.dex
+new file mode 100644
+index 0000000..8907ba3
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestBatchCallback.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestBatchCallback.dex
+new file mode 100644
+index 0000000..f92caa6
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestBatchCallback.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestCallback.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestCallback.dex
+new file mode 100644
+index 0000000..979b7db
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestCallback.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGraphRequestModule.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGraphRequestModule.dex
+new file mode 100644
+index 0000000..3344b0c
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBGraphRequestModule.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBLoginButtonManager.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBLoginButtonManager.dex
+new file mode 100644
+index 0000000..dbbbd21
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBLoginButtonManager.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBLoginManagerModule$LoginManagerCallback.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBLoginManagerModule$LoginManagerCallback.dex
+new file mode 100644
+index 0000000..3266212
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBLoginManagerModule$LoginManagerCallback.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBLoginManagerModule.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBLoginManagerModule.dex
+new file mode 100644
+index 0000000..f91e132
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBLoginManagerModule.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBMessageDialogModule$MessageDialogCallback.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBMessageDialogModule$MessageDialogCallback.dex
+new file mode 100644
+index 0000000..d71cb25
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBMessageDialogModule$MessageDialogCallback.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBMessageDialogModule.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBMessageDialogModule.dex
+new file mode 100644
+index 0000000..0b42276
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBMessageDialogModule.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBProfileModule$1.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBProfileModule$1.dex
+new file mode 100644
+index 0000000..a6364ed
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBProfileModule$1.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBProfileModule$2.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBProfileModule$2.dex
+new file mode 100644
+index 0000000..e4f518d
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBProfileModule$2.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBProfileModule.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBProfileModule.dex
+new file mode 100644
+index 0000000..6e4e844
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBProfileModule.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBSDKCallbackManagerBaseJavaModule.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBSDKCallbackManagerBaseJavaModule.dex
+new file mode 100644
+index 0000000..b9ebdc1
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBSDKCallbackManagerBaseJavaModule.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBSDKPackage.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBSDKPackage.dex
+new file mode 100644
+index 0000000..cd49ce0
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBSDKPackage.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBSendButtonManager.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBSendButtonManager.dex
+new file mode 100644
+index 0000000..665b0eb
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBSendButtonManager.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBSettingsModule.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBSettingsModule.dex
+new file mode 100644
+index 0000000..54dbfce
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBSettingsModule.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBShareButtonManager.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBShareButtonManager.dex
+new file mode 100644
+index 0000000..9e74748
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBShareButtonManager.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBShareDialogModule$ShareDialogCallback.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBShareDialogModule$ShareDialogCallback.dex
+new file mode 100644
+index 0000000..aafd168
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBShareDialogModule$ShareDialogCallback.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBShareDialogModule.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBShareDialogModule.dex
+new file mode 100644
+index 0000000..e73a2e2
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/FBShareDialogModule.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/RCTLoginButton$1.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/RCTLoginButton$1.dex
+new file mode 100644
+index 0000000..0412bc5
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/RCTLoginButton$1.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/RCTLoginButton$2.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/RCTLoginButton$2.dex
+new file mode 100644
+index 0000000..b6af42a
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/RCTLoginButton$2.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/RCTLoginButton.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/RCTLoginButton.dex
+new file mode 100644
+index 0000000..2abd79f
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/RCTLoginButton.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/ReactNativeFacebookSDKCallback.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/ReactNativeFacebookSDKCallback.dex
+new file mode 100644
+index 0000000..954230e
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/ReactNativeFacebookSDKCallback.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/Utility.dex b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/Utility.dex
+new file mode 100644
+index 0000000..6a2d277
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/facebook/reactnative/androidsdk/Utility.dex differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin
+new file mode 100644
+index 0000000..7ded7a5
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/.transforms/6d9b153d0f2586891656e19fe5176fa5/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/generated/source/buildConfig/debug/com/facebook/reactnative/androidsdk/BuildConfig.java b/node_modules/react-native-fbsdk-next/android/build/generated/source/buildConfig/debug/com/facebook/reactnative/androidsdk/BuildConfig.java
+new file mode 100644
+index 0000000..228672b
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/generated/source/buildConfig/debug/com/facebook/reactnative/androidsdk/BuildConfig.java
+@@ -0,0 +1,10 @@
++/**
++ * Automatically generated file. DO NOT MODIFY
++ */
++package com.facebook.reactnative.androidsdk;
++
++public final class BuildConfig {
++  public static final boolean DEBUG = Boolean.parseBoolean("true");
++  public static final String LIBRARY_PACKAGE_NAME = "com.facebook.reactnative.androidsdk";
++  public static final String BUILD_TYPE = "debug";
++}
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml b/node_modules/react-native-fbsdk-next/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+new file mode 100644
+index 0000000..00b17ae
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+@@ -0,0 +1,26 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    Copyright (c) 2014-present, Facebook, Inc. All rights reserved.
++
++    You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
++    copy, modify, and distribute this software in source code or binary form for use
++    in connection with the web services and APIs provided by Facebook.
++
++    As with any software that integrates with the Facebook platform, your use of
++    this software is subject to the Facebook Developer Principles and Policies
++    [http://developers.facebook.com/policy/]. This copyright notice shall be
++    included in all copies or substantial portions of the software.
++
++    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
++    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
++    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
++    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
++    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++-->
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.facebook.reactnative.androidsdk" >
++
++    <uses-sdk android:minSdkVersion="26" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json b/node_modules/react-native-fbsdk-next/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+new file mode 100644
+index 0000000..2e3ec9f
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+@@ -0,0 +1,18 @@
++{
++  "version": 3,
++  "artifactType": {
++    "type": "AAPT_FRIENDLY_MERGED_MANIFESTS",
++    "kind": "Directory"
++  },
++  "applicationId": "com.facebook.reactnative.androidsdk",
++  "variantName": "debug",
++  "elements": [
++    {
++      "type": "SINGLE",
++      "filters": [],
++      "attributes": [],
++      "outputFile": "AndroidManifest.xml"
++    }
++  ],
++  "elementType": "File"
++}
+\ No newline at end of file
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties b/node_modules/react-native-fbsdk-next/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+new file mode 100644
+index 0000000..1211b1e
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+@@ -0,0 +1,6 @@
++aarFormatVersion=1.0
++aarMetadataVersion=1.0
++minCompileSdk=1
++minCompileSdkExtension=0
++minAndroidGradlePluginVersion=1.0.0
++coreLibraryDesugaringEnabled=false
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json b/node_modules/react-native-fbsdk-next/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+new file mode 100644
+index 0000000..9e26dfe
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+@@ -0,0 +1 @@
++{}
+\ No newline at end of file
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar b/node_modules/react-native-fbsdk-next/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar
+new file mode 100644
+index 0000000..603c80b
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar b/node_modules/react-native-fbsdk-next/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar
+new file mode 100644
+index 0000000..9bd36ed
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt b/node_modules/react-native-fbsdk-next/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+new file mode 100644
+index 0000000..78c9e2a
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+@@ -0,0 +1 @@
++#Wed Jul 30 18:38:13 IST 2025
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+new file mode 100644
+index 0000000..816710d
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/build/generated/res/resValues/debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/build/generated/res/resValues/debug"/></dataSet><mergedItems/></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml b/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+new file mode 100644
+index 0000000..b62f596
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/jniLibs"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/debug/jniLibs"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/mergeDebugShaders/merger.xml b/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+new file mode 100644
+index 0000000..944db4f
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/shaders"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/debug/shaders"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/packageDebugAssets/merger.xml b/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/packageDebugAssets/merger.xml
+new file mode 100644
+index 0000000..8bb0cac
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/incremental/packageDebugAssets/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/assets"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/debug/assets"/></dataSet><dataSet config="generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/build/intermediates/shader_assets/debug/compileDebugShaders/out"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/BuildConfig.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/BuildConfig.class
+new file mode 100644
+index 0000000..3e1ec8b
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/BuildConfig.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAccessTokenModule$1.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAccessTokenModule$1.class
+new file mode 100644
+index 0000000..5b19eb2
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAccessTokenModule$1.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAccessTokenModule$2.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAccessTokenModule$2.class
+new file mode 100644
+index 0000000..1bc6440
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAccessTokenModule$2.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAccessTokenModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAccessTokenModule.class
+new file mode 100644
+index 0000000..fa98bcc
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAccessTokenModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBActivityEventListener.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBActivityEventListener.class
+new file mode 100644
+index 0000000..3b07922
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBActivityEventListener.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAppEventsLoggerModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAppEventsLoggerModule.class
+new file mode 100644
+index 0000000..d5b78dc
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAppEventsLoggerModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAppLinkModule$1.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAppLinkModule$1.class
+new file mode 100644
+index 0000000..936fd9c
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAppLinkModule$1.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAppLinkModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAppLinkModule.class
+new file mode 100644
+index 0000000..3ad6625
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBAppLinkModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule$GameRequestDialogCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule$GameRequestDialogCallback.class
+new file mode 100644
+index 0000000..e38f20e
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule$GameRequestDialogCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule.class
+new file mode 100644
+index 0000000..c2afbd6
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestBatchCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestBatchCallback.class
+new file mode 100644
+index 0000000..a655ec5
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestBatchCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestCallback.class
+new file mode 100644
+index 0000000..f81c76b
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGraphRequestModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGraphRequestModule.class
+new file mode 100644
+index 0000000..47059d1
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBGraphRequestModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBLoginButtonManager.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBLoginButtonManager.class
+new file mode 100644
+index 0000000..9709507
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBLoginButtonManager.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBLoginManagerModule$LoginManagerCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBLoginManagerModule$LoginManagerCallback.class
+new file mode 100644
+index 0000000..fcb893e
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBLoginManagerModule$LoginManagerCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBLoginManagerModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBLoginManagerModule.class
+new file mode 100644
+index 0000000..0c56b18
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBLoginManagerModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBMessageDialogModule$MessageDialogCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBMessageDialogModule$MessageDialogCallback.class
+new file mode 100644
+index 0000000..acf892d
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBMessageDialogModule$MessageDialogCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBMessageDialogModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBMessageDialogModule.class
+new file mode 100644
+index 0000000..f8eb2d0
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBMessageDialogModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBProfileModule$1.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBProfileModule$1.class
+new file mode 100644
+index 0000000..206bdfd
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBProfileModule$1.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBProfileModule$2.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBProfileModule$2.class
+new file mode 100644
+index 0000000..bdc9073
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBProfileModule$2.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBProfileModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBProfileModule.class
+new file mode 100644
+index 0000000..901d945
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBProfileModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBSDKCallbackManagerBaseJavaModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBSDKCallbackManagerBaseJavaModule.class
+new file mode 100644
+index 0000000..dad994e
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBSDKCallbackManagerBaseJavaModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBSDKPackage.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBSDKPackage.class
+new file mode 100644
+index 0000000..6936857
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBSDKPackage.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBSendButtonManager.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBSendButtonManager.class
+new file mode 100644
+index 0000000..40cabfd
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBSendButtonManager.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBSettingsModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBSettingsModule.class
+new file mode 100644
+index 0000000..a792d5d
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBSettingsModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBShareButtonManager.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBShareButtonManager.class
+new file mode 100644
+index 0000000..9c30c3c
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBShareButtonManager.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBShareDialogModule$ShareDialogCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBShareDialogModule$ShareDialogCallback.class
+new file mode 100644
+index 0000000..8cc7e5c
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBShareDialogModule$ShareDialogCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBShareDialogModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBShareDialogModule.class
+new file mode 100644
+index 0000000..a34a2f8
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/FBShareDialogModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/RCTLoginButton$1.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/RCTLoginButton$1.class
+new file mode 100644
+index 0000000..e73b3d1
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/RCTLoginButton$1.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/RCTLoginButton$2.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/RCTLoginButton$2.class
+new file mode 100644
+index 0000000..fcd6fb3
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/RCTLoginButton$2.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/RCTLoginButton.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/RCTLoginButton.class
+new file mode 100644
+index 0000000..9f48875
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/RCTLoginButton.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/ReactNativeFacebookSDKCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/ReactNativeFacebookSDKCallback.class
+new file mode 100644
+index 0000000..ce54223
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/ReactNativeFacebookSDKCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/Utility.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/Utility.class
+new file mode 100644
+index 0000000..18471c0
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/facebook/reactnative/androidsdk/Utility.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt b/node_modules/react-native-fbsdk-next/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+new file mode 100644
+index 0000000..78ac5b8
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+@@ -0,0 +1,2 @@
++R_DEF: Internal format may change without notice
++local
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt b/node_modules/react-native-fbsdk-next/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+new file mode 100644
+index 0000000..606f130
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+@@ -0,0 +1,26 @@
++1<?xml version="1.0" encoding="utf-8"?>
++2<!--
++3    Copyright (c) 2014-present, Facebook, Inc. All rights reserved.
++4
++5    You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
++6    copy, modify, and distribute this software in source code or binary form for use
++7    in connection with the web services and APIs provided by Facebook.
++8
++9    As with any software that integrates with the Facebook platform, your use of
++10    this software is subject to the Facebook Developer Principles and Policies
++11    [http://developers.facebook.com/policy/]. This copyright notice shall be
++12    included in all copies or substantial portions of the software.
++13
++14    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++15    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
++16    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
++17    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
++18    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
++19    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++20-->
++21<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++22    package="com.facebook.reactnative.androidsdk" >
++23
++24    <uses-sdk android:minSdkVersion="26" />
++25
++26</manifest>
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml b/node_modules/react-native-fbsdk-next/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+new file mode 100644
+index 0000000..00b17ae
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+@@ -0,0 +1,26 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    Copyright (c) 2014-present, Facebook, Inc. All rights reserved.
++
++    You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
++    copy, modify, and distribute this software in source code or binary form for use
++    in connection with the web services and APIs provided by Facebook.
++
++    As with any software that integrates with the Facebook platform, your use of
++    this software is subject to the Facebook Developer Principles and Policies
++    [http://developers.facebook.com/policy/]. This copyright notice shall be
++    included in all copies or substantial portions of the software.
++
++    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
++    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
++    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
++    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
++    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++-->
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.facebook.reactnative.androidsdk" >
++
++    <uses-sdk android:minSdkVersion="26" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json b/node_modules/react-native-fbsdk-next/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+new file mode 100644
+index 0000000..0637a08
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+@@ -0,0 +1 @@
++[]
+\ No newline at end of file
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt b/node_modules/react-native-fbsdk-next/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+new file mode 100644
+index 0000000..08f4ebe
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+@@ -0,0 +1 @@
++0 Warning/Error
+\ No newline at end of file
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/BuildConfig.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/BuildConfig.class
+new file mode 100644
+index 0000000..3e1ec8b
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/BuildConfig.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAccessTokenModule$1.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAccessTokenModule$1.class
+new file mode 100644
+index 0000000..5b19eb2
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAccessTokenModule$1.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAccessTokenModule$2.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAccessTokenModule$2.class
+new file mode 100644
+index 0000000..1bc6440
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAccessTokenModule$2.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAccessTokenModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAccessTokenModule.class
+new file mode 100644
+index 0000000..fa98bcc
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAccessTokenModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBActivityEventListener.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBActivityEventListener.class
+new file mode 100644
+index 0000000..3b07922
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBActivityEventListener.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAppEventsLoggerModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAppEventsLoggerModule.class
+new file mode 100644
+index 0000000..d5b78dc
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAppEventsLoggerModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAppLinkModule$1.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAppLinkModule$1.class
+new file mode 100644
+index 0000000..936fd9c
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAppLinkModule$1.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAppLinkModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAppLinkModule.class
+new file mode 100644
+index 0000000..3ad6625
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBAppLinkModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule$GameRequestDialogCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule$GameRequestDialogCallback.class
+new file mode 100644
+index 0000000..e38f20e
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule$GameRequestDialogCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule.class
+new file mode 100644
+index 0000000..c2afbd6
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGameRequestDialogModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestBatchCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestBatchCallback.class
+new file mode 100644
+index 0000000..a655ec5
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestBatchCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestCallback.class
+new file mode 100644
+index 0000000..f81c76b
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGraphRequestModule$GraphRequestCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGraphRequestModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGraphRequestModule.class
+new file mode 100644
+index 0000000..47059d1
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBGraphRequestModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBLoginButtonManager.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBLoginButtonManager.class
+new file mode 100644
+index 0000000..9709507
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBLoginButtonManager.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBLoginManagerModule$LoginManagerCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBLoginManagerModule$LoginManagerCallback.class
+new file mode 100644
+index 0000000..fcb893e
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBLoginManagerModule$LoginManagerCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBLoginManagerModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBLoginManagerModule.class
+new file mode 100644
+index 0000000..0c56b18
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBLoginManagerModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBMessageDialogModule$MessageDialogCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBMessageDialogModule$MessageDialogCallback.class
+new file mode 100644
+index 0000000..acf892d
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBMessageDialogModule$MessageDialogCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBMessageDialogModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBMessageDialogModule.class
+new file mode 100644
+index 0000000..f8eb2d0
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBMessageDialogModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBProfileModule$1.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBProfileModule$1.class
+new file mode 100644
+index 0000000..206bdfd
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBProfileModule$1.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBProfileModule$2.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBProfileModule$2.class
+new file mode 100644
+index 0000000..bdc9073
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBProfileModule$2.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBProfileModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBProfileModule.class
+new file mode 100644
+index 0000000..901d945
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBProfileModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBSDKCallbackManagerBaseJavaModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBSDKCallbackManagerBaseJavaModule.class
+new file mode 100644
+index 0000000..dad994e
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBSDKCallbackManagerBaseJavaModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBSDKPackage.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBSDKPackage.class
+new file mode 100644
+index 0000000..6936857
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBSDKPackage.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBSendButtonManager.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBSendButtonManager.class
+new file mode 100644
+index 0000000..40cabfd
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBSendButtonManager.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBSettingsModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBSettingsModule.class
+new file mode 100644
+index 0000000..a792d5d
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBSettingsModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBShareButtonManager.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBShareButtonManager.class
+new file mode 100644
+index 0000000..9c30c3c
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBShareButtonManager.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBShareDialogModule$ShareDialogCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBShareDialogModule$ShareDialogCallback.class
+new file mode 100644
+index 0000000..8cc7e5c
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBShareDialogModule$ShareDialogCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBShareDialogModule.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBShareDialogModule.class
+new file mode 100644
+index 0000000..a34a2f8
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/FBShareDialogModule.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/RCTLoginButton$1.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/RCTLoginButton$1.class
+new file mode 100644
+index 0000000..e73b3d1
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/RCTLoginButton$1.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/RCTLoginButton$2.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/RCTLoginButton$2.class
+new file mode 100644
+index 0000000..fcd6fb3
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/RCTLoginButton$2.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/RCTLoginButton.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/RCTLoginButton.class
+new file mode 100644
+index 0000000..9f48875
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/RCTLoginButton.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/ReactNativeFacebookSDKCallback.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/ReactNativeFacebookSDKCallback.class
+new file mode 100644
+index 0000000..ce54223
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/ReactNativeFacebookSDKCallback.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/Utility.class b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/Utility.class
+new file mode 100644
+index 0000000..18471c0
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/facebook/reactnative/androidsdk/Utility.class differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar
+new file mode 100644
+index 0000000..b808455
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar differ
+diff --git a/node_modules/react-native-fbsdk-next/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt b/node_modules/react-native-fbsdk-next/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+new file mode 100644
+index 0000000..5e911be
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+@@ -0,0 +1 @@
++com.facebook.reactnative.androidsdk
+diff --git a/node_modules/react-native-fbsdk-next/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/react-native-fbsdk-next/android/build/outputs/logs/manifest-merger-debug-report.txt
+new file mode 100644
+index 0000000..90b10ee
+--- /dev/null
++++ b/node_modules/react-native-fbsdk-next/android/build/outputs/logs/manifest-merger-debug-report.txt
+@@ -0,0 +1,15 @@
++-- Merging decision tree log ---
++manifest
++ADDED from /Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/AndroidManifest.xml:21:1-23:12
++INJECTED from /Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/AndroidManifest.xml:21:1-23:12
++	package
++		ADDED from /Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/AndroidManifest.xml:22:5-50
++		INJECTED from /Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/AndroidManifest.xml
++uses-sdk
++INJECTED from /Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
++INJECTED from /Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/AndroidManifest.xml
++INJECTED from /Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/AndroidManifest.xml
++	android:targetSdkVersion
++		INJECTED from /Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/AndroidManifest.xml
++	android:minSdkVersion
++		INJECTED from /Users/inngenius/Documents/NewProjects/TSGAPP/TSGNEW/node_modules/react-native-fbsdk-next/android/src/main/AndroidManifest.xml
+diff --git a/node_modules/react-native-fbsdk-next/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin b/node_modules/react-native-fbsdk-next/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin
+new file mode 100644
+index 0000000..6ea02fc
+Binary files /dev/null and b/node_modules/react-native-fbsdk-next/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin differ
