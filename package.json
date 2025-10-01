@@ -28,6 +28,7 @@
     "expo": "~52.0.0",
     "expo-asset": "~11.0.5",
     "expo-calendar": "~14.0.6",
+    "expo-font": "~13.0.4",
     "lottie-react-native": "^7.1.0",
     "mediasoup-client": "^3.12.5",
     "moment": "^2.30.1",
@@ -45,7 +46,6 @@
     "react-native-image-crop-picker": "^0.41.4",
     "react-native-inappbrowser-reborn": "^3.7.0",
     "react-native-modal-datetime-picker": "^18.0.0",
-    "react-native-nodemediaclient": "^0.3.5",
     "react-native-push-notification": "^8.1.1",
     "react-native-reanimated": "^3.16.7",
     "react-native-responsive-screen": "^1.4.2",
@@ -57,8 +57,7 @@
     "react-native-view-shot": "^4.0.3",
     "react-native-webrtc": "^124.0.5",
     "react-native-webview": "^13.14.1",
-    "socket.io-client": "^4.8.1",
-    "expo-font": "~13.0.4"
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

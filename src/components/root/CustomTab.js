@@ -27,7 +27,7 @@ import NetInfo from '@react-native-community/netinfo';
 import COLORS from '../../theme/Color';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import ImagePicker from 'react-native-image-crop-picker';
-import {getData} from '../../utils/Storage';
+import {getData, removeData, storeData} from '../../utils/Storage';
 import moment from 'moment';
 import Video from 'react-native-video';
 import {Dropdown} from 'react-native-element-dropdown';
@@ -36,6 +36,21 @@ import httpClient from '../../connection/httpClient';
 import FastImage from 'react-native-fast-image';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {IMAGE_URL} from '../../connection/Config';
+import {
+  AccessToken,
+  GraphRequest,
+  LoginManager,
+  ShareDialog,
+  GraphRequestManager,
+} from 'react-native-fbsdk-next';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import Feather from 'react-native-vector-icons/Feather';
+
+const APP_ID = '1173536437853030';
+const APP_SECRET = '72e5b8d18e367ca47a066f5d8801e693';
+
+const TOKEN_STORAGE_KEY = 'fb_user_access_token';
+const USER_INFO_KEY = 'fb_userinfo';
 
 export default function CustomTab({
   data,
@@ -56,6 +71,30 @@ export default function CustomTab({
   const {width} = useWindowDimensions();
 
   const styles = StyleSheet.create({
+    checkboxContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    checkbox: {
+      width: 22,
+      height: 22,
+      borderWidth: 2,
+      borderColor: COLORS.LABELCOLOR,
+      borderRadius: 6,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'transparent',
+    },
+    checkboxChecked: {
+      backgroundColor: '#F26904',
+      borderColor: '#F26904',
+    },
+    label: {
+      marginLeft: 8,
+      color: COLORS.LABELCOLOR,
+      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+      fontSize: FONTS.FONTSIZE.SMALL,
+    },
     dropdown: {
       height: 38,
       borderWidth: 1,
@@ -1082,122 +1121,6 @@ export default function CustomTab({
 
   const isSubmitting = useRef(false);
 
-  const submitHandller = () => {
-    if (isSubmitting.current || isComplete) return;
-
-    const requiredFields = data.filter(item => item.required);
-
-    const newErrors = {};
-
-    requiredFields.forEach(item => {
-      const value = formData[item?.key];
-
-      if (
-        !value ||
-        (typeof value === 'string' && value.trim() === '') ||
-        value?.length == 0
-      ) {
-        newErrors[item?.key] = `${item?.label} is required.`;
-      } else {
-        newErrors[item?.key] = null;
-      }
-    });
-
-    const updatedErrors = {...errors};
-
-    Object.keys(newErrors).forEach(key => {
-      if (newErrors[key] === null) {
-        if (updatedErrors[key] && updatedErrors[key] === newErrors[key]) {
-          delete updatedErrors[key];
-        }
-      } else {
-        updatedErrors[key] = newErrors[key];
-      }
-    });
-
-    setErrors(updatedErrors);
-
-    if (Object.values(updatedErrors).some(error => error !== null)) {
-      const errorMessages = Object.entries(updatedErrors)
-        .filter(([key, value]) => value !== null)
-        .map(([key, value]) => value);
-
-      const errorMessage = errorMessages.join('\n');
-      alert(`Please correct the following errors:\n\n${errorMessage}`);
-      return;
-    }
-
-    isSubmitting.current = true;
-    setIsCopmlete(true);
-    const content = {};
-
-    data.forEach(item => {
-      content[item.name] = {
-        label: item.label,
-        subtype: item.subtype,
-        type: item.type,
-        value: formData[item.key] || null,
-      };
-    });
-
-    const apiPayload = {
-      moduleId: response1?.moduleId,
-      keys: JSON.stringify(data.map(item => item.name)),
-      content: JSON.stringify(content),
-      contentType: response1?.constantName,
-    };
-
-    NetInfo.fetch().then(state => {
-      if (state.isConnected) {
-        httpClient
-          .post(`module/configuration/create?isMobile=true`, apiPayload)
-          .then(response => {
-            if (response.data.status) {
-              NOTIFY_MESSAGE(response?.data?.message);
-              if (isFromEventAdmin) {
-                navigation.goBack();
-              } else if (
-                response1?.constantName == 'SIGN UP' &&
-                isSignupFromDashboard
-              ) {
-                navigation.navigate('Dashboard');
-              } else if (response1?.constantName == 'SIGN UP') {
-                navigation.navigate('Login');
-              } else if (isImageGallery || isVideoGallery) {
-                if (isFromDashboard) {
-                  setModalVisible1(false);
-                  onChange(true);
-                } else {
-                  navigation.navigate('Dashboard');
-                }
-              } else {
-                navigation.navigate('Dashboard');
-              }
-            } else {
-              NOTIFY_MESSAGE(
-                response?.data?.message
-                  ? response?.data?.message
-                  : 'Something went wrong',
-              );
-            }
-          })
-          .catch(err => {
-            isSubmitting.current = false;
-            setIsCopmlete(false);
-            NOTIFY_MESSAGE(err || err?.message ? 'Something went wrong' : null);
-          })
-          .finally(() => {
-            isSubmitting.current = false;
-            setIsCopmlete(false);
-          });
-      } else {
-        isSubmitting.current = false;
-        setIsCopmlete(false);
-        NOTIFY_MESSAGE('Please check your internet connectivity');
-      }
-    });
-  };
-
   const handleTabClick = index => {
     if (activeTab === index) return;
 
@@ -1332,11 +1255,31 @@ export default function CustomTab({
     COLORS.PRIMARYORANGE,
   ]);
 
-  const handleDeleteImage = (key, uri) => {
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      [key]: prevFormData[key].filter(imageUri => imageUri !== uri),
-    }));
+  // const handleDeleteImage = (key, uri) => {
+  //   setFormData(prevFormData => ({
+  //     ...prevFormData,
+  //     [key]: prevFormData[key].filter(imageUri => imageUri !== uri),
+  //   }));
+  // };
+
+  const handleDeleteImage = (key, index) => {
+    setFormData(prevFormData => {
+      const updatedArray = [...(prevFormData[key] || [])];
+      updatedArray.splice(index, 1);
+      return {
+        ...prevFormData,
+        [key]: updatedArray,
+      };
+    });
+
+    setImageUris(prevImageUris => {
+      const updatedArray = [...(prevImageUris[key] || [])];
+      updatedArray.splice(index, 1);
+      return {
+        ...prevImageUris,
+        [key]: updatedArray,
+      };
+    });
   };
 
   const fetchData = useCallback(async searchQuery => {
@@ -1411,6 +1354,480 @@ export default function CustomTab({
     } else if ((name === 'member' || name === 'eventCoordinator') && text) {
       fetchData(text);
     }
+  };
+
+  const [userToken, setUserToken] = useState(null);
+  const [syncWithFacebook, setSyncWithFacebook] = useState(false);
+  const [pages, setPages] = useState([]);
+  const [loadingPages, setLoadingPages] = useState(false);
+  const [selectedPageId, setSelectedPageId] = useState(null);
+  const [showNoPagesMessage, setShowNoPagesMessage] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
+
+  const fetchPages = async token => {
+    setLoadingPages(true);
+    try {
+      const response = await fetch(
+        `https://graph.facebook.com/me/accounts?access_token=${token}`,
+      );
+      const result = await response.json();
+      if (result?.error) {
+        if (result.error.code === 190) {
+          Alert.alert(
+            'Session expired',
+            'Your Facebook session has expired. Please log in again.',
+          );
+          await logout();
+          return;
+        } else {
+          Alert.alert(
+            'Error fetching pages',
+            result.error.message || 'Unknown error',
+          );
+          setPages([]);
+          setSyncWithFacebook(false);
+          setShowNoPagesMessage(false);
+          return;
+        }
+      }
+
+      if (result?.data?.length > 0) {
+        setPages(result.data);
+        setShowNoPagesMessage(false);
+      } else {
+        setPages([]);
+        setSyncWithFacebook(false);
+        setShowNoPagesMessage(true);
+      }
+    } catch (error) {
+      Alert.alert('Error fetching pages', error.message || 'Unknown error');
+      setPages([]);
+      setSyncWithFacebook(false);
+      setShowNoPagesMessage(false);
+    } finally {
+      setLoadingPages(false);
+    }
+  };
+
+  const onToggleSync = async () => {
+    if (!userToken) {
+      const result = await LoginManager.logInWithPermissions([
+        'public_profile',
+        'email',
+        'pages_show_list',
+        'pages_manage_posts',
+        // 'pages_read_engagement',
+        // 'pages_manage_metadata',
+        // 'business_management',
+
+        // 'openid',
+        // 'user_photos',
+        // 'user_videos',
+      ]);
+
+      if (result.isCancelled) {
+        Alert.alert('Login cancelled');
+        return;
+      }
+      const data = await AccessToken.getCurrentAccessToken();
+      if (data) {
+        const token = data.accessToken.toString();
+        await storeData(TOKEN_STORAGE_KEY, token); // Persist token
+        setUserToken(token);
+        fetchPages(token);
+        setSyncWithFacebook(true);
+        // getUserInfo(token);
+      } else {
+        Alert.alert('Failed to get access token');
+      }
+    } else {
+      // setSyncWithFacebook(prev => !prev);
+      setSyncWithFacebook(prevSync => {
+        const newSync = !prevSync;
+
+        if (!newSync) {
+          setSelectedPageId(null);
+        } else if (newSync && pages.length === 0) {
+          fetchPages(userToken);
+        }
+
+        return newSync;
+      });
+    }
+  };
+
+  const getUserInfo = token => {
+    const infoRequest = new GraphRequest(
+      '/me',
+      {
+        accessToken: token,
+        parameters: {
+          fields: {
+            string: 'id,name,email,picture.type(large)',
+          },
+        },
+      },
+      async (error, result) => {
+        if (error) {
+          Alert.alert(
+            'Error fetching user info',
+            'Your session may have expired. Please log in again.',
+          );
+          await logout();
+        } else {
+          setUserInfo(result);
+          await storeData(USER_INFO_KEY, JSON.stringify(result));
+        }
+      },
+    );
+    new GraphRequestManager().addRequest(infoRequest).start();
+  };
+
+  const getUserInfoFromStorage = async () => {
+    try {
+      const jsonValue = await getData(USER_INFO_KEY);
+      const jsonValue1 = jsonValue != null ? JSON.parse(jsonValue) : null;
+
+      setUserInfo(jsonValue1);
+    } catch (e) {
+      setUserInfo(null);
+    }
+  };
+
+  const checkTokenValidity = async token => {
+    try {
+      const appAccessToken = `${APP_ID}|${APP_SECRET}`;
+      const url = `https://graph.facebook.com/debug_token?input_token=${token}&access_token=${appAccessToken}`;
+      const res = await fetch(url);
+      const json = await res.json();
+
+      if (json.data && json.data.is_valid) {
+        const currentTime = Math.floor(Date.now() / 1000);
+
+        // If expires_at is 0, treat as non-expiring token
+        if (json.data.expires_at === 0) {
+          return true;
+        }
+
+        // Otherwise check expires_at timestamp
+        if (json.data.expires_at && json.data.expires_at > currentTime) {
+          return true;
+        }
+
+        // Optionally check data_access_expires_at if needed
+        if (
+          json.data.data_access_expires_at &&
+          json.data.data_access_expires_at > currentTime
+        ) {
+          return true;
+        }
+
+        return false;
+      }
+      return false;
+    } catch (error) {
+      // console.error('Error checking token validity:', error);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      const token = await getData(TOKEN_STORAGE_KEY);
+      if (token && (await checkTokenValidity(token))) {
+        setUserToken(token);
+        // getUserInfoFromStorage();
+      } else {
+        setUserToken(null);
+      }
+    })();
+  }, []);
+
+  const logout = async () => {
+    await removeData(TOKEN_STORAGE_KEY);
+    setUserToken(null);
+    setPages([]);
+    setUserInfo(null);
+    setSyncWithFacebook(false);
+  };
+
+  const handleFBLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+          onPress: () => {},
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            LoginManager.logOut();
+            await logout();
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const uploadMediaToFacebook = async ({
+    accessToken, // user or page access token
+    pageId = null, // null for profile upload, else page ID
+    files, // string URI or array of URIs
+    mediaType = 'photo', // 'photo' or 'video'
+    caption = '', // for photos
+    title = '', // for videos
+    description = '', // for videos
+  }) => {
+    // Normalize files array
+    const fileUris = Array.isArray(files) ? files : [files];
+
+    const endpointBase = pageId
+      ? `https://graph.facebook.com/${pageId}`
+      : `https://graph.facebook.com/me`;
+
+    const uploadSingle = async uri => {
+      const endpoint =
+        mediaType === 'photo'
+          ? `${endpointBase}/photos`
+          : `${endpointBase}/videos`;
+
+      const formData = new FormData();
+
+      if (mediaType === 'photo') {
+        formData.append('caption', caption);
+        formData.append('source', {
+          uri,
+          name: uri.split('/').pop() || 'photo.jpg',
+          type: 'image/jpeg',
+        });
+      } else {
+        formData.append('title', title);
+        formData.append('description', description);
+        formData.append('source', {
+          uri,
+          name: uri.split('/').pop() || 'video.mp4',
+          type: 'video/mp4',
+        });
+      }
+
+      formData.append('access_token', accessToken);
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const json = await response.json();
+
+      if (json.error) {
+        throw new Error(json.error.message);
+      }
+
+      return json;
+    };
+
+    // Upload files sequentially and collect results
+    const results = [];
+    for (const fileUri of fileUris) {
+      const result = await uploadSingle(fileUri);
+      results.push(result);
+    }
+
+    return results; // Array of upload results
+  };
+
+  const submitHandller = () => {
+    if (isSubmitting.current || isComplete) return;
+
+    const requiredFields = data.filter(item => item.required);
+
+    const newErrors = {};
+
+    requiredFields.forEach(item => {
+      const value = formData[item?.key];
+
+      if (
+        !value ||
+        (typeof value === 'string' && value.trim() === '') ||
+        value?.length == 0
+      ) {
+        newErrors[item?.key] = `${item?.label} is required.`;
+      } else {
+        newErrors[item?.key] = null;
+      }
+    });
+
+    const updatedErrors = {...errors};
+
+    Object.keys(newErrors).forEach(key => {
+      if (newErrors[key] === null) {
+        if (updatedErrors[key] && updatedErrors[key] === newErrors[key]) {
+          delete updatedErrors[key];
+        }
+      } else {
+        updatedErrors[key] = newErrors[key];
+      }
+    });
+
+    setErrors(updatedErrors);
+
+    if (Object.values(updatedErrors).some(error => error !== null)) {
+      const errorMessages = Object.entries(updatedErrors)
+        .filter(([key, value]) => value !== null)
+        .map(([key, value]) => value);
+
+      const errorMessage = errorMessages.join('\n');
+      alert(`Please correct the following errors:\n\n${errorMessage}`);
+      return;
+    }
+
+    const fileItems = data.filter(item => item.type === 'file');
+    // const allMediaUris = [];
+
+    // fileItems.forEach(item => {
+    //   const filesForKey = imageUris[item.key] || [];
+    //   allMediaUris.push(...filesForKey);
+    // });
+
+    // if (allMediaUris.length === 0) {
+    //   Alert.alert('No Media', 'Please add some media before sharing');
+    //   return;
+    // }
+
+    if (
+      syncWithFacebook &&
+      (isImageGallery || isVideoGallery) &&
+      fileItems.length > 0 &&
+      !selectedPageId
+    ) {
+      alert('Please select a Facebook Page to upload media.');
+      return;
+    }
+
+    isSubmitting.current = true;
+    setIsCopmlete(true);
+    const content = {};
+
+    data.forEach(item => {
+      content[item.name] = {
+        label: item.label,
+        subtype: item.subtype,
+        type: item.type,
+        value: formData[item.key] || null,
+      };
+    });
+
+    const apiPayload = {
+      moduleId: response1?.moduleId,
+      keys: JSON.stringify(data.map(item => item.name)),
+      content: JSON.stringify(content),
+      contentType: response1?.constantName,
+    };
+
+    NetInfo.fetch().then(state => {
+      if (state.isConnected) {
+        httpClient
+          .post(`module/configuration/create?isMobile=true`, apiPayload)
+          .then(async response => {
+            if (response.data.status) {
+              if (
+                syncWithFacebook &&
+                (isImageGallery || isVideoGallery) &&
+                fileItems.length > 0
+              ) {
+                for (const item of fileItems) {
+                  const filesForKey = imageUris[item.key] || [];
+                  if (filesForKey.length > 0) {
+                    try {
+                      if (!selectedPageId) {
+                        throw new Error(
+                          'Facebook Page must be selected to upload media',
+                        );
+                      }
+                      const tokenToUse = pages.find(
+                        p => p.id === selectedPageId,
+                      )?.access_token;
+
+                      const results = await uploadMediaToFacebook({
+                        accessToken: tokenToUse,
+                        pageId: selectedPageId,
+                        files: filesForKey,
+                        mediaType: isVideoGallery ? 'video' : 'photo',
+                        caption: '', //for image
+                        title: '',
+                        description: '', //for video
+                      });
+                    } catch (uploadErr) {
+                      NOTIFY_MESSAGE('Failed to upload media to Facebook.');
+                      console.error('Upload failed:', uploadErr);
+                    }
+                  }
+                }
+                NOTIFY_MESSAGE(response?.data?.message);
+              } else {
+                NOTIFY_MESSAGE(response?.data?.message);
+              }
+              // if (
+              //   syncWithFacebook &&
+              //   (isImageGallery || isVideoGallery) &&
+              //   allMediaUris.length > 0
+              // ) {
+              //   await shareToPersonalProfile(allMediaUris);
+              //   NOTIFY_MESSAGE(response?.data?.message);
+              // } else {
+              //   NOTIFY_MESSAGE(response?.data?.message);
+              // }
+
+              if (isFromEventAdmin) {
+                navigation.goBack();
+              } else if (
+                response1?.constantName == 'SIGN UP' &&
+                isSignupFromDashboard
+              ) {
+                navigation.navigate('Dashboard');
+              } else if (response1?.constantName == 'SIGN UP') {
+                navigation.navigate('Login');
+              } else if (isImageGallery || isVideoGallery) {
+                if (isFromDashboard) {
+                  setModalVisible1(false);
+                  onChange(true);
+                } else {
+                  navigation.navigate('Dashboard');
+                }
+              } else {
+                navigation.navigate('Dashboard');
+              }
+            } else {
+              NOTIFY_MESSAGE(
+                response?.data?.message
+                  ? response?.data?.message
+                  : 'Something went wrong',
+              );
+            }
+          })
+          .catch(err => {
+            isSubmitting.current = false;
+            setIsCopmlete(false);
+            NOTIFY_MESSAGE(err || err?.message ? 'Something went wrong' : null);
+          })
+          .finally(() => {
+            isSubmitting.current = false;
+            setIsCopmlete(false);
+          });
+      } else {
+        isSubmitting.current = false;
+        setIsCopmlete(false);
+        NOTIFY_MESSAGE('Please check your internet connectivity');
+      }
+    });
   };
 
   return (
@@ -2013,6 +2430,18 @@ export default function CustomTab({
                           }
                           width={'50%'}
                           onPress={() => {
+                            if (formData[item?.key]?.length >= 6) {
+                              Alert.alert(
+                                `Maximum ${
+                                  isImageGallery ? 'Images' : 'Videos'
+                                } Reached`,
+                                `You can only upload a maximum of 6 ${
+                                  isImageGallery ? 'images' : 'videos'
+                                }.`,
+                                [{text: 'OK'}],
+                              );
+                              return;
+                            }
                             setModalVisible(prev => ({
                               ...prev,
                               [item?.key]: true,
@@ -2080,7 +2509,7 @@ export default function CustomTab({
                                           borderRadius: 15,
                                         }}
                                         onPress={() =>
-                                          handleDeleteImage(item?.key, uri)
+                                          handleDeleteImage(item?.key, index)
                                         }>
                                         <Entypo
                                           name="circle-with-minus"
@@ -2109,7 +2538,7 @@ export default function CustomTab({
                                           borderRadius: 15,
                                         }}
                                         onPress={() =>
-                                          handleDeleteImage(item?.key, uri)
+                                          handleDeleteImage(item?.key, index)
                                         }>
                                         <Entypo
                                           name="circle-with-minus"
@@ -3192,6 +3621,158 @@ export default function CustomTab({
                   return null;
               }
             })}
+
+            {(isImageGallery || isVideoGallery) && (
+              <>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginVertical: 4,
+                  }}>
+                  <TouchableOpacity
+                    onPress={onToggleSync}
+                    style={styles.checkboxContainer}>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        syncWithFacebook && styles.checkboxChecked,
+                      ]}
+                      activeOpacity={0.7}>
+                      {syncWithFacebook && (
+                        <FontAwesome6 name="check" size={16} color={'#fff'} />
+                      )}
+                    </View>
+                    <Text style={styles.label}>Share with Facebook?</Text>
+                  </TouchableOpacity>
+                  {userToken && (
+                    <TouchableOpacity
+                      onPress={handleFBLogout}
+                      style={{marginLeft: 12, padding: 4}}
+                      activeOpacity={0.7}>
+                      <Ionicons
+                        name="log-out-outline"
+                        size={22}
+                        color="#F26904"
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+                {/* {userInfo && (
+                  <View
+                    style={{
+                      backgroundColor: '#1877F2',
+                      paddingHorizontal: 10,
+                      paddingVertical: 4,
+                      justifyContent: 'space-between',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      borderRadius: 10,
+                    }}>
+                    <Text
+                      style={{
+                        color: COLORS.PRIMARYWHITE,
+                        fontSize: FONTS.FONTSIZE.SMALL,
+                        fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                      }}>
+                      {userInfo?.name || 'User'}
+                    </Text>
+                  </View>
+                )} */}
+
+                {/* {userInfo && syncWithFacebook && <ShareIconComponent />} */}
+
+                {showNoPagesMessage && (
+                  <View style={{marginTop: 0}}>
+                    <Text
+                      style={{
+                        fontStyle: 'italic',
+                        color: '#666',
+                        fontSize: FONTS.FONTSIZE.SEMIMINI,
+                      }}>
+                      You need to have at least one Facebook Page to enable
+                      syncing.
+                    </Text>
+                  </View>
+                )}
+
+                {syncWithFacebook && (
+                  <>
+                    {loadingPages ? (
+                      <View style={{marginTop: 2}}>
+                        <Text
+                          style={{
+                            fontStyle: 'italic',
+                            color: '#666',
+                            textAlign: 'center',
+                            fontSize: FONTS.FONTSIZE.SEMIMINI,
+                          }}>
+                          Please Wait...
+                        </Text>
+                      </View>
+                    ) : pages.length > 0 ? (
+                      <View style={{marginTop: 2}}>
+                        <Text
+                          style={{
+                            fontSize: FONTS.FONTSIZE.SEMIMINI,
+                            fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                            color: COLORS.PRIMARYBLACK,
+                          }}>
+                          Select Facebook Page:
+                        </Text>
+                        {pages.map(page => (
+                          <TouchableOpacity
+                            key={page.id}
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              padding: 6,
+                              backgroundColor:
+                                selectedPageId === page.id
+                                  ? COLORS.LABELCOLOR
+                                  : '#d3d3d3b8',
+                              marginVertical: 4,
+                              borderRadius: 6,
+                            }}
+                            onPress={() => {
+                              if (selectedPageId === page.id) {
+                                setSelectedPageId(null);
+                              } else {
+                                setSelectedPageId(page.id);
+                              }
+                            }}
+                            activeOpacity={0.7}>
+                            <Feather
+                              name={
+                                selectedPageId === page.id
+                                  ? 'check-square'
+                                  : 'square'
+                              }
+                              size={20}
+                              color={
+                                selectedPageId === page.id ? '#fff' : '#444'
+                              }
+                            />
+                            <Text
+                              numberOfLines={2}
+                              style={{
+                                marginLeft: 6,
+                                color:
+                                  selectedPageId === page.id ? '#fff' : '#000',
+                                fontSize: FONTS.FONTSIZE.MINI,
+                                fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                              }}>
+                              {page.name}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    ) : null}
+                  </>
+                )}
+              </>
+            )}
 
             <View style={{alignItems: 'center', marginTop: 'auto'}}>
               {response1?.constantName == 'SIGN UP' &&

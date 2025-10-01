@@ -509,7 +509,7 @@ const Registration1 = ({route}) => {
             ) {
               initialValue = item?.value;
             } else if (item.type == 'radio-group') {
-              const selectedOption = item.values.find(
+              const selectedOption = item?.values?.find(
                 option => option.selected,
               );
 
@@ -521,7 +521,7 @@ const Registration1 = ({route}) => {
             } else if (item.type === 'file') {
               initialValue = item?.value;
             } else if (item.type === 'select') {
-              const selectedOption = item.values.find(
+              const selectedOption = item?.values?.find(
                 option => option.selected,
               );
               initialValue = item?.value
@@ -583,7 +583,7 @@ const Registration1 = ({route}) => {
           ) {
             initialValue = null;
           } else if (item.type === 'radio-group') {
-            const selectedOption = item.values.find(option => option.selected);
+            const selectedOption = item?.values?.find(option => option.selected);
             initialValue = selectedOption ? selectedOption.value : null;
           } else if (item.type === 'file') {
             initialValue = null;
@@ -596,7 +596,7 @@ const Registration1 = ({route}) => {
               originalMemberValues.current = item.values;
               hasInitializedOriginal.current = true;
             }
-            const selectedOption = item.values.find(option => option.selected);
+            const selectedOption = item?.values?.find(option => option.selected);
             initialValue = selectedOption ? selectedOption.value : null;
           } else if (item.type === 'calendar') {
             const today = moment(new Date()).format('MM/DD/YYYY');

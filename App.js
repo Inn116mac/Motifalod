@@ -9,7 +9,7 @@ import DeviceInfo from 'react-native-device-info';
 import {DrawerProvider} from './src/utils/DrawerContext';
 import COLORS from './src/theme/Color';
 import ZoomableView from './src/components/root/ZoomableView';
-import {NodeMediaClient} from 'react-native-nodemediaclient';
+// import {NodeMediaClient} from 'react-native-nodemediaclient';
 let PushNotification;
 if (Platform.OS === 'android') {
   PushNotification = require('react-native-push-notification');
@@ -18,11 +18,11 @@ if (Platform.OS === 'android') {
 }
 LogBox.ignoreAllLogs();
 const App = () => {
-  if (Platform.OS === 'ios') {
-    NodeMediaClient.setLicense('');
-  } else {
-    NodeMediaClient.setLicense('');
-  }
+  // if (Platform.OS === 'ios') {
+  //   NodeMediaClient.setLicense('');
+  // } else {
+  //   NodeMediaClient.setLicense('');
+  // }
   const getDeviceId = async () => {
     const deviceId = await DeviceInfo.getUniqueId();
     await storeData('deviceId', deviceId);

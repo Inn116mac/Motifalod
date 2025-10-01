@@ -19,7 +19,7 @@ end
 target 'Motifalod' do
   # Manual pod specifications for packages that need it
   pod 'react-native-fbsdk-next', :path => '../node_modules/react-native-fbsdk-next'
-  pod 'react-native-nodemediaclient', :path => '../node_modules/react-native-nodemediaclient'
+  # pod 'react-native-nodemediaclient', :path => '../node_modules/react-native-nodemediaclient'
   
   use_expo_modules!
   

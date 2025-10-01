@@ -17,7 +17,8 @@ import {useNavigation} from '@react-navigation/native';
 import {NOTIFY_MESSAGE} from '../constant/Module';
 import Video from 'react-native-video';
 
-const SERVER_URL = 'http://65.49.60.248:3000';
+// const SERVER_URL = 'http://65.49.60.248:3000';
+const SERVER_URL = 'http://applivestream.inngenius.com:3000';
 
 export default function FullScreenVideoScreen({route}) {
   const {roomId, title, item, videoUrl, isRecording} = route.params;
@@ -69,15 +70,11 @@ export default function FullScreenVideoScreen({route}) {
 
     socket.on('connect', () => {
       socket.emit('joinRoom', roomId, {}, async ({rtpCapabilities}) => {
-        console.log('rtpCapabilities from server:', rtpCapabilities);
         try {
           const device = new mediasoupClient.Device();
-
           await device.load({routerRtpCapabilities: rtpCapabilities});
           deviceRef.current = device;
         } catch (err) {
-          console.log('err :', err);
-
           NOTIFY_MESSAGE(err.message || 'Error loading device');
           return;
         }

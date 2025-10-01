@@ -324,6 +324,7 @@ const TableScreen = ({route}) => {
               editItem: item1,
               configurationId: memberId?.value,
             };
+            setSearchKeyword('')
             navigation.navigate('Form', {data}); 
           },
         },
@@ -671,7 +672,7 @@ const TableScreen = ({route}) => {
                     flexDirection: 'row',
                     justifyContent: 'flex-start',
                     alignItems: 'center',
-                    gap: 10,
+                    gap: 14,
                     paddingHorizontal: 2,
                   }}>
                   {item?.constantName === 'SIGN UP' && (
@@ -681,7 +682,7 @@ const TableScreen = ({route}) => {
                           disabled={isLoading1}
                           activeOpacity={0.35}
                           onPress={() => handleApprove(item1)}>
-                          <Entypo name="check" size={17} color={'green'} />
+                          <Entypo name="check" size={18} color={'green'} />
                         </TouchableOpacity>
                       )}
 
@@ -701,17 +702,17 @@ const TableScreen = ({route}) => {
                   )}
 
                   <TouchableOpacity onPress={() => handleUpdate(item1)}>
-                    <Feather name="edit" size={17} color={'#007bff'} />
+                    <Feather name="edit" size={18} color={'#007bff'} />
                   </TouchableOpacity>
 
                   <TouchableOpacity onPress={() => handleDelete(item1)}>
-                    <AntDesign name="delete" size={17} color={'red'} />
+                    <AntDesign name="delete" size={18} color={'red'} />
                   </TouchableOpacity>
                 </View>
               )}
               <AntDesign
                 name={openIndex === index ? 'up' : 'down'}
-                size={14}
+                size={16}
                 color={COLORS.LABELCOLOR}
               />
             </View>

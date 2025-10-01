@@ -23,8 +23,8 @@ import Loader from '../components/root/Loader';
 import Offline from '../components/root/Offline';
 import FONTS from '../theme/Fonts';
 
-const SERVER_URL = 'http://65.49.60.248:3000';
-
+const SERVER_URL = 'http://applivestream.inngenius.com:3000';
+// const SERVER_URL = 'http://65.49.60.248:8080';
 
 export default function BroadcasterScreen({route}) {
   const {item} = route.params.data;
@@ -32,12 +32,13 @@ export default function BroadcasterScreen({route}) {
   const [stream, setStream] = useState(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [isFrontCamera, setIsFrontCamera] = useState(true);
+  const [isFrontCamera, setIsFrontCamera] = useState(false);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [name, setName] = useState('');
   const [title, setTitle] = useState('');
   const [roomId, setRoomId] = useState('');
   const [isStarting, setIsStarting] = useState(false);
+  const [wantToRecord, setWantToRecord] = useState(false);
 
   function randomRoomId() {
     return 'event-' + Math.random().toString(36).slice(2, 10);
@@ -94,12 +95,52 @@ export default function BroadcasterScreen({route}) {
   const videoTrackRef = useRef(null);
   const audioTrackRef = useRef(null);
 
+  useEffect(() => {
+    if (!isStreaming) return;
+
+    const monitorCapacity = setInterval(async () => {
+      try {
+        const response = await fetch(
+          `${SERVER_URL}/api/server-capacity?appName=motifalod`,
+        );
+        const data = await response.json();
+
+        if (data.global?.status === 'CRITICAL') {
+          console.warn('Server approaching critical capacity');
+          // Could show a warning to broadcaster
+        }
+      } catch (error) {
+        console.error('Capacity monitoring error:', error);
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(monitorCapacity);
+  }, [isStreaming]);
+
   const getMediaStream = async (isFront = true) => {
     const facingMode = isFront ? 'user' : 'environment';
     return await mediaDevices.getUserMedia({
       audio: true,
       video: {facingMode},
     });
+  };
+
+  const checkServerCapacity = async () => {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/server-capacity`);
+      const data = await response.json();
+
+      if (data.status === 'FULL' || data.utilizationPercent >= 95) {
+        Alert.alert('Server at Capacity', 'Please try again later.');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error checking server capacity:', error);
+      // In case of error, allow stream to continue
+      return true;
+    }
   };
 
   const startStreaming = async () => {
@@ -109,6 +150,10 @@ export default function BroadcasterScreen({route}) {
       return;
     }
     if (isStarting || isStreaming) return;
+    console.log('Checking server capacity before starting stream...');
+
+    const canStart = await checkServerCapacity();
+    if (!canStart) return;
     setIsStarting(true);
     setIsPaused(false);
 
@@ -140,7 +185,7 @@ export default function BroadcasterScreen({route}) {
     sock.emit(
       'joinRoom',
       newRoomId,
-      {name, title, appName: 'motifalod'},
+      {name, title, appName: 'motifalod', wantToRecord},
       async ({rtpCapabilities}) => {
         const dev = new mediasoupClient.Device();
         await dev.load({routerRtpCapabilities: rtpCapabilities});
@@ -202,7 +247,7 @@ export default function BroadcasterScreen({route}) {
       stopAll();
       Alert.alert(
         'Connection Failed',
-        'Cannot connect to streaming server. Please check if the server is running and try again.',
+        'Cannot connect to streaming server. The server may be overloaded or offline.',
       );
     });
 
@@ -332,6 +377,11 @@ export default function BroadcasterScreen({route}) {
       setIsStarting(false);
       setIsPaused(false);
       setIsAudioMuted(false);
+      setWantToRecord(false);
+      // setRoomId('');
+      // videoTrackRef.current = null;
+      // audioTrackRef.current = null;
+      // deviceRef.current = null;
     } catch (err) {
       console.error('Error in stopAll:', err);
     }
@@ -367,6 +417,13 @@ export default function BroadcasterScreen({route}) {
       ) : isConnected ? (
         !isStreaming ? (
           <View style={styles.modalContent}>
+            {/* {capacityStatus?.global?.status === 'HIGH' && (
+              <View style={styles.warningContainer}>
+                <Text style={styles.warningText}>
+                  ⚠️ Server load is high - stream quality may be affected
+                </Text>
+              </View>
+            )} */}
             <TextInput
               style={styles.input}
               placeholder="Stream Title"
@@ -383,6 +440,29 @@ export default function BroadcasterScreen({route}) {
               maxLength={100}
               placeholderTextColor={COLORS.grey500}
             />
+            <TouchableOpacity
+              onPress={() => setWantToRecord(v => !v)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}>
+              <Icon
+                name={
+                  wantToRecord ? 'checkbox-marked' : 'checkbox-blank-outline'
+                }
+                size={22}
+                color={COLORS.LABELCOLOR}
+                style={{marginRight: 6}}
+              />
+              <Text
+                style={{
+                  color: COLORS.LABELCOLOR,
+                  fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                  fontSize: FONTS.FONTSIZE.SEMIMINI,
+                }}>
+                Want to record?
+              </Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               disabled={isStarting}
@@ -453,6 +533,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 16,
   },
+  warningContainer: {
+    backgroundColor: '#ffc107',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 12,
+  },
+  warningText: {
+    color: '#333',
+    fontSize: FONTS.FONTSIZE.SEMIMINI,
+    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+    textAlign: 'center',
+  },
   continueButton: {
     backgroundColor: COLORS.LABELCOLOR,
     borderRadius: 6,
@@ -476,8 +568,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.PRIMARYWHITE,
     fontFamily: FONTS.FONT_FAMILY.REGULAR,
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 0,
     color: COLORS.PRIMARYBLACK,
+    height: 40,
   },
   iconBar: {
     position: 'absolute',

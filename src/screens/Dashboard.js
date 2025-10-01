@@ -333,13 +333,13 @@ const Dashboard = ({route}) => {
             gap: 10,
             marginRight: 8,
           }}>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             activeOpacity={0.35}
             onPress={() => {
               navigation.navigate('NotificationScreen');
             }}>
             <FontAwesome name="bell-o" color={COLORS.LABELCOLOR} size={25} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity
             activeOpacity={0.35}
             onPress={() => {

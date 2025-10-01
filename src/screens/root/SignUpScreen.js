@@ -69,7 +69,7 @@ const SignUpScreen = () => {
       <CustomHeader
         title={'Sign Up'}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" solid size={26} color={COLORS.LABELCOLOR} />
         }
         leftOnPress={() => {
           navigation.goBack();
