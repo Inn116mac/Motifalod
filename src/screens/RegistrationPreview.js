@@ -13,7 +13,7 @@ import {NOTIFY_MESSAGE} from '../constant/Module';
 import COLORS from '../theme/Color';
 import Loader from '../components/root/Loader';
 import {useNavigation} from '@react-navigation/native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import FONTS from '../theme/Fonts';
 import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
@@ -88,7 +88,12 @@ const RegistrationPreview = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={'Registration Preview'}
       />

@@ -12,7 +12,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import COLORS from '../theme/Color';
 import {useNavigation} from '@react-navigation/native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
 import Loader from '../components/root/Loader';
@@ -25,9 +25,9 @@ import {
   heightPercentageToDP,
   widthPercentageToDP,
 } from 'react-native-responsive-screen';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {AntDesign} from '@react-native-vector-icons/ant-design';
 import {IMAGE_URL} from '../connection/Config';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
 
 const ReportsData = ({route}) => {
   const {width, height} = useWindowDimensions();
@@ -373,333 +373,6 @@ const ReportsData = ({route}) => {
     });
   }, [item1, navigation, selectedEvent, pageNumber, PAGE_SIZE]);
 
-  // const [tableData, setTableData] = useState({headers: [], rows: []});
-
-  // useEffect(() => {
-  //   if (reportsData.length === 0) return;
-  //   const headers = Object.keys(reportsData[0]).map(key => ({
-  //     key,
-  //     label: key,
-  //   }));
-
-  //   const rows = reportsData.map(user => {
-  //     const rowData = {...user};
-  //     return rowData;
-  //   });
-
-  //   setTableData({headers, rows});
-  // }, [reportsData]);
-
-  // const renderTableHeader = () => {
-  //   if (!tableData.headers || tableData.headers.length === 0) {
-  //     return null;
-  //   }
-  //   return (
-  //     <View style={styles.header}>
-  //       {tableData.headers.map(({key, label}) => {
-  //         const finalLabel =
-  //           label == 'emailAddress'
-  //             ? 'email Address'
-  //             : label == 'phoneNumber'
-  //             ? 'phone Number'
-  //             : label == 'familyMembers'
-  //             ? 'family Members'
-  //             : label;
-
-  //         return (
-  //           <Text
-  //             key={key}
-  //             style={[
-  //               styles.headerText,
-  //               {
-  //                 width: widthPercentageToDP('60%'),
-  //                 textTransform: 'capitalize',
-  //               },
-  //             ]}>
-  //             {finalLabel}
-  //           </Text>
-  //         );
-  //       })}
-  //     </View>
-  //   );
-  // };
-
-  // const renderTableRows = () => {
-  //   return tableData.rows.map((row, index) => {
-  //     const isLastRow = index === tableData.rows.length - 1;
-  //     return (
-  //       <View
-  //         key={`row_${index}`}
-  //         style={{
-  //           flexDirection: 'row',
-  //           justifyContent: 'center',
-  //           alignItems: 'center',
-  //           backgroundColor:
-  //             isLastRow && allowedCategories.includes(item1?.label)
-  //               ? 'yellow'
-  //               : index % 2 === 0
-  //               ? COLORS.PRIMARYWHITE
-  //               : COLORS.TABLEROWCOLOR,
-  //           borderLeftWidth: 1,
-  //           borderColor: COLORS.LIGHTGREY,
-  //           borderRightWidth: 1,
-  //           borderBottomWidth: 1,
-  //         }}>
-  //         {tableData.headers.map(({key}) => {
-  //           const cellData = row[key];
-
-  //           return (
-  //             <View
-  //               key={`cell_${key}_${index}`}
-  //               style={{
-  //                 width: widthPercentageToDP('60%'),
-  //                 flex: 1,
-  //                 overflow: 'hidden',
-  //                 textAlign: 'center',
-  //                 alignSelf: 'stretch',
-  //                 padding: 5,
-  //                 alignItems: 'center',
-  //               }}>
-  //               {Array.isArray(cellData) ? (
-  //                 key == 'familyMembers' ? (
-  //                   cellData.map((item, itemIndex) => {
-  //                     return (
-  //                       <View
-  //                         key={`nested_${key}_${index}_${itemIndex}`}
-  //                         style={{
-  //                           flexDirection: 'row',
-  //                           marginBottom: 5,
-  //                           width: '100%',
-  //                           alignItems: 'flex-start',
-  //                         }}>
-  //                         <View style={{width: 32, marginRight: 4, flex: 0.2}}>
-  //                           <Text
-  //                             style={{
-  //                               fontSize: FONTS.FONTSIZE.EXTRASMALL,
-  //                               fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-  //                               color: COLORS.TABLEROW,
-  //                               textAlign: 'right',
-  //                             }}>
-  //                             {itemIndex + 1}.
-  //                           </Text>
-  //                         </View>
-  //                         <View style={{flex: 0.8}}>
-  //                           <Text
-  //                             style={{
-  //                               fontSize: FONTS.FONTSIZE.EXTRASMALL,
-  //                               fontFamily: FONTS.FONT_FAMILY.REGULAR,
-  //                               color: COLORS.TABLEROW,
-  //                               textAlign: 'left',
-  //                             }}>
-  //                             <Text
-  //                               style={{
-  //                                 color: COLORS.PLACEHOLDERCOLOR,
-  //                                 fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-  //                               }}>
-  //                               Name:
-  //                             </Text>{' '}
-  //                             {item.member}
-  //                             {'\n'}
-  //                             <Text
-  //                               style={{
-  //                                 color: COLORS.PLACEHOLDERCOLOR,
-  //                                 fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-  //                               }}>
-  //                               Email:
-  //                             </Text>{' '}
-  //                             {item.emailAddress || '-'} {'\n'}
-  //                             <Text
-  //                               style={{
-  //                                 color: COLORS.PLACEHOLDERCOLOR,
-  //                                 fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-  //                               }}>
-  //                               Phone:
-  //                             </Text>{' '}
-  //                             {item.phoneNumber || '-'}
-  //                             {item?.relationship ? '\n' : null}
-  //                             {item?.relationship && (
-  //                               <>
-  //                                 <Text
-  //                                   style={{
-  //                                     color: COLORS.PLACEHOLDERCOLOR,
-  //                                     fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-  //                                   }}>
-  //                                   Relationship:
-  //                                 </Text>{' '}
-  //                                 <Text>{item.relationship || '-'}</Text>
-  //                               </>
-  //                             )}
-  //                             {item?.membershipAmount !== undefined &&
-  //                             item?.membershipAmount !== null
-  //                               ? '\n'
-  //                               : null}
-  //                             {item?.membershipAmount !== undefined &&
-  //                               item?.membershipAmount !== null && (
-  //                                 <>
-  //                                   <Text
-  //                                     style={{
-  //                                       color: COLORS.PLACEHOLDERCOLOR,
-  //                                       fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-  //                                     }}>
-  //                                     Membership Amount:
-  //                                   </Text>{' '}
-  //                                   <Text>{item.membershipAmount || 0}</Text>
-  //                                 </>
-  //                               )}
-  //                           </Text>
-  //                         </View>
-  //                       </View>
-  //                     );
-  //                   })
-  //                 ) : (
-  //                   cellData.map((item, itemIndex) => (
-  //                     <View
-  //                       key={`nested_${key}_${index}_${itemIndex}`}
-  //                       style={{marginBottom: 5, width: '100%'}}>
-  //                       {Object.entries(item).map(([subKey, subValue]) => (
-  //                         <Text
-  //                           key={`${subKey}_${itemIndex}`}
-  //                           style={{
-  //                             fontSize: FONTS.FONTSIZE.EXTRASMALL,
-  //                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
-  //                             color: COLORS.TABLEROW,
-  //                             textAlign: 'center',
-  //                           }}>
-  //                           <Text
-  //                             style={{
-  //                               fontSize: FONTS.FONTSIZE.EXTRASMALL,
-  //                               fontFamily: FONTS.FONT_FAMILY.REGULAR,
-  //                               color: COLORS.TABLEROW,
-  //                               textAlign: 'center',
-  //                             }}>
-  //                             {subKey}:
-  //                           </Text>{' '}
-  //                           {subValue || '-'}
-  //                         </Text>
-  //                       ))}
-  //                     </View>
-  //                   ))
-  //                 )
-  //               ) : (
-  //                 <Text
-  //                   numberOfLines={2}
-  //                   style={{
-  //                     width: widthPercentageToDP('40%'),
-  //                     fontSize: FONTS.FONTSIZE.EXTRASMALL,
-  //                     fontFamily: FONTS.FONT_FAMILY.REGULAR,
-  //                     color: COLORS.TABLEROW,
-  //                     textAlign: 'center',
-  //                   }}>
-  //                   {cellData || '-'}
-  //                 </Text>
-  //               )}
-  //             </View>
-  //           );
-  //         })}
-  //       </View>
-  //     );
-  //   });
-  // };
-
-  // const handlePageClick = page => {
-  //   setCurrentPage(page);
-  // };
-
-  // const handlePageChange = direction => {
-  //   if (direction === 'left' && currentPage > 1) {
-  //     handlePageClick(currentPage - 1);
-  //   } else if (direction === 'right' && currentPage < totalPages) {
-  //     handlePageClick(currentPage + 1);
-  //   }
-  // };
-
-  // const renderPaginationButtons = () => {
-  //   const buttons = [];
-  //   const maxButtonsToShow = 5;
-  //   const totalPagesToShow = Math.min(totalPages, maxButtonsToShow);
-
-  //   let startPage = Math.max(1, currentPage - Math.floor(totalPagesToShow / 2));
-  //   let endPage = Math.min(totalPages, startPage + totalPagesToShow - 1);
-
-  //   if (endPage - startPage < totalPagesToShow - 1) {
-  //     startPage = Math.max(1, endPage - totalPagesToShow + 1);
-  //   }
-
-  //   if (startPage > 1) {
-  //     buttons.push(
-  //       <TouchableOpacity
-  //         key={1}
-  //         onPress={() => handlePageClick(1)}
-  //         style={styles.paginationButton}>
-  //         <Text style={styles.buttonText}>1</Text>
-  //       </TouchableOpacity>,
-  //     );
-  //     if (startPage > 2) {
-  //       buttons.push(
-  //         <Text
-  //           key="ellipsis-start"
-  //           style={{
-  //             color: COLORS.PRIMARYBLACK,
-  //             fontSize: FONTS.FONTSIZE.MEDIUM,
-  //             fontFamily: FONTS.FONT_FAMILY.REGULAR,
-  //           }}>
-  //           ...
-  //         </Text>,
-  //       );
-  //     }
-  //   }
-
-  //   for (let i = startPage; i <= endPage; i++) {
-  //     buttons.push(
-  //       <TouchableOpacity
-  //         key={i}
-  //         onPress={() => handlePageClick(i)}
-  //         style={[
-  //           styles.paginationButton,
-  //           i === currentPage ? styles.activeButton : null,
-  //         ]}>
-  //         <Text style={styles.buttonText}>{i}</Text>
-  //       </TouchableOpacity>,
-  //     );
-  //   }
-
-  //   if (endPage < totalPages) {
-  //     if (endPage < totalPages - 1) {
-  //       buttons.push(
-  //         <Text
-  //           key="ellipsis-end"
-  //           style={{
-  //             color: COLORS.PRIMARYBLACK,
-  //             fontSize: FONTS.FONTSIZE.MEDIUM,
-  //             fontFamily: FONTS.FONT_FAMILY.REGULAR,
-  //           }}>
-  //           ...
-  //         </Text>,
-  //       );
-  //     }
-  //     buttons.push(
-  //       <TouchableOpacity
-  //         key={totalPages}
-  //         onPress={() => handlePageClick(totalPages)}
-  //         style={styles.paginationButton}>
-  //         <Text style={styles.buttonText}>{totalPages}</Text>
-  //       </TouchableOpacity>,
-  //     );
-  //   }
-
-  //   return (
-  //     <ScrollView
-  //       contentContainerStyle={{
-  //         alignItems: 'center',
-  //         paddingHorizontal: 10,
-  //       }}
-  //       horizontal
-  //       showsHorizontalScrollIndicator={false}>
-  //       {buttons}
-  //     </ScrollView>
-  //   );
-  // };
-
   const [openIndex, setOpenIndex] = useState(null);
 
   const renderItem = ({item, index}) => {
@@ -908,13 +581,13 @@ const ReportsData = ({route}) => {
       }}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         title={item1?.label}
         leftOnPress={() => navigation.goBack()}
         rightIcon={
           reportsData.length > 0 && (
-            <MaterialCommunityIcons
+            <MaterialDesignIcons
               name="microsoft-excel"
               size={34}
               color={COLORS.PRIMARYGREEN}

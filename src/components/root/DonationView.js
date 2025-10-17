@@ -11,7 +11,7 @@ import {widthPercentageToDP} from 'react-native-responsive-screen';
 import FONTS from '../../theme/Fonts';
 import COLORS from '../../theme/Color';
 import NoDataFound from './NoDataFound';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {AntDesign} from "@react-native-vector-icons/ant-design";
 
 export default function DonationView({data, pageNumber, PAGE_SIZE}) {
   const {width} = useWindowDimensions();

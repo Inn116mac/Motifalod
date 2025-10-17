@@ -20,7 +20,7 @@ import {
 import {Camera, CameraType} from 'react-native-camera-kit';
 import {PermissionsAndroid} from 'react-native';
 import {NOTIFY_MESSAGE} from '../constant/Module';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import CustomHeader from '../components/root/CustomHeader';
 import Loader from '../components/root/Loader';
 import FONTS from '../theme/Fonts';
@@ -28,7 +28,7 @@ import NetInfo from '@react-native-community/netinfo';
 import {getData, removeData, storeData} from '../utils/Storage';
 import Offline from '../components/root/Offline';
 import NoDataFound from '../components/root/NoDataFound';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {AntDesign} from "@react-native-vector-icons/ant-design";
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import httpClient from '../connection/httpClient';
 
@@ -316,7 +316,7 @@ const QrCodeScanScreen = ({route}) => {
       <CustomHeader
         leftOnPress={handlePress}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         title={'Qrcode Scanner'}
       />

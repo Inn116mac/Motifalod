@@ -22,8 +22,8 @@ import {NOTIFY_MESSAGE} from '../constant/Module';
 import Loader from '../components/root/Loader';
 import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {AntDesign} from "@react-native-vector-icons/ant-design";
 import httpClient from '../connection/httpClient';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import NoDataFound from '../components/root/NoDataFound';
@@ -226,7 +226,7 @@ const FormRecords = ({route}) => {
       }}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         title={item?.name}
         leftOnPress={() => navigation.navigate('Dashboard')}

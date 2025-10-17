@@ -13,7 +13,7 @@ import React, {useEffect, useState} from 'react';
 import COLORS from '../theme/Color';
 import CustomHeader from '../components/root/CustomHeader';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import {IMAGE_URL} from '../connection/Config';
 import FONTS from '../theme/Fonts';
 import moment from 'moment';
@@ -108,6 +108,12 @@ const EntertainmentDetails = ({route}) => {
     'ceafee16de904b7da61cec2fa0be9d3f',
     'e5414f3130ab4dba85381256091884ae',
     'ac227cc474944266b2fffea1c371128c',
+    '26d64443025a4162826c67c6df59d97d',
+    '02d5fe32ddf94e1da7d85d3b98cf3237',
+    'f80d9dc7b2804c05ba1b891d90610b48',
+    '7e66e73054da43ce87a279e184110edf',
+    '66ad375eb7514b32835d8c91fe295419',
+    '6b28bda8af634d2a92d2b843b1691c8a',
   ];
   const [currentApiKeyIndex, setCurrentApiKeyIndex] = useState(0);
 
@@ -214,7 +220,12 @@ const EntertainmentDetails = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={entertainmentName}
       />

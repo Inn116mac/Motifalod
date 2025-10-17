@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import * as MapLibreRN from '@maplibre/maplibre-react-native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import Feather from 'react-native-vector-icons/Feather';
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
+import {AntDesign} from '@react-native-vector-icons/ant-design';
+import {Feather} from '@react-native-vector-icons/feather';
 import COLORS from '../theme/Color';
 import FONTS from '../theme/Fonts';
 import CustomHeader from '../components/root/CustomHeader';
@@ -44,6 +44,12 @@ const MapScreen = ({route}) => {
     'ceafee16de904b7da61cec2fa0be9d3f',
     'e5414f3130ab4dba85381256091884ae',
     'ac227cc474944266b2fffea1c371128c',
+    '26d64443025a4162826c67c6df59d97d',
+    '02d5fe32ddf94e1da7d85d3b98cf3237',
+    'f80d9dc7b2804c05ba1b891d90610b48',
+    '7e66e73054da43ce87a279e184110edf',
+    '66ad375eb7514b32835d8c91fe295419',
+    '6b28bda8af634d2a92d2b843b1691c8a',
   ];
 
   const [currentApiKeyIndex, setCurrentApiKeyIndex] = useState(0);
@@ -179,7 +185,12 @@ const MapScreen = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            iconStyle="solid"
+            name="angle-left"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={'Map'}
       />
@@ -194,7 +205,7 @@ const MapScreen = ({route}) => {
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                borderColor:COLORS.TABLEBORDER,
+                borderColor: COLORS.TABLEBORDER,
                 paddingHorizontal: 4,
                 height: 36,
               }}>
@@ -278,6 +289,7 @@ const MapScreen = ({route}) => {
                     coordinate={[selectedLocation[1], selectedLocation[0]]}>
                     <MapLibreRN.Callout style={{alignItems: 'center'}}>
                       <FontAwesome6
+                        iconStyle="solid"
                         name="location-dot"
                         size={24}
                         color={COLORS.red700}

@@ -5,20 +5,24 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  Platform, // ✅ ADD THIS
 } from 'react-native';
 import {RTCView} from 'react-native-webrtc';
 import * as mediasoupClient from 'mediasoup-client';
 import io from 'socket.io-client';
+import InCallManager from 'react-native-incall-manager'; // ✅ ADD THIS
 import CustomHeader from '../components/root/CustomHeader';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import COLORS from '../theme/Color';
 import FONTS from '../theme/Fonts';
 import {useNavigation} from '@react-navigation/native';
 import {NOTIFY_MESSAGE} from '../constant/Module';
 import Video from 'react-native-video';
+import KeepAwake from 'react-native-keep-awake';
 
-// const SERVER_URL = 'http://65.49.60.248:3000';
 const SERVER_URL = 'http://applivestream.inngenius.com:3000';
+// const SERVER_URL = 'http://192.168.1.107:8080';
+// const SERVER_URL = 'http://10.108.200.211:8080';
 
 export default function FullScreenVideoScreen({route}) {
   const {roomId, title, item, videoUrl, isRecording} = route.params;
@@ -35,6 +39,21 @@ export default function FullScreenVideoScreen({route}) {
   const deviceRef = useRef(null);
   const recvTransportRef = useRef(null);
   const consumersRef = useRef([]);
+
+  // ✅ ADD AUDIO SESSION MANAGEMENT
+  useEffect(() => {
+    if (Platform.OS === 'ios' && !isRecording) {
+      // Start audio session for video viewing (not recording)
+      InCallManager.start({media: 'video', auto: false, ringback: ''});
+      InCallManager.setForceSpeakerphoneOn(true);
+      console.log('✅ iOS Audio Session started - Speaker enabled');
+
+      return () => {
+        InCallManager.stop();
+        console.log('🛑 iOS Audio Session stopped');
+      };
+    }
+  }, [isRecording]);
 
   // Clean up on unmount or room switch
   const cleanup = () => {
@@ -119,6 +138,12 @@ export default function FullScreenVideoScreen({route}) {
 
               if (gotVideo) {
                 setStream(videoStream);
+                // ✅ ENSURE SPEAKER IS ON AFTER STREAM STARTS
+                if (Platform.OS === 'ios') {
+                  setTimeout(() => {
+                    InCallManager.setForceSpeakerphoneOn(true);
+                  }, 500);
+                }
               } else {
                 NOTIFY_MESSAGE('No video stream found');
               }
@@ -149,12 +174,29 @@ export default function FullScreenVideoScreen({route}) {
     };
   }, [roomId]);
 
+  useEffect(() => {
+    if (stream) {
+      KeepAwake.activate();
+    } else {
+      KeepAwake.deactivate();
+    }
+
+    return () => {
+      KeepAwake.deactivate();
+    };
+  }, [stream]);
+
   return (
     <SafeAreaView style={styles.container}>
       <CustomHeader
         leftOnPress={() => navigation.goBack()}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            iconStyle="solid"
+            name="angle-left"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={title ? title : ''}
       />
@@ -163,8 +205,8 @@ export default function FullScreenVideoScreen({route}) {
           <Video
             source={{uri: fullVideoUrl}}
             style={{flex: 1}}
-            controls={true} // show player controls
-            resizeMode="contain"
+            controls={true}
+            resizeMode="cover"
             onError={e =>
               console.log('Video playback error:', JSON.stringify(e))
             }

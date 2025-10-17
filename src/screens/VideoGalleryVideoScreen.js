@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {View, ActivityIndicator} from 'react-native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import Video from 'react-native-video';
 import {heightPercentageToDP} from 'react-native-responsive-screen';
 import COLORS from '../theme/Color';
@@ -41,7 +41,7 @@ const VideoGalleryVideoScreen = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
       />
 

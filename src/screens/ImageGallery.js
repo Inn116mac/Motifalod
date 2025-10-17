@@ -20,8 +20,8 @@ import Offline from '../components/root/Offline';
 import {IMAGE_URL} from '../connection/Config';
 import NetInfo from '@react-native-community/netinfo';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {AntDesign} from "@react-native-vector-icons/ant-design";
 import {
   heightPercentageToDP,
   widthPercentageToDP,
@@ -463,7 +463,7 @@ export default function ImageGallery({route}) {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         title={item?.name}
       />

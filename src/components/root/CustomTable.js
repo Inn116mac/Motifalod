@@ -18,7 +18,7 @@ import Loader from './Loader';
 import Offline from './Offline';
 import {getFileType} from '../../utils/fileType';
 import moment from 'moment';
-import Entypo from 'react-native-vector-icons/Entypo';
+import {Entypo} from "@react-native-vector-icons/entypo";
 import { useNavigation } from '@react-navigation/native';
 
 export default function CustomTable({

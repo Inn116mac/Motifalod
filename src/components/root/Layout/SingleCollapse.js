@@ -12,7 +12,7 @@ import moment from 'moment';
 import COLORS from '../../../theme/Color';
 import FONTS from '../../../theme/Fonts';
 import {IMAGE_URL} from '../../../connection/Config';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {AntDesign} from "@react-native-vector-icons/ant-design";
 import NoDataFound from '../NoDataFound';
 import {getImageUri} from '../../../constant/Module';
 

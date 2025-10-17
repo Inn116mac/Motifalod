@@ -9,22 +9,26 @@ import {
   Keyboard,
   AppState,
   BackHandler,
+  Platform,
 } from 'react-native';
-import {mediaDevices, RTCView} from 'react-native-webrtc';
+import {mediaDevices, MediaStream, RTCView} from 'react-native-webrtc';
 import io from 'socket.io-client';
 import * as mediasoupClient from 'mediasoup-client';
 import {useNavigation} from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
 import CustomHeader from '../components/root/CustomHeader';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import COLORS from '../theme/Color';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import Loader from '../components/root/Loader';
 import Offline from '../components/root/Offline';
 import FONTS from '../theme/Fonts';
+import KeepAwake from 'react-native-keep-awake';
+import InCallManager from 'react-native-incall-manager';
 
 const SERVER_URL = 'http://applivestream.inngenius.com:3000';
-// const SERVER_URL = 'http://65.49.60.248:8080';
+// const SERVER_URL = 'http://192.168.1.107:8080';
+// const SERVER_URL = 'http://10.108.200.211:8080';
 
 export default function BroadcasterScreen({route}) {
   const {item} = route.params.data;
@@ -39,6 +43,7 @@ export default function BroadcasterScreen({route}) {
   const [roomId, setRoomId] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [wantToRecord, setWantToRecord] = useState(false);
+  const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
 
   function randomRoomId() {
     return 'event-' + Math.random().toString(36).slice(2, 10);
@@ -117,10 +122,35 @@ export default function BroadcasterScreen({route}) {
     return () => clearInterval(monitorCapacity);
   }, [isStreaming]);
 
+  // const getMediaStream = async (isFront = true) => {
+  //   const facingMode = isFront ? 'user' : 'environment';
+  //   return await mediaDevices.getUserMedia({
+  //     audio: true,
+  //     video: {facingMode},
+  //   });
+  // };
+
   const getMediaStream = async (isFront = true) => {
     const facingMode = isFront ? 'user' : 'environment';
+
+    if (Platform.OS === 'ios') {
+      InCallManager.start({media: 'video', auto: false, ringback: ''});
+      InCallManager.setSpeakerphoneOn(false); // Keep speaker OFF
+      console.log('[iOS] Audio configured for recording (no speaker)');
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+
     return await mediaDevices.getUserMedia({
-      audio: true,
+      audio:
+        Platform.OS === 'ios'
+          ? {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+              sampleRate: 48000,
+              channelCount: 1,
+            }
+          : true,
       video: {facingMode},
     });
   };
@@ -172,6 +202,9 @@ export default function BroadcasterScreen({route}) {
     } catch (err) {
       setIsStarting(false);
       Alert.alert('Media Error', 'Failed to get camera/mic permissions.');
+      if (Platform.OS === 'ios') {
+        InCallManager.stop();
+      }
       return;
     }
     setStream(localStream);
@@ -185,7 +218,14 @@ export default function BroadcasterScreen({route}) {
     sock.emit(
       'joinRoom',
       newRoomId,
-      {name, title, appName: 'motifalod', wantToRecord},
+      {
+        name,
+        title,
+        appName: 'motifalod',
+        wantToRecord,
+        platform: Platform.OS,
+        isFrontCamera: isFrontCamera,
+      },
       async ({rtpCapabilities}) => {
         const dev = new mediasoupClient.Device();
         await dev.load({routerRtpCapabilities: rtpCapabilities});
@@ -226,16 +266,15 @@ export default function BroadcasterScreen({route}) {
               });
             }
             producersRef.current = [videoProducer, audioProducer];
+            KeepAwake.activate();
             setIsStreaming(true);
             setIsStarting(false);
-
-            // socketRef.current.emit('notifyNewStream', {
-            //   name,
-            //   title,
-            // });
           } catch (err) {
             setIsStarting(false);
             console.error('Error producing tracks:', err);
+            if (Platform.OS === 'ios') {
+              InCallManager.stop();
+            }
           }
         });
       },
@@ -297,23 +336,80 @@ export default function BroadcasterScreen({route}) {
     );
   };
 
-  const switchCamera = async () => {
-    if (!stream) return;
-    const videoTrack = videoTrackRef.current;
-    if (videoTrack && typeof videoTrack._switchCamera === 'function') {
-      videoTrack._switchCamera();
-      setIsFrontCamera(prev => !prev);
-    } else {
-      const newIsFront = !isFrontCamera;
-      const newStream = await getMediaStream(newIsFront);
-      setStream(newStream);
-      setIsFrontCamera(newIsFront);
+  const emitCameraSwitch = isFront => {
+    if (socketRef.current) {
+      socketRef.current.emit('cameraSwitched', {
+        isFrontCamera: isFront,
+        platform: Platform.OS,
+        timestamp: Date.now(),
+      });
+    }
+  };
 
-      if (isStreaming && producersRef.current[0]) {
-        const newVideoTrack = newStream.getVideoTracks()[0];
-        await producersRef.current[0].replaceTrack({track: newVideoTrack});
-        videoTrackRef.current = newVideoTrack;
+  const switchCamera = async () => {
+    if (!stream || isSwitchingCamera) return;
+
+    const videoTrack = videoTrackRef.current;
+    const newIsFront = !isFrontCamera;
+
+    try {
+      setIsSwitchingCamera(true);
+
+      if (videoTrack && typeof videoTrack._switchCamera === 'function') {
+        // Clear stream URL to prevent mirror/transpose flicker on iOS
+        setStream(null);
+
+        // Update mirror state first
+        setIsFrontCamera(newIsFront);
+
+        // Small delay to ensure state update
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Switch camera
+        videoTrack._switchCamera();
+
+        // Wait for camera to stabilize
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Restore stream with new camera
+        const currentStream = new MediaStream([
+          videoTrack,
+          audioTrackRef.current,
+        ]);
+        setStream(currentStream);
+
+        // Emit after everything is stable
+        await new Promise(resolve => setTimeout(resolve, 200));
+        emitCameraSwitch(newIsFront);
+      } else {
+        // Fallback: Replace track method
+        const newStream = await getMediaStream(newIsFront);
+
+        if (isStreaming && producersRef.current[0]) {
+          const newVideoTrack = newStream.getVideoTracks()[0];
+
+          await producersRef.current[0].replaceTrack({track: newVideoTrack});
+
+          if (videoTrack) {
+            videoTrack.stop();
+          }
+
+          videoTrackRef.current = newVideoTrack;
+        }
+
+        setStream(newStream);
+        setIsFrontCamera(newIsFront);
+
+        await new Promise(resolve => setTimeout(resolve, 300));
+        emitCameraSwitch(newIsFront);
       }
+
+      console.log('[CAMERA] Switch completed:', newIsFront ? 'front' : 'back');
+    } catch (error) {
+      console.error('[CAMERA] Switch error:', error);
+      Alert.alert('Camera Error', 'Failed to switch camera. Please try again.');
+    } finally {
+      setIsSwitchingCamera(false);
     }
   };
 
@@ -373,6 +469,13 @@ export default function BroadcasterScreen({route}) {
         } catch (e) {}
         setStream(null);
       }
+      if (Platform.OS === 'ios') {
+        try {
+          InCallManager.stop();
+          console.log('[iOS] InCallManager stopped');
+        } catch (err) {}
+      }
+      KeepAwake.deactivate();
       setIsStreaming(false);
       setIsStarting(false);
       setIsPaused(false);
@@ -408,7 +511,12 @@ export default function BroadcasterScreen({route}) {
           }
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={item?.name || 'Live Stream'}
       />
@@ -417,13 +525,6 @@ export default function BroadcasterScreen({route}) {
       ) : isConnected ? (
         !isStreaming ? (
           <View style={styles.modalContent}>
-            {/* {capacityStatus?.global?.status === 'HIGH' && (
-              <View style={styles.warningContainer}>
-                <Text style={styles.warningText}>
-                  ⚠️ Server load is high - stream quality may be affected
-                </Text>
-              </View>
-            )} */}
             <TextInput
               style={styles.input}
               placeholder="Stream Title"
@@ -446,7 +547,7 @@ export default function BroadcasterScreen({route}) {
                 flexDirection: 'row',
                 alignItems: 'center',
               }}>
-              <Icon
+              <MaterialDesignIcons
                 name={
                   wantToRecord ? 'checkbox-marked' : 'checkbox-blank-outline'
                 }
@@ -489,7 +590,7 @@ export default function BroadcasterScreen({route}) {
               <TouchableOpacity
                 onPress={isPaused ? resumeStreaming : pauseStreaming}
                 style={styles.iconButton}>
-                <Icon
+                <MaterialDesignIcons
                   name={isPaused ? 'play-pause' : 'pause-circle-outline'}
                   size={34}
                   color="#fff"
@@ -499,7 +600,7 @@ export default function BroadcasterScreen({route}) {
                 onPress={toggleAudio}
                 style={styles.iconButton}
                 disabled={!stream}>
-                <Icon
+                <MaterialDesignIcons
                   name={isAudioMuted ? 'microphone-off' : 'microphone'}
                   size={34}
                   color={isAudioMuted ? '#f00' : '#fff'}
@@ -508,15 +609,23 @@ export default function BroadcasterScreen({route}) {
               <TouchableOpacity
                 onPress={switchCamera}
                 style={styles.iconButton}
-                disabled={!stream}>
-                <Icon name="camera-flip" size={34} color="#fff" />
+                disabled={!stream || isSwitchingCamera || isPaused}>
+                <MaterialDesignIcons
+                  name="camera-flip"
+                  size={34}
+                  color="#fff"
+                />
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => endVideo()}
                 style={styles.iconButton}
                 disabled={!stream}>
-                <Icon name="stop-circle-outline" size={34} color="#f00" />
+                <MaterialDesignIcons
+                  name="stop-circle-outline"
+                  size={34}
+                  color="#f00"
+                />
               </TouchableOpacity>
             </View>
           </View>

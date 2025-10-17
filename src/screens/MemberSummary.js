@@ -15,7 +15,7 @@ import {NOTIFY_MESSAGE} from '../constant/Module';
 import Loader from '../components/root/Loader';
 import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import httpClient from '../connection/httpClient';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import NoDataFound from '../components/root/NoDataFound';
@@ -188,7 +188,7 @@ const MemberSummary = ({route}) => {
       }}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 iconStyle='solid' name="angle-left" size={26} color={COLORS.LABELCOLOR} />
         }
         title={item?.name}
         leftOnPress={() => navigation.goBack()}

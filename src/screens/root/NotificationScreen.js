@@ -3,10 +3,10 @@ import React from 'react';
 import COLORS from '../../theme/Color';
 import CustomHeader from '../../components/root/CustomHeader';
 import {useNavigation} from '@react-navigation/native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import Feather from 'react-native-vector-icons/Feather';
-import Entypo from 'react-native-vector-icons/Entypo';
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
+import {MaterialIcons} from '@react-native-vector-icons/material-icons';
+import {Feather} from '@react-native-vector-icons/feather';
+import {Entypo} from '@react-native-vector-icons/entypo';
 import FONTS from '../../theme/Fonts';
 
 const NotificationScreen = () => {
@@ -25,7 +25,7 @@ const NotificationScreen = () => {
       iconColor: '#4A90E2',
       backgroundColor: '#E8F4FD',
       badge: 'NEW',
-      badgeColor:COLORS.LABELCOLOR,
+      badgeColor: COLORS.LABELCOLOR,
       borderColor: '#3881e0',
       typeBack: '#3881e028',
     },
@@ -109,6 +109,7 @@ const NotificationScreen = () => {
             <View style={styles.metaRow}>
               <View style={styles.metaItem}>
                 <FontAwesome6
+                  iconStyle="solid"
                   name="clock"
                   size={12}
                   color={COLORS.INPUTBORDER}
@@ -117,6 +118,7 @@ const NotificationScreen = () => {
               </View>
               <View style={styles.metaItem}>
                 <FontAwesome6
+                  iconStyle="solid"
                   name="book-open"
                   size={12}
                   color={COLORS.INPUTBORDER}
@@ -126,6 +128,7 @@ const NotificationScreen = () => {
               <View style={styles.actionSection}>
                 <TouchableOpacity style={styles.actionButton}>
                   <FontAwesome6
+                    iconStyle="solid"
                     name="bookmark"
                     size={16}
                     color={COLORS.INPUTBORDER}
@@ -160,7 +163,12 @@ const NotificationScreen = () => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={'Notifications'}
       />
@@ -179,7 +187,7 @@ const NotificationScreen = () => {
             fontSize: FONTS.FONTSIZE.EXTRAMINI,
             fontFamily: FONTS.FONT_FAMILY.BOLD,
             color: COLORS.PRIMARYWHITE,
-            includeFontPadding:false
+            includeFontPadding: false,
           }}>
           URGENT:{' '}
           <Text
@@ -194,6 +202,7 @@ const NotificationScreen = () => {
       <View style={styles.updatesHeader}>
         <View style={styles.updatesLeft}>
           <FontAwesome6
+            iconStyle="solid"
             name="arrow-trend-up"
             size={20}
             color={COLORS.LABELCOLOR}
@@ -221,7 +230,13 @@ const NotificationScreen = () => {
       {/* View All News Button */}
       <TouchableOpacity style={styles.viewAllButton} activeOpacity={0.8}>
         <Text style={styles.viewAllText}>View All</Text>
-        <FontAwesome6 name="angle-right" size={16} color="white" top={-1} />
+        <FontAwesome6
+          name="angle-right"
+          iconStyle="solid"
+          size={16}
+          color="white"
+          top={-1}
+        />
       </TouchableOpacity>
     </View>
   );
@@ -342,8 +357,8 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     gap: 20,
-    alignItems:'center',
-    justifyContent:'space-between'
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   metaItem: {
     flexDirection: 'row',
@@ -359,7 +374,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-    alignItems:'center'
+    alignItems: 'center',
   },
   actionButton: {
     padding: 8,
@@ -368,10 +383,10 @@ const styles = StyleSheet.create({
   moreButton: {
     paddingHorizontal: 8,
     borderRadius: 8,
-    paddingVertical:5
+    paddingVertical: 5,
   },
   viewAllButton: {
-    backgroundColor:COLORS.LABELCOLOR,
+    backgroundColor: COLORS.LABELCOLOR,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

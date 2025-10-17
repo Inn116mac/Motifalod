@@ -7,7 +7,7 @@ import Loader from '../../components/root/Loader';
 import {useNavigation} from '@react-navigation/native';
 import CustomTab from '../../components/root/CustomTab';
 import CustomHeader from '../../components/root/CustomHeader';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import Offline from '../../components/root/Offline';
 import httpClient from '../../connection/httpClient';
 import {useNetworkStatus} from '../../connection/UseNetworkStatus';
@@ -69,13 +69,12 @@ const SignUpScreen = () => {
       <CustomHeader
         title={'Sign Up'}
         leftIcon={
-          <FontAwesome6 name="angle-left" solid size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         leftOnPress={() => {
           navigation.goBack();
         }}
       />
-
       {isConnected ? (
         loading && moduleData.length > 0 && response ? (
           <>

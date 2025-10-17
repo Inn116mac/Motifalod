@@ -16,10 +16,10 @@ import {
 } from 'react-native';
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import FONTS from '../../theme/Fonts';
-import Fontisto from 'react-native-vector-icons/Fontisto';
-import Entypo from 'react-native-vector-icons/Entypo';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import {Fontisto} from "@react-native-vector-icons/fontisto";
+import {Entypo} from "@react-native-vector-icons/entypo";
+import {Ionicons} from "@react-native-vector-icons/ionicons";
+import {FontAwesome} from "@react-native-vector-icons/fontawesome";
 import {capitalizeFirstLetter, NOTIFY_MESSAGE} from '../../constant/Module';
 import NetInfo from '@react-native-community/netinfo';
 import COLORS from '../../theme/Color';
@@ -29,7 +29,7 @@ import moment from 'moment';
 import Video from 'react-native-video';
 import ButtonComponent from './ButtonComponent';
 import Loader from './Loader';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {MaterialDesignIcons} from "@react-native-vector-icons/material-design-icons";
 import httpClient from '../../connection/httpClient';
 import NoDataFound from './NoDataFound';
 import {Dropdown} from 'react-native-element-dropdown';
@@ -2046,7 +2046,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           }}>
                           {item?.value || 'Select Date'}
                         </Text>
-                        <MaterialCommunityIcons
+                        <MaterialDesignIcons
                           name="calendar-month-outline"
                           size={25}
                           color={COLORS.PLACEHOLDERCOLOR}
@@ -2147,7 +2147,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           }}>
                           {item?.value || 'Select Date-Time'}
                         </Text>
-                        <MaterialCommunityIcons
+                        <MaterialDesignIcons
                           name="calendar-month-outline"
                           size={25}
                           color={COLORS.PLACEHOLDERCOLOR}
@@ -2330,7 +2330,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           }}>
                           {item?.value || 'Select Time'}
                         </Text>
-                        <MaterialCommunityIcons
+                        <MaterialDesignIcons
                           name="calendar-month-outline"
                           size={25}
                           color={COLORS.PLACEHOLDERCOLOR}

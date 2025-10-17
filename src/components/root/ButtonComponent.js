@@ -2,7 +2,8 @@ import {Text, TouchableOpacity, View} from 'react-native';
 import React from 'react';
 import COLORS from '../../theme/Color';
 import FONTS from '../../theme/Fonts';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {MaterialDesignIcons} from "@react-native-vector-icons/material-design-icons";
+
 
 export default function ButtonComponent({
   title,
@@ -37,7 +38,7 @@ export default function ButtonComponent({
       }}
       onPress={onPress}>
         {isReport ? (
-        <MaterialCommunityIcons
+        <MaterialDesignIcons
           name="microsoft-excel"
           size={32}
           color={COLORS.PRIMARYWHITE}

@@ -15,14 +15,14 @@ import {
   heightPercentageToDP,
   widthPercentageToDP,
 } from 'react-native-responsive-screen';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import Loader from '../components/root/Loader';
 import {NOTIFY_MESSAGE} from '../constant/Module';
 import FONTS from '../theme/Fonts';
 import NetInfo from '@react-native-community/netinfo';
 import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {AntDesign} from '@react-native-vector-icons/ant-design';
 import NoDataFound from '../components/root/NoDataFound';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import httpClient from '../connection/httpClient';
@@ -421,6 +421,7 @@ const EventAttendee = ({route}) => {
           }}
           leftIcon={
             <FontAwesome6
+              iconStyle="solid"
               name="angle-left"
               size={26}
               color={COLORS.LABELCOLOR}

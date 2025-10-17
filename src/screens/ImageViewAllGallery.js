@@ -7,7 +7,7 @@ import {
   useWindowDimensions,
   FlatList,
 } from 'react-native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import {
   heightPercentageToDP,
   widthPercentageToDP,
@@ -185,7 +185,7 @@ export default function ImageViewAllGallery({route}) {
     <View style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         title={route?.params?.header || '-'}
         leftOnPress={() => navigation.goBack()}

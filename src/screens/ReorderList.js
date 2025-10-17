@@ -13,7 +13,7 @@ import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import CustomHeader from '../components/root/CustomHeader';
 import httpClient from '../connection/httpClient';
 import DraggableFlatList from 'react-native-draggable-flatlist';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 
 const ReorderList = ({}) => {
   const [loading, setLoading] = useState(true);
@@ -146,7 +146,7 @@ const ReorderList = ({}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         title={'Update Order'}
       />

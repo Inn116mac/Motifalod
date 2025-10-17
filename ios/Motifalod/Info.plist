@@ -2,55 +2,53 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
-    <key>CFBundleDisplayName</key>
-    <string>Moti Falod</string>
-    <key>CFBundleExecutable</key>
-    <string>$(EXECUTABLE_NAME)</string>
-    <key>CFBundleIdentifier</key>
-    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>$(PRODUCT_NAME)</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>$(MARKETING_VERSION)</string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
-    <key>CFBundleVersion</key>
-    <string>$(CURRENT_PROJECT_VERSION)</string>
-    <key>LSRequiresIPhoneOS</key>
-    <true/>
-    
-    <!-- File Sharing and Documents -->
-    <key>UIFileSharingEnabled</key>
-    <true/>
-    <key>LSSupportsOpeningDocumentsInPlace</key>
-    <true/>
-    <key>UISupportsDocumentBrowser</key>
-    <true/>
-    
-    <!-- Network Security -->
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <key>NSAllowsArbitraryLoads</key>
-        <false/>
-        <key>NSAllowsLocalNetworking</key>
-        <true/>
-        <key>NSExceptionDomains</key>
-        <dict>
-            <key>inngenius.net</key>
-            <dict>
-                <key>NSIncludesSubdomains</key>
-                <true/>
-                <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-                <true/>
-                <key>NSTemporaryExceptionMinimumTLSVersion</key>
-                <string>TLSv1.0</string>
-            </dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Moti Falod</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb1173536437853030</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>FacebookAppID</key>
+	<string>1173536437853030</string>
+	<key>FacebookClientToken</key>
+	<string>42287478117b5d26dc2d1146fd799b77</string>
+	<key>FacebookDisplayName</key>
+	<string>Motifalod</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
 			<key>inngenius.com</key>
 			<dict>
 				<key>NSIncludesSubdomains</key>
@@ -60,125 +58,99 @@
 				<key>NSTemporaryExceptionMinimumTLSVersion</key>
 				<string>TLSv1.0</string>
 			</dict>
-            <key>99.96.208.123</key>
-            <dict>
-                <key>NSIncludesSubdomains</key>
-                <true/>
-                <key>NSExceptionAllowsInsecureHTTPLoads</key>
-                <true/>
-                <key>NSTemporaryExceptionMinimumTLSVersion</key>
-                <string>TLSv1.0</string>
-            </dict>
-        </dict>
-    </dict>
-    
-    <!-- Facebook SDK Configuration -->
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>fb1173536437853030</string>
-            </array>
-        </dict>
-    </array>
-    <key>FacebookAppID</key>
-    <string>1173536437853030</string>
-    <key>FacebookClientToken</key>
-    <string>42287478117b5d26dc2d1146fd799b77</string>
-    <key>FacebookDisplayName</key>
-    <string>Motifalod</string>
-    
-    <!-- Privacy Usage Descriptions -->
-    <key>NSContactsUsageDescription</key>
-    <string>This app requires permission to access contact details to help committee to manage events.</string>
-    <key>NSCalendarsFullAccessUsageDescription</key>
-    <string>This app requires access to your calendar to add events to your calendar.</string>
-    <key>NSCalendarsUsageDescription</key>
-    <string>This app requires access to your calendar to add events to your calendar.</string>
-    <key>NSCameraUsageDescription</key>
-    <string>This app uses your camera to scan QR codes for event check-in, to take photos for event registration, and to upload images to event galleries.</string>
-    <key>NSDocumentDirectoryUsageDescription</key>
-    <string>This app needs access to your documents folder to let you upload files and images for event registration, sharing, and management.</string>
-    <key>NSFileProviderUsageDescription</key>
-    <string>This app needs access to files from external providers so you can upload documents and images for event participation and sharing.</string>
-    <key>NSLocationAlwaysUsageDescription</key>
-    <string>This app needs your location to provide better services and directions.</string>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>This app needs your location to provide better services and directions.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>This app needs access to your photo library to select and upload images for events and galleries.</string>
-    <key>NSRemindersFullAccessUsageDescription</key>
-    <string>This app requires access to your reminders for RSVP and Events.</string>
-    <key>NSRemindersUsageDescription</key>
-    <string>This app requires access to your reminders for RSVP and Events.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>This app requires access to your microphone to record audio for events and live streaming.</string>
-    
-    <!-- Custom Fonts -->
-    <key>UIAppFonts</key>
-    <array>
-        <string>AntDesign.ttf</string>
-        <string>Entypo.ttf</string>
-        <string>EvilIcons.ttf</string>
-        <string>Feather.ttf</string>
-        <string>FontAwesome.ttf</string>
-        <string>FontAwesome5_Brands.ttf</string>
-        <string>FontAwesome5_Regular.ttf</string>
-        <string>FontAwesome5_Solid.ttf</string>
-        <string>FontAwesome6_Brands.ttf</string>
-        <string>FontAwesome6_Regular.ttf</string>
-        <string>FontAwesome6_Solid.ttf</string>
-        <string>Foundation.ttf</string>
-        <string>Ionicons.ttf</string>
-        <string>MaterialIcons.ttf</string>
-        <string>MaterialCommunityIcons.ttf</string>
-        <string>SimpleLineIcons.ttf</string>
-        <string>Octicons.ttf</string>
-        <string>Zocial.ttf</string>
-        <string>Fontisto.ttf</string>
-        <string>Poppins-Black.ttf</string>
-        <string>Poppins-Bold.ttf</string>
-        <string>Poppins-ExtraBold.ttf</string>
-        <string>Poppins-ExtraLight.ttf</string>
-        <string>Poppins-Italic.ttf</string>
-        <string>Poppins-Light.ttf</string>
-        <string>Poppins-Medium.ttf</string>
-        <string>Poppins-Regular.ttf</string>
-        <string>Poppins-SemiBold.ttf</string>
-        <string>Poppins-Thin.ttf</string>
-        <string>SpaceMono-Regular.ttf</string>
-        <string>roboto-700.ttf</string>
-        <string>roboto-regular.ttf</string>
-    </array>
-    
-    <!-- Background Modes -->
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>fetch</string>
-        <string>remote-notification</string>
-    </array>
-    
-    <!-- Launch Configuration -->
-    <key>UILaunchStoryboardName</key>
-    <string>LaunchScreen</string>
-    
-    <!-- Device Requirements -->
-    <key>UIRequiredDeviceCapabilities</key>
-    <array>
-        <string>arm64</string>
-    </array>
-    
-    <!-- Interface Orientations -->
-    <key>UISupportedInterfaceOrientations</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-    
-    <!-- Status Bar -->
-    <key>UIViewControllerBasedStatusBarAppearance</key>
-    <false/>
+			<key>inngenius.net</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSTemporaryExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+			</dict>
+		</dict>
+	</dict>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>This app requires access to your calendar to add events to your calendar.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>This app requires access to your calendar to add events to your calendar.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses your camera to scan QR codes for event check-in, to take photos for event registration, and to upload images to event galleries.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>This app requires permission to access contact details to help committee to manage events.</string>
+	<key>NSDocumentDirectoryUsageDescription</key>
+	<string>This app needs access to your documents folder to let you upload files and images for event registration, sharing, and management.</string>
+	<key>NSFileProviderUsageDescription</key>
+	<string>This app needs access to files from external providers so you can upload documents and images for event participation and sharing.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app needs your location to provide better services and directions.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs your location to provide better services and directions.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires access to your microphone to record audio for events and live streaming.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to select and upload images for events and galleries.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>This app requires access to your reminders for RSVP and Events.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>This app requires access to your reminders for RSVP and Events.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>AntDesign.ttf</string>
+		<string>Entypo.ttf</string>
+		<string>EvilIcons.ttf</string>
+		<string>Feather.ttf</string>
+		<string>FontAwesome.ttf</string>
+		<string>FontAwesome5_Brands.ttf</string>
+		<string>FontAwesome5_Regular.ttf</string>
+		<string>FontAwesome5_Solid.ttf</string>
+		<string>FontAwesome6_Brands.ttf</string>
+		<string>FontAwesome6_Regular.ttf</string>
+		<string>FontAwesome6_Solid.ttf</string>
+		<string>Foundation.ttf</string>
+		<string>Ionicons.ttf</string>
+		<string>MaterialIcons.ttf</string>
+		<string>MaterialCommunityIcons.ttf</string>
+		<string>MaterialDesignIcons.ttf</string>
+		<string>SimpleLineIcons.ttf</string>
+		<string>Octicons.ttf</string>
+		<string>Zocial.ttf</string>
+		<string>Fontisto.ttf</string>
+		<string>Poppins-Black.ttf</string>
+		<string>Poppins-Bold.ttf</string>
+		<string>Poppins-ExtraBold.ttf</string>
+		<string>Poppins-ExtraLight.ttf</string>
+		<string>Poppins-Italic.ttf</string>
+		<string>Poppins-Light.ttf</string>
+		<string>Poppins-Medium.ttf</string>
+		<string>Poppins-Regular.ttf</string>
+		<string>Poppins-SemiBold.ttf</string>
+		<string>Poppins-Thin.ttf</string>
+		<string>SpaceMono-Regular.ttf</string>
+		<string>roboto-700.ttf</string>
+		<string>roboto-regular.ttf</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportsDocumentBrowser</key>
+	<true/>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 </dict>
 </plist>

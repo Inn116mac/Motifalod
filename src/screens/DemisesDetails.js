@@ -9,7 +9,7 @@ import {
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import CustomHeader from '../components/root/CustomHeader';
 import COLORS from '../theme/Color';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import Offline from '../components/root/Offline';
 import FONTS from '../theme/Fonts';
 import {useNavigation} from '@react-navigation/native';
@@ -104,7 +104,7 @@ const DemisesDetails = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         title={'Demise Details'}
       />

@@ -17,17 +17,16 @@ import NetInfo from '@react-native-community/netinfo';
 import {IMAGE_URL} from '../connection/Config';
 import {NOTIFY_MESSAGE} from '../constant/Module';
 import Loader from '../components/root/Loader';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import {Ionicons} from '@react-native-vector-icons/ionicons';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Offline from '../components/root/Offline';
 import NoDataFound from '../components/root/NoDataFound';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
-import CustomHeader from '../components/root/CustomHeader';
 import httpClient from '../connection/httpClient';
 import {DrawerContext} from '../utils/DrawerContext';
 import FastImage from 'react-native-fast-image';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
+import RNExitApp from 'react-native-exit-app';
 
 const Dashboard = ({route}) => {
   const [userData, setUserData] = useState(null);
@@ -50,7 +49,13 @@ const Dashboard = ({route}) => {
             onPress: () => null,
             style: 'cancel',
           },
-          {text: 'YES', onPress: () => BackHandler.exitApp()},
+          {
+            text: 'YES',
+            onPress: () => {
+              // BackHandler.exitApp();
+              RNExitApp.exitApp();
+            },
+          },
         ]);
         return true;
       };
@@ -210,16 +215,10 @@ const Dashboard = ({route}) => {
                 data: data,
               });
             } else if (constantName === 'FB LIVE STREAM') {
-              // navigation.navigate('LiveStreamHost', {
-              //   data: data,
-              // });
               navigation.navigate('BroadcasterScreen', {
                 data: data,
               });
             } else if (constantName === 'JOIN FB LIVE') {
-              // navigation.navigate('LiveStreamView', {
-              //   data: data,
-              // });
               navigation.navigate('ViewerScreen', {
                 data: data,
               });
@@ -281,7 +280,7 @@ const Dashboard = ({route}) => {
           userData?.user?.firstName ? userData?.user?.firstName : firstName
         }!`}
         rightIcon={
-          <MaterialCommunityIcons
+          <MaterialDesignIcons
             name="sort"
             color={COLORS.LABELCOLOR}
             size={28}
@@ -345,7 +344,7 @@ const Dashboard = ({route}) => {
             onPress={() => {
               navigation.navigate('ReorderList');
             }}>
-            <MaterialCommunityIcons
+            <MaterialDesignIcons
               name="sort"
               color={COLORS.LABELCOLOR}
               size={28}

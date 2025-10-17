@@ -12,7 +12,7 @@ import React, {useEffect, useState} from 'react';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import COLORS from '../theme/Color';
 import {useNavigation} from '@react-navigation/native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
 import Loader from '../components/root/Loader';
@@ -21,7 +21,7 @@ import NetInfo from '@react-native-community/netinfo';
 import httpClient from '../connection/httpClient';
 import {NOTIFY_MESSAGE} from '../constant/Module';
 import NoDataFound from '../components/root/NoDataFound';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {AntDesign} from '@react-native-vector-icons/ant-design';
 
 const ReportsList = ({route}) => {
   const {isConnected, networkLoading} = useNetworkStatus();
@@ -64,7 +64,6 @@ const ReportsList = ({route}) => {
   const [loading, setLoading] = useState(true);
   const [reportsList, setReportsList] = useState([]);
   const [eventData, setEventData] = useState([]);
-  const [filterLoading, setFilterLoading] = useState(false);
   const [isEventDataModal, setIsEventDataModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
@@ -83,7 +82,6 @@ const ReportsList = ({route}) => {
   function onEventFilter() {
     NetInfo.fetch().then(state => {
       if (state.isConnected) {
-        setFilterLoading(true);
         httpClient
           .get(
             `module/configuration/dropdown?contentType=EVENT&moduleName=Reports`,
@@ -92,27 +90,21 @@ const ReportsList = ({route}) => {
             const {data} = response;
             const {status, message, result} = data;
 
-            if (status || (status == true && result)) {
-              // const newEvent = {
-              //   id: 0,
-              //   name: 'All',
-              // };
-              // result.unshift(newEvent);
+            if (status) {
               if (result?.length > 0) {
                 setSelectedEvent(result[0]);
                 setEventData(result);
               } else {
                 setSelectedEvent(null);
                 setEventData([]);
+                setLoading(false);
               }
-              setFilterLoading(false);
             } else {
               NOTIFY_MESSAGE(message);
-              setFilterLoading(false);
+              setLoading(false);
             }
           })
           .catch(err => {
-            setFilterLoading(false);
             NOTIFY_MESSAGE(err ? 'Something Went Wrong.' : null);
             navigation.goBack();
           });
@@ -129,11 +121,6 @@ const ReportsList = ({route}) => {
   }
 
   const getReportsList = () => {
-    // const data = {
-    //   eventId: selectedEvent ? selectedEvent?.id : 0,
-    //   rsvpResponse: '',
-    // };
-
     NetInfo.fetch().then(state => {
       if (state.isConnected) {
         setLoading(true);
@@ -159,6 +146,7 @@ const ReportsList = ({route}) => {
               }
             } else {
               NOTIFY_MESSAGE(response?.data?.message);
+              setLoading(false);
             }
           })
           .catch(error => {
@@ -185,7 +173,12 @@ const ReportsList = ({route}) => {
       }}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={item?.name}
         leftOnPress={() => navigation.goBack()}
@@ -217,7 +210,7 @@ const ReportsList = ({route}) => {
             </TouchableOpacity>
           </View>
           <FlatList
-            contentContainerStyle={{margin: 10, paddingBottom: 15}}
+            contentContainerStyle={{margin: 10, paddingBottom: 15, flexGrow: 1}}
             data={reportsList}
             keyExtractor={(item, index) => String(index)}
             renderItem={({item: item1, index}) => {
@@ -264,6 +257,7 @@ const ReportsList = ({route}) => {
                 </TouchableOpacity>
               );
             }}
+            ListEmptyComponent={!loading ? () => <NoDataFound /> : null}
           />
           <Modal
             animationType="none"

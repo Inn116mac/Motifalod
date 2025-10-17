@@ -11,7 +11,7 @@ import {
   useWindowDimensions,
   ImageBackground,
 } from 'react-native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import moment from 'moment';
 import FONTS from '../theme/Fonts';
 import COLORS from '../theme/Color';
@@ -22,14 +22,12 @@ import {heightPercentageToDP} from 'react-native-responsive-screen';
 import CustomHeader from '../components/root/CustomHeader';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import Loader from '../components/root/Loader';
-import ButtonComponent from '../components/root/ButtonComponent';
 import httpClient from '../connection/httpClient';
 import NetInfo from '@react-native-community/netinfo';
 import {getImageUri, NOTIFY_MESSAGE} from '../constant/Module';
-import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import FastImage from 'react-native-fast-image';
+import { SimpleLineIcons } from "@react-native-vector-icons/simple-line-icons";
+import {AntDesign} from "@react-native-vector-icons/ant-design";
+import {Ionicons} from "@react-native-vector-icons/ionicons";
 
 const EventDetails = ({route}) => {
   const {width, height} = useWindowDimensions();
@@ -143,6 +141,12 @@ const EventDetails = ({route}) => {
     'ceafee16de904b7da61cec2fa0be9d3f',
     'e5414f3130ab4dba85381256091884ae',
     'ac227cc474944266b2fffea1c371128c',
+    '26d64443025a4162826c67c6df59d97d',
+    '02d5fe32ddf94e1da7d85d3b98cf3237',
+    'f80d9dc7b2804c05ba1b891d90610b48',
+    '7e66e73054da43ce87a279e184110edf',
+    '66ad375eb7514b32835d8c91fe295419',
+    '6b28bda8af634d2a92d2b843b1691c8a',
   ];
   const [currentApiKeyIndex, setCurrentApiKeyIndex] = useState(0);
   const [locationData, setLocationData] = useState(null);
@@ -242,7 +246,7 @@ const EventDetails = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         rightIcon={
           qrImageUri && (

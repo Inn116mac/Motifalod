@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   BackHandler,
 } from 'react-native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import {
   heightPercentageToDP,
   widthPercentageToDP,
@@ -24,7 +24,7 @@ import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import NoDataFound from '../components/root/NoDataFound';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {AntDesign} from "@react-native-vector-icons/ant-design";
 import httpClient from '../connection/httpClient';
 
 const MemberScreen = () => {
@@ -247,7 +247,7 @@ const MemberScreen = () => {
           navigation.navigate('Dashboard');
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 iconStyle='solid' name="angle-left" size={26} color={COLORS.LABELCOLOR} />
         }
         title={'Members'}
       />

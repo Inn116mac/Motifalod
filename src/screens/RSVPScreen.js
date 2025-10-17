@@ -10,7 +10,7 @@ import {
   TouchableWithoutFeedback,
   BackHandler,
 } from 'react-native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import {
   heightPercentageToDP,
   widthPercentageToDP,
@@ -25,7 +25,7 @@ import NoDataFound from '../components/root/NoDataFound';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import CustomHeader from '../components/root/CustomHeader';
 import NetInfo from '@react-native-community/netinfo';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {AntDesign} from "@react-native-vector-icons/ant-design";
 import httpClient from '../connection/httpClient';
 
 export default function RsvpList({}) {
@@ -412,7 +412,7 @@ export default function RsvpList({}) {
           navigation.navigate('Dashboard');
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         title={'RSVP'}
       />

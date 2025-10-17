@@ -12,8 +12,8 @@ import {
   KeyboardAvoidingView,
   Keyboard,
 } from 'react-native';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import Entypo from 'react-native-vector-icons/Entypo';
+import {Ionicons} from "@react-native-vector-icons/ionicons";
+import {Entypo} from "@react-native-vector-icons/entypo";
 import fonts from '../../theme/Fonts';
 import NetInfo from '@react-native-community/netinfo';
 import COLORS, {textInputBorderColor} from '../../theme/Color';
@@ -33,7 +33,7 @@ import {useNetworkStatus} from '../../connection/UseNetworkStatus';
 import Loader from '../../components/root/Loader';
 import messaging from '@react-native-firebase/messaging';
 import DeviceInfo from 'react-native-device-info';
-import Fontisto from 'react-native-vector-icons/Fontisto';
+import {Fontisto} from "@react-native-vector-icons/fontisto";
 
 const LoginScreen = ({route}) => {
   const {width} = useWindowDimensions();
@@ -391,10 +391,10 @@ const LoginScreen = ({route}) => {
                 </View>
 
                 <View style={styles.privacyContainer}>
-                  <AntDesign
-                    name={'checksquare'}
+                  <Ionicons
+                    name={'checkbox-sharp'}
                     color={COLORS.LABELCOLOR}
-                    size={20}
+                    size={24}
                     style={styles.checkIcon}
                   />
                   <Text style={styles.privacyText}>

@@ -10,14 +10,15 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import CustomHeader from '../components/root/CustomHeader';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
-import Entypo from 'react-native-vector-icons/Entypo';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {Entypo} from "@react-native-vector-icons/entypo";
 import COLORS from '../theme/Color';
 import FONTS from '../theme/Fonts';
 import Loader from '../components/root/Loader';
 
 const SERVER_URL = 'http://applivestream.inngenius.com:3000';
-// const SERVER_URL = 'http://65.49.60.248:8080';
+// const SERVER_URL = 'http://192.168.1.107:8080';
+// const SERVER_URL = 'http://10.108.200.211:8080';
 
 function VideoList({data, onPressItem, isLive}) {
   if (!data.length)
@@ -207,7 +208,7 @@ export default function ViewerScreen({route}) {
       <CustomHeader
         leftOnPress={() => navigation.goBack()}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         title={item?.name}
       />

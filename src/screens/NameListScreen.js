@@ -10,7 +10,7 @@ import {
 import CustomHeader from '../components/root/CustomHeader';
 import {useNavigation} from '@react-navigation/native';
 import COLORS from '../theme/Color';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import FONTS from '../theme/Fonts';
 import NoDataFound from '../components/root/NoDataFound';
 import {
@@ -23,7 +23,7 @@ import httpClient from '../connection/httpClient';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import Loader from '../components/root/Loader';
 import Offline from '../components/root/Offline';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {AntDesign} from "@react-native-vector-icons/ant-design";
 
 const NameListScreen = ({route}) => {
   const {width, height} = useWindowDimensions();
@@ -384,7 +384,7 @@ const NameListScreen = ({route}) => {
     <View style={styles.container}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         title={title}
         leftOnPress={() => navigation.goBack()}

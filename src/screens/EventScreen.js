@@ -17,7 +17,7 @@ import NetInfo from '@react-native-community/netinfo';
 import FONTS from '../theme/Fonts';
 import Loader from '../components/root/Loader';
 import {getData} from '../utils/Storage';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import {
   heightPercentageToDP,
   widthPercentageToDP,
@@ -388,10 +388,10 @@ const EventScreen = ({route}) => {
               justifyContent: 'center',
               bottom: 10,
               padding: 8,
-              height:
-                Platform.OS === 'ios'
-                  ? heightPercentageToDP('13%')
-                  : heightPercentageToDP('16%'),
+              // height:
+              //   Platform.OS === 'ios'
+              //     ? heightPercentageToDP('13%')
+              //     : heightPercentageToDP('16%'),
             }}>
             <Text
               numberOfLines={2}
@@ -440,7 +440,7 @@ const EventScreen = ({route}) => {
               marginLeft: 5,
               paddingVertical: 2,
               flex: 1,
-              gap: Platform.OS == 'ios' ? 8 : 0,
+              gap: Platform.OS == 'ios' ? 2 : 0,
             }}>
             <Text
               numberOfLines={1}
@@ -568,7 +568,12 @@ const EventScreen = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={item?.name}
       />
@@ -594,6 +599,7 @@ const EventScreen = ({route}) => {
                   paddingHorizontal: 2,
                   borderBottomLeftRadius: 20,
                   borderBottomRightRadius: 20,
+                  marginBottom: 4,
                 }}
                 onPress={() => {
                   setActiveTab(item);

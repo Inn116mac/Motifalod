@@ -9,7 +9,7 @@ import React, {useState} from 'react';
 import COLORS from '../theme/Color';
 import {IMAGE_URL} from '../connection/Config';
 import {useNavigation} from '@react-navigation/native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import FONTS from '../theme/Fonts';
 import CustomHeader from '../components/root/CustomHeader';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
@@ -96,7 +96,7 @@ const MoreDetails = ({route}) => {
     <View style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 iconStyle='solid' name="angle-left" size={26} color={COLORS.LABELCOLOR} />
         }
         leftOnPress={() => navigation.goBack()}
       />

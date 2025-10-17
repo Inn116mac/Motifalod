@@ -1,7 +1,7 @@
 import {View} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import COLORS from '../theme/Color';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import {useNavigation} from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
 import {NOTIFY_MESSAGE} from '../constant/Module';
@@ -224,7 +224,7 @@ const FormScreen = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         title={isRsvp ? 'New Rsvp' : item?.name}
       />

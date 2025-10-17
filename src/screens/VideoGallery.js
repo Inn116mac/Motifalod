@@ -11,7 +11,7 @@ import {
   ScrollView,
   RefreshControl,
 } from 'react-native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import {
   heightPercentageToDP,
   widthPercentageToDP,
@@ -31,7 +31,7 @@ import NoDataFound from '../components/root/NoDataFound';
 import CustomHeader from '../components/root/CustomHeader';
 import httpClient from '../connection/httpClient';
 import FastImage from 'react-native-fast-image';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {AntDesign} from "@react-native-vector-icons/ant-design";
 
 const VideoGallery = ({route}) => {
   const {item} = route?.params?.data;
@@ -376,7 +376,7 @@ const VideoGallery = ({route}) => {
                   />
                 ) : (
                   <TouchableOpacity
-                    disabled={videoLoading[`${img.videoPath}_${index}`]}
+                    // disabled={videoLoading[`${img.videoPath}_${index}`]}
                     onPress={() => {
                       navigation.navigate('VideoGalleryVideoScreen', {
                         videoData: img?.videoPath,
@@ -455,7 +455,7 @@ const VideoGallery = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         title={item?.name}
       />

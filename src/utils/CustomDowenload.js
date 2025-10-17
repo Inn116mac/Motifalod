@@ -1,8 +1,6 @@
 import {PermissionsAndroid, Alert, Platform} from 'react-native';
 import RNFS from 'react-native-fs';
-import Share from 'react-native-share';
 import FileViewer from 'react-native-file-viewer';
-// import { showDownloadNotification } from './CustomShowNotification';
 
 export const checkStoragePermission = async () => {
   if (Platform.OS === 'android') {

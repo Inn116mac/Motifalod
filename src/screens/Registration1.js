@@ -16,11 +16,11 @@ import {
   Keyboard,
 } from 'react-native';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import Fontisto from 'react-native-vector-icons/Fontisto';
-import Feather from 'react-native-vector-icons/Feather';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import {AntDesign} from '@react-native-vector-icons/ant-design';
+import {Fontisto} from '@react-native-vector-icons/fontisto';
+import {Feather} from '@react-native-vector-icons/feather';
+import {Ionicons} from '@react-native-vector-icons/ionicons';
+import {FontAwesome} from '@react-native-vector-icons/fontawesome';
 import NetInfo from '@react-native-community/netinfo';
 import {getData} from '../utils/Storage';
 import {IMAGE_URL} from '../connection/Config';
@@ -29,7 +29,7 @@ import {capitalizeFirstLetter, NOTIFY_MESSAGE} from '../constant/Module';
 import COLORS from '../theme/Color';
 import Loader from '../components/root/Loader';
 import {useNavigation} from '@react-navigation/native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import FONTS from '../theme/Fonts';
 import ButtonComponent from '../components/root/ButtonComponent';
 import {
@@ -44,9 +44,9 @@ import CustomHeader from '../components/root/CustomHeader';
 import httpClient from '../connection/httpClient';
 import FastImage from 'react-native-fast-image';
 import {getFileType} from '../utils/fileType';
-import Entypo from 'react-native-vector-icons/Entypo';
+import {Entypo} from '@react-native-vector-icons/entypo';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
 
 const Registration1 = ({route}) => {
   const {item, isTabView, isForm, isFromEventAdmin} = route.params.data;
@@ -583,7 +583,9 @@ const Registration1 = ({route}) => {
           ) {
             initialValue = null;
           } else if (item.type === 'radio-group') {
-            const selectedOption = item?.values?.find(option => option.selected);
+            const selectedOption = item?.values?.find(
+              option => option.selected,
+            );
             initialValue = selectedOption ? selectedOption.value : null;
           } else if (item.type === 'file') {
             initialValue = null;
@@ -596,7 +598,9 @@ const Registration1 = ({route}) => {
               originalMemberValues.current = item.values;
               hasInitializedOriginal.current = true;
             }
-            const selectedOption = item?.values?.find(option => option.selected);
+            const selectedOption = item?.values?.find(
+              option => option.selected,
+            );
             initialValue = selectedOption ? selectedOption.value : null;
           } else if (item.type === 'calendar') {
             const today = moment(new Date()).format('MM/DD/YYYY');
@@ -2129,6 +2133,17 @@ const Registration1 = ({route}) => {
             }}>
             <View style={{flex: 1}}>
               {Object.entries(item).map(([fieldKey, fieldData]) => {
+                if (fieldKey === 'value') {
+                  return null;
+                }
+
+                if (
+                  typeof fieldData !== 'object' ||
+                  !fieldData ||
+                  !fieldData.key
+                ) {
+                  return null;
+                }
                 if (
                   fieldKey?.toLowerCase() === 'configurationid'
                   // ||
@@ -2578,6 +2593,7 @@ const Registration1 = ({route}) => {
           }}
           leftIcon={
             <FontAwesome6
+              iconStyle="solid"
               name="angle-left"
               size={26}
               color={COLORS.LABELCOLOR}
@@ -3373,7 +3389,7 @@ const Registration1 = ({route}) => {
                                   }}>
                                   {formData[item?.key] || 'Select Date'}
                                 </Text>
-                                <MaterialCommunityIcons
+                                <MaterialDesignIcons
                                   name="calendar-month-outline"
                                   size={25}
                                   color={COLORS.PLACEHOLDERCOLOR}
@@ -3481,7 +3497,7 @@ const Registration1 = ({route}) => {
                                   }}>
                                   {formData[item?.key] || 'Select Time'}
                                 </Text>
-                                <MaterialCommunityIcons
+                                <MaterialDesignIcons
                                   name="calendar-month-outline"
                                   size={25}
                                   color={COLORS.PLACEHOLDERCOLOR}

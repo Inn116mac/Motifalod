@@ -34,8 +34,6 @@ import MoreDetails from '../screens/MoreDetails';
 import {navigationRef} from '../utils/NavigationService';
 import QrCodeScanScreen from '../screens/QrCodeScanScreen';
 import EventDashboard from '../screens/EventDashboard';
-import TemplateSelectionScreen from '../screens/TemplateSelectionScreen';
-import TemplatePreviewScreen from '../screens/TemplatePreviewScreen';
 import NameListScreen from '../screens/NameListScreen';
 import RSVPScreen from '../screens/RSVPScreen';
 import ReportsList from '../screens/ReportsList';
@@ -44,9 +42,6 @@ import MemberSummary from '../screens/MemberSummary';
 import ReorderList from '../screens/ReorderList';
 import MemberScreen from '../screens/MemberScreen';
 import FileViewer from '../screens/FileViewer';
-import LiveStreamHost from '../screens/LiveStreamHost';
-import LiveBroadcast from '../screens/LiveBroadcast';
-import LiveStreamView from '../screens/LiveStreamView';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import DemisesDetails from '../screens/DemisesDetails';
 import BroadcasterScreen from '../screens/BroadcasterScreen';
@@ -83,9 +78,6 @@ function AppNavigation() {
             <Stack.Screen name="Verify" component={VerifyScreen} />
             <Stack.Screen name="NewPassword" component={NewPassword} />
             <Stack.Screen name="Main" component={DrawerNavigator} />
-            <Stack.Screen name="LiveStreamHost" component={LiveStreamHost} />
-            <Stack.Screen name="LiveBroadcast" component={LiveBroadcast} />
-            <Stack.Screen name="LiveStreamView" component={LiveStreamView} />
             <Stack.Screen name="ReorderList" component={ReorderList} />
             <Stack.Screen name="FormRecords" component={FormRecords} />
             <Stack.Screen name="TableScreen" component={TableScreen} />
@@ -93,14 +85,6 @@ function AppNavigation() {
             <Stack.Screen name="View" component={ViewScreen} />
             <Stack.Screen name="EventScreen" component={EventScreen} />
             <Stack.Screen name="EventDetails" component={EventDetails} />
-            <Stack.Screen
-              name="TemplateSelectionScreen"
-              component={TemplateSelectionScreen}
-            />
-            <Stack.Screen
-              name="TemplatePreviewScreen"
-              component={TemplatePreviewScreen}
-            />
             <Stack.Screen name="EventAttendee" component={EventAttendee} />
             <Stack.Screen name="ImageGallery" component={ImageGallery} />
             <Stack.Screen

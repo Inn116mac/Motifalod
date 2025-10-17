@@ -17,11 +17,11 @@ import {
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import FONTS from '../../theme/Fonts';
 import ButtonComponent from './ButtonComponent';
-import Entypo from 'react-native-vector-icons/Entypo';
-import Fontisto from 'react-native-vector-icons/Fontisto';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {Entypo} from "@react-native-vector-icons/entypo";
+import {Fontisto} from "@react-native-vector-icons/fontisto";
+import {Ionicons} from "@react-native-vector-icons/ionicons";
+import {FontAwesome} from "@react-native-vector-icons/fontawesome";
+import {MaterialDesignIcons} from "@react-native-vector-icons/material-design-icons";
 import {capitalizeFirstLetter, NOTIFY_MESSAGE} from '../../constant/Module';
 import NetInfo from '@react-native-community/netinfo';
 import COLORS from '../../theme/Color';
@@ -43,8 +43,8 @@ import {
   ShareDialog,
   GraphRequestManager,
 } from 'react-native-fbsdk-next';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
-import Feather from 'react-native-vector-icons/Feather';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {Feather} from "@react-native-vector-icons/feather";
 
 const APP_ID = '1173536437853030';
 const APP_SECRET = '72e5b8d18e367ca47a066f5d8801e693';
@@ -2644,7 +2644,7 @@ export default function CustomTab({
                           }}>
                           {formData[item?.key] || 'Select Date'}
                         </Text>
-                        <MaterialCommunityIcons
+                        <MaterialDesignIcons
                           name="calendar-month-outline"
                           size={25}
                           color={COLORS.PLACEHOLDERCOLOR}
@@ -2744,7 +2744,7 @@ export default function CustomTab({
                           }}>
                           {formData[item?.key] || 'Select Date-Time'}
                         </Text>
-                        <MaterialCommunityIcons
+                        <MaterialDesignIcons
                           name="calendar-month-outline"
                           size={25}
                           color={COLORS.PLACEHOLDERCOLOR}
@@ -2934,7 +2934,7 @@ export default function CustomTab({
                           }}>
                           {formData[item?.key] || 'Select Time'}
                         </Text>
-                        <MaterialCommunityIcons
+                        <MaterialDesignIcons
                           name="calendar-month-outline"
                           size={25}
                           color={COLORS.PLACEHOLDERCOLOR}
@@ -3641,7 +3641,7 @@ export default function CustomTab({
                       ]}
                       activeOpacity={0.7}>
                       {syncWithFacebook && (
-                        <FontAwesome6 name="check" size={16} color={'#fff'} />
+                        <FontAwesome6 iconStyle='solid' name="check" size={16} color={'#fff'} />
                       )}
                     </View>
                     <Text style={styles.label}>Share with Facebook?</Text>

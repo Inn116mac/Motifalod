@@ -13,7 +13,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Loader from '../components/root/Loader';
 import COLORS from '../theme/Color';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import NetInfo from '@react-native-community/netinfo';
 import CustomHeader from '../components/root/CustomHeader';
 import FONTS from '../theme/Fonts';
@@ -23,11 +23,11 @@ import {
   heightPercentageToDP,
   widthPercentageToDP,
 } from 'react-native-responsive-screen';
-import Feather from 'react-native-vector-icons/Feather';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {Feather} from '@react-native-vector-icons/feather';
+import {AntDesign} from '@react-native-vector-icons/ant-design';
+import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
-import Entypo from 'react-native-vector-icons/Entypo';
+import {Entypo} from '@react-native-vector-icons/entypo';
 import {capitalizeFirstLetter, NOTIFY_MESSAGE} from '../constant/Module';
 import {getFileType} from '../utils/fileType';
 import Offline from '../components/root/Offline';
@@ -324,12 +324,12 @@ const TableScreen = ({route}) => {
               editItem: item1,
               configurationId: memberId?.value,
             };
-            setSearchKeyword('')
-            navigation.navigate('Form', {data}); 
+            setSearchKeyword('');
+            navigation.navigate('Form', {data});
           },
         },
       ],
-      {cancelable: false}, 
+      {cancelable: false},
     );
   };
 
@@ -381,12 +381,12 @@ const TableScreen = ({route}) => {
                 NOTIFY_MESSAGE(error?.message || 'Something Went Wrong');
               })
               .finally(() => {
-                setIsLoading1(false); 
+                setIsLoading1(false);
               });
           },
         },
       ],
-      {cancelable: false}, 
+      {cancelable: false},
     );
   };
 
@@ -421,8 +421,8 @@ const TableScreen = ({route}) => {
                             content: JSON.stringify({
                               ...JSON.parse(item.content),
                               isApproved: {
-                                ...JSON.parse(item.content).isApproved, 
-                                value: 'No', 
+                                ...JSON.parse(item.content).isApproved,
+                                value: 'No',
                               },
                             }),
                           }
@@ -442,7 +442,7 @@ const TableScreen = ({route}) => {
           },
         },
       ],
-      {cancelable: false}, 
+      {cancelable: false},
     );
   };
 
@@ -527,75 +527,6 @@ const TableScreen = ({route}) => {
           marginVertical: 8,
         }}
         key={index}>
-        {/* <TouchableOpacity
-          onPress={() => handleToggle(index)}
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-              width: width / 1.4,
-            }}>
-            <View
-              style={{
-                backgroundColor: COLORS.LABELCOLOR,
-                maxWidth: '30%',
-                padding: 6,
-                justifyContent: 'center',
-                alignItems: 'center',
-                borderRadius: 10,
-              }}>
-              <Text style={[styles.pkgLbl, {color: COLORS.PRIMARYWHITE}]}>
-                {number}
-              </Text>
-            </View>
-            <View>
-              <Text
-                numberOfLines={1}
-                style={{
-                  fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                  fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                  color: COLORS.PLACEHOLDERCOLOR,
-                }}>
-                {firstValue ? removeContentPrefix(firstValue) : '-'}{' '}
-                {item?.constantName === 'SIGN UP' && secondValue
-                  ? secondValue
-                  : ''}
-              </Text>
-              <Text
-                numberOfLines={1}
-                style={{
-                  fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                  fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                  color:
-                    item?.constantName === 'SIGN UP' && isApproved == 'yes'
-                      ? COLORS.PRIMARYGREEN
-                      : item?.constantName === 'SIGN UP' && isApproved == 'no'
-                      ? COLORS.PRIMARYRED
-                      : COLORS.PLACEHOLDERCOLOR,
-                }}>
-                {item?.constantName !== 'SIGN UP' && secondValue
-                  ? removeContentPrefix(secondValue)
-                  : ''}
-                {item?.constantName === 'SIGN UP' && isApproved == 'yes'
-                  ? 'Approved'
-                  : item?.constantName === 'SIGN UP' && isApproved == 'no'
-                  ? 'Not Approved'
-                  : ''}
-              </Text>
-            </View>
-          </View>
-          {openIndex === index ? (
-            <AntDesign name="up" size={20} color={COLORS.LABELCOLOR} />
-          ) : (
-            <AntDesign name="down" size={20} color={COLORS.LABELCOLOR} />
-          )}
-        </TouchableOpacity> */}
         <View
           style={{
             padding: 8,
@@ -691,7 +622,7 @@ const TableScreen = ({route}) => {
                           disabled={isLoading1}
                           activeOpacity={0.35}
                           onPress={() => handleReject(item1)}>
-                          <MaterialCommunityIcons
+                          <MaterialDesignIcons
                             name="cancel"
                             size={18}
                             color={'red'}
@@ -752,8 +683,7 @@ const TableScreen = ({route}) => {
                       isArray = true;
                       parsedArray = possibleArray;
                     }
-                  } catch {
-                  }
+                  } catch {}
                 } else if (Array.isArray(value)) {
                   isArray = true;
                   parsedArray = value;
@@ -921,7 +851,12 @@ const TableScreen = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={item?.name}
       />
@@ -951,7 +886,7 @@ const TableScreen = ({route}) => {
             {searchKeyword.length > 0 && (
               <TouchableOpacity onPress={() => setSearchKeyword('')} style={{}}>
                 <AntDesign
-                  name="closecircle"
+                  name="close-circle"
                   size={20}
                   color={COLORS.grey500}
                 />

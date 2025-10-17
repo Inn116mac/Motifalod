@@ -8,7 +8,7 @@ import React, {useState} from 'react';
 import COLORS from '../theme/Color';
 import {heightPercentageToDP} from 'react-native-responsive-screen';
 import {IMAGE_URL} from '../connection/Config';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import {useNavigation} from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
 import Offline from '../components/root/Offline';
@@ -41,7 +41,7 @@ const FullImageScreen = ({route}) => {
       }}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
         }
         leftOnPress={() => navigation.goBack()}
         title={eventName ? eventName : null}
