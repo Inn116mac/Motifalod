@@ -12,8 +12,8 @@ import {
   KeyboardAvoidingView,
   Keyboard,
 } from 'react-native';
-import {Ionicons} from "@react-native-vector-icons/ionicons";
-import {Entypo} from "@react-native-vector-icons/entypo";
+import {Ionicons} from '@react-native-vector-icons/ionicons';
+import {Entypo} from '@react-native-vector-icons/entypo';
 import fonts from '../../theme/Fonts';
 import NetInfo from '@react-native-community/netinfo';
 import COLORS, {textInputBorderColor} from '../../theme/Color';
@@ -33,7 +33,7 @@ import {useNetworkStatus} from '../../connection/UseNetworkStatus';
 import Loader from '../../components/root/Loader';
 import messaging from '@react-native-firebase/messaging';
 import DeviceInfo from 'react-native-device-info';
-import {Fontisto} from "@react-native-vector-icons/fontisto";
+import {Fontisto} from '@react-native-vector-icons/fontisto';
 
 const LoginScreen = ({route}) => {
   const {width} = useWindowDimensions();
@@ -199,7 +199,19 @@ const LoginScreen = ({route}) => {
   }, []);
 
   const handlePrivacyPolicyClick = () => {
-    Linking.openURL('https://www.psmtech.com/privacy-policy-for-motifalod-app/');
+    Linking.openURL(
+      'https://www.psmtech.com/privacy-policy-for-motifalod-app/',
+    );
+  };
+
+  const subscribeToTopic = async () => {
+    const topic = 'motifalod';
+    try {
+      await messaging().subscribeToTopic(topic);
+      console.log('Successfully subscribed to topic:', topic);
+    } catch (error) {
+      console.error('Error subscribing to topic:', error);
+    }
   };
 
   const handleLog = async () => {
@@ -219,7 +231,6 @@ const LoginScreen = ({route}) => {
         httpClient
           .post(`member/login`, data)
           .then(async response => {
-            
             if (response.data.status && response?.data?.result) {
               if (rememberMe) {
                 await storeData('cred', {userName, password, rememberMe});
@@ -229,6 +240,7 @@ const LoginScreen = ({route}) => {
               const {result} = response.data;
               if (result) {
                 await storeData('user', result);
+                await subscribeToTopic();
                 navigation.dispatch(
                   CommonActions.reset({
                     index: 0,

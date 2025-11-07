@@ -495,9 +495,15 @@ const TableScreen = ({route}) => {
       const field = content[keys[i]];
       if (
         field &&
-        !['header', 'hidden', 'button', 'autocomplete', 'section'].includes(
-          field.type,
-        )
+        ![
+          'header',
+          'hidden',
+          'button',
+          'autocomplete',
+          'section',
+          'password',
+        ].includes(field.type) &&
+        field?.subtype !== 'password'
       ) {
         firstUsedKeyIndex = i;
         break;
@@ -667,7 +673,9 @@ const TableScreen = ({route}) => {
                     'header',
                     'autocomplete',
                     'section',
-                  ].includes(field?.type)
+                    'password',
+                  ].includes(field?.type) ||
+                  field?.subtype === 'password'
                 ) {
                   return null;
                 }

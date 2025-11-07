@@ -109,7 +109,7 @@ export default function ViewerScreen({route}) {
       const data = await res.json();
       setLiveEvents(data);
     } catch (err) {
-      console.log('Fetch liveEvents error:', err.message);
+      // console.log('Fetch liveEvents error:', err.message);
       setLiveEvents([]);
     } finally {
       clearTimeout(timeoutId);
@@ -130,11 +130,10 @@ export default function ViewerScreen({route}) {
 
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const data = await res.json();
-      console.log('data', data);
 
       setRecordedEvents(data);
     } catch (err) {
-      console.log('Fetch recordings error:', err.message);
+      // console.log('Fetch recordings error:', err.message);
       setRecordedEvents([]);
     } finally {
       clearTimeout(timeoutId);
@@ -164,7 +163,6 @@ export default function ViewerScreen({route}) {
       const response = await fetch(`${SERVER_URL}/api/server-capacity`);
       const data = await response.json();
 
-      console.log('Server capacity:', data);
 
       if (data.status === 'FULL' || data.utilizationPercent >= 95) {
         Alert.alert('Server at Capacity', 'Please try again later.');

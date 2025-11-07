@@ -130,13 +130,6 @@ export default function NewsView({data}) {
           <Text numberOfLines={2} style={styles.title}>
             {heading}
           </Text>
-          {/* <Text numberOfLines={2} style={styles.date}>
-            {date || time
-              ? `${moment(formatDate(date)).format(
-                  'DD MMMM YYYY',
-                )} @ ${formattedTime(time)}`
-              : null}
-          </Text> */}
           <Text numberOfLines={2} style={styles.date}>
             {date || time
               ? `${

@@ -20,7 +20,7 @@ import {
 import {Camera, CameraType} from 'react-native-camera-kit';
 import {PermissionsAndroid} from 'react-native';
 import {NOTIFY_MESSAGE} from '../constant/Module';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import CustomHeader from '../components/root/CustomHeader';
 import Loader from '../components/root/Loader';
 import FONTS from '../theme/Fonts';
@@ -28,7 +28,7 @@ import NetInfo from '@react-native-community/netinfo';
 import {getData, removeData, storeData} from '../utils/Storage';
 import Offline from '../components/root/Offline';
 import NoDataFound from '../components/root/NoDataFound';
-import {AntDesign} from "@react-native-vector-icons/ant-design";
+import {AntDesign} from '@react-native-vector-icons/ant-design';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import httpClient from '../connection/httpClient';
 
@@ -173,29 +173,6 @@ const QrCodeScanScreen = ({route}) => {
     fetchData();
   }, []);
 
-  // useEffect(() => {
-  //   const getPermission = async () => {
-  //     try {
-  //       if (Platform.OS === 'android') {
-  //         const granted = await PermissionsAndroid.request(
-  //           PermissionsAndroid.PERMISSIONS.CAMERA,
-  //         );
-
-  //         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-  //         } else {
-  //           Alert.alert(
-  //             'Permission Denied',
-  //             'Camera permission is required to use this feature.',
-  //           );
-  //         }
-  //       } else if (Platform.OS === 'ios') {
-  //       }
-  //     } catch (err) {}
-  //   };
-
-  //   getPermission();
-  // }, []);
-
   useEffect(() => {
     if (isSelfCheckIn) {
       setLoading(false);
@@ -285,7 +262,7 @@ const QrCodeScanScreen = ({route}) => {
       clearTimeout(messageTimeout.current);
       messageTimeout.current = setTimeout(() => {
         setScanMessage(null);
-      }, 5000);
+      }, 3000);
     }
 
     return () => {
@@ -316,7 +293,12 @@ const QrCodeScanScreen = ({route}) => {
       <CustomHeader
         leftOnPress={handlePress}
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={'Qrcode Scanner'}
       />
@@ -350,6 +332,12 @@ const QrCodeScanScreen = ({route}) => {
               showFrame={true}
               frameColor={COLORS.PRIMARYWHITE}
               laserColor={'green'}
+              flashMode="auto"
+              focusMode="on"
+              barcodeFrameSize={{
+                width: 300,
+                height: 300,
+              }}
               onReadCode={event => {
                 handleScan(event?.nativeEvent?.codeStringValue);
               }}
@@ -378,6 +366,12 @@ const QrCodeScanScreen = ({route}) => {
                 showFrame={true}
                 frameColor={COLORS.PRIMARYWHITE}
                 laserColor={'green'}
+                flashMode="auto"
+                focusMode="on"
+                barcodeFrameSize={{
+                  width: 300,
+                  height: 300,
+                }}
                 onReadCode={event => {
                   handleScan(event?.nativeEvent?.codeStringValue);
                 }}

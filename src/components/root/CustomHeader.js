@@ -1,4 +1,4 @@
-import {View, Text, TouchableOpacity, useWindowDimensions} from 'react-native';
+import {View, Text, TouchableOpacity} from 'react-native';
 import React from 'react';
 import COLORS from '../../theme/Color';
 import FONTS from '../../theme/Fonts';
@@ -13,7 +13,6 @@ export default function CustomHeader({
   return (
     <View
       style={{
-        // height: 50,
         flexDirection: 'row',
         alignItems: 'center',
         paddingRight: 10,

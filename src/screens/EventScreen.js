@@ -108,29 +108,21 @@ const EventScreen = ({route}) => {
   const [isLoading1, setIsLoading1] = useState(false);
   const [upEventRes, setUpEventRes] = useState([]);
   const [pastEventRes, setPastEventRes] = useState([]);
-  const [userInfo, setUserInfo] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageNumber1, setPageNumber1] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  // const getUser = async () => {
-  //   const userRes = await getData('user');
-  //   setUserInfo(userRes);
-  // };
-
-  // useEffect(() => {
-  //   getUser();
-  // }, []);
+  useEffect(() => {
+    if (activeTab.id === 0) {
+      onUpComingEvents();
+    }
+  }, [pageNumber, activeTab.id]);
 
   useEffect(() => {
-    if (pageNumber || pageNumber1) {
-      if (activeTab.id == 0) {
-        onUpComingEvents();
-      } else {
-        onPastEventApiCall();
-      }
+    if (activeTab.id === 1) {
+      onPastEventApiCall();
     }
-  }, [pageNumber, pageNumber1, activeTab]);
+  }, [pageNumber1, activeTab.id]);
 
   function onUpComingEvents() {
     NetInfo.fetch().then(state => {
@@ -307,7 +299,7 @@ const EventScreen = ({route}) => {
     try {
       if (hasPermission) {
         const eventId = await Calendar.createEventInCalendarAsync(eventDetails);
-        console.log('Event created with ID:', eventId);
+        // console.log('Event created with ID:', eventId);
       } else {
         Alert.alert('Calendar permission denied');
       }
@@ -388,10 +380,6 @@ const EventScreen = ({route}) => {
               justifyContent: 'center',
               bottom: 10,
               padding: 8,
-              // height:
-              //   Platform.OS === 'ios'
-              //     ? heightPercentageToDP('13%')
-              //     : heightPercentageToDP('16%'),
             }}>
             <Text
               numberOfLines={2}
@@ -604,11 +592,11 @@ const EventScreen = ({route}) => {
                 onPress={() => {
                   setActiveTab(item);
                   if (item.id === 0) {
-                    setPageNumber1(1);
-                    onUpComingEvents();
-                  } else {
                     setPageNumber(1);
-                    onPastEventApiCall();
+                    setHasMore(true);
+                  } else {
+                    setPageNumber1(1);
+                    setHasMore(true);
                   }
                 }}>
                 <Text
@@ -630,8 +618,8 @@ const EventScreen = ({route}) => {
           <Loader />
         ) : isConnected ? (
           <>
-            {pastEventRes.length > 0 ||
-            (activeTab?.id === 0 && upEventRes.length > 0) ? (
+            {(activeTab?.id === 0 && upEventRes.length > 0) ||
+            (activeTab?.id === 1 && pastEventRes.length > 0) ? (
               <View
                 style={{
                   flex: 1,

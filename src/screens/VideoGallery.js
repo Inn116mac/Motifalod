@@ -11,7 +11,7 @@ import {
   ScrollView,
   RefreshControl,
 } from 'react-native';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import {
   heightPercentageToDP,
   widthPercentageToDP,
@@ -31,7 +31,7 @@ import NoDataFound from '../components/root/NoDataFound';
 import CustomHeader from '../components/root/CustomHeader';
 import httpClient from '../connection/httpClient';
 import FastImage from 'react-native-fast-image';
-import {AntDesign} from "@react-native-vector-icons/ant-design";
+import {AntDesign} from '@react-native-vector-icons/ant-design';
 
 const VideoGallery = ({route}) => {
   const {item} = route?.params?.data;
@@ -63,10 +63,12 @@ const VideoGallery = ({route}) => {
       overflow: 'hidden',
       margin: 20,
     },
+    scrollContent: {
+      flexGrow: 1,
+    },
     imageContainer: {
       paddingVertical: 4,
       borderRadius: 10,
-      marginBottom: 10,
       overflow: 'hidden',
     },
     txtLabel: {
@@ -361,78 +363,90 @@ const VideoGallery = ({route}) => {
               gap: 10,
               overflow: 'hidden',
             }}>
-            {consolidatedImages.slice(0, 3).map((img, index) => (
+            {consolidatedImages.slice(0, 3).map((img, imgIndex) => (
               <View
-                key={`${img.videoPath}_${index}`}
+                key={`${img.videoPath}_${imgIndex}`}
                 style={{width: width / 3 - 17}}>
-                {hasError[`${img.videoPath}_${index}`] ? (
+                <TouchableOpacity
+                  disabled={hasError[`${img.videoPath}_${imgIndex}`]}
+                  onPress={() => {
+                    navigation.navigate('VideoGalleryVideoScreen', {
+                      videoData: img?.videoPath,
+                    });
+                  }}
+                  style={{
+                    borderRadius: 10,
+                    overflow: 'hidden',
+                  }}>
                   <FastImage
-                    source={require('../assets/images/video.jpg')}
+                    source={
+                      hasError[`${img.videoPath}_${imgIndex}`]
+                        ? require('../assets/images/video.jpg')
+                        : {
+                            uri: IMAGE_URL + img.videoPath,
+                            cache: FastImage.cacheControl.immutable,
+                            priority: FastImage.priority.normal,
+                          }
+                    }
                     style={{
                       height: 100,
                       width: width / 3 - 18,
                       borderRadius: 10,
                     }}
-                  />
-                ) : (
-                  <TouchableOpacity
-                    // disabled={videoLoading[`${img.videoPath}_${index}`]}
-                    onPress={() => {
-                      navigation.navigate('VideoGalleryVideoScreen', {
-                        videoData: img?.videoPath,
-                      });
+                    resizeMode={FastImage.resizeMode.cover}
+                    onError={() => {
+                      setHasError(prevState => ({
+                        ...prevState,
+                        [`${img.videoPath}_${imgIndex}`]: true,
+                      }));
                     }}
-                    style={{
-                      borderRadius: 10,
-                      overflow: 'hidden',
-                    }}>
-                    {videoLoading[`${img.videoPath}_${index}`] && (
-                      <FastImage
-                        source={require('../assets/images/Video_placeholder.png')}
-                        style={{
-                          height: 100,
-                          width: width / 3 - 18,
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          bottom: 0,
-                          right: 0,
-                          zIndex: 1,
-                        }}
-                        resizeMode="stretch"
-                      />
-                    )}
-                    <Video
-                      onLoadStart={() =>
-                        setVideoLoading(prevState => ({
-                          ...prevState,
-                          [`${img.videoPath}_${index}`]: true,
-                        }))
-                      }
-                      onLoad={() =>
-                        setVideoLoading(prevState => ({
-                          ...prevState,
-                          [`${img.videoPath}_${index}`]: false,
-                        }))
-                      }
-                      onError={() =>
-                        handleVideoError(`${img.videoPath}_${index}`)
-                      }
-                      source={{
-                        uri: IMAGE_URL + img.videoPath,
-                      }}
-                      muted={true}
-                      paused={true}
-                      controls={false}
-                      resizeMode="stretch"
+                    defaultSource={require('../assets/images/Video_placeholder.png')}
+                  />
+
+                  {/* Show play icon only if video is available */}
+                  {!hasError[`${img.videoPath}_${imgIndex}`] && (
+                    <View
                       style={{
-                        height: 100,
-                        width: width / 3 - 18,
-                      }}
-                      shutterColor="transparent"
-                    />
-                  </TouchableOpacity>
-                )}
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: [{translateX: -12}, {translateY: -12}],
+                      }}>
+                      <FontAwesome6
+                        name="circle-play"
+                        size={24}
+                        color="rgba(255,255,255,0.8)"
+                      />
+                    </View>
+                  )}
+
+                  {/* Show "No Video Available" overlay if error */}
+                  {hasError[`${img.videoPath}_${imgIndex}`] && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      }}>
+                      <Text
+                        style={{
+                          color: COLORS.PRIMARYWHITE,
+                          fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                          fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                          textAlign: 'center',
+                          paddingHorizontal: 5,
+                        }}>
+                        No Video{'\n'}Available
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+
                 <Text numberOfLines={1} style={styles.txtAddress}>
                   {img?.createdAt ? img?.createdAt : '-'}
                 </Text>
@@ -455,7 +469,12 @@ const VideoGallery = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={item?.name}
       />
@@ -492,7 +511,7 @@ const VideoGallery = ({route}) => {
                 }
                 contentContainerStyle={{
                   paddingHorizontal: 6,
-                  paddingBottom: 60,
+                  paddingBottom: 80,
                 }}
                 data={rsvpConfig}
                 keyExtractor={(item, index) => index?.toString()}

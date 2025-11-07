@@ -49,11 +49,9 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
 
 const Registration1 = ({route}) => {
-  const {item, isTabView, isForm, isFromEventAdmin} = route.params.data;
+  const {item, isFromEventAdmin} = route.params.data;
 
   const {width} = useWindowDimensions();
-  const windowHeight = Dimensions.get('window').height;
-  const windowWidth = Dimensions.get('window').width;
 
   const styles = StyleSheet.create({
     dropdown: {
@@ -2144,13 +2142,7 @@ const Registration1 = ({route}) => {
                 ) {
                   return null;
                 }
-                if (
-                  fieldKey?.toLowerCase() === 'configurationid'
-                  // ||
-                  // (item?.relationship &&
-                  //   item?.relationship?.value?.toLowerCase() === 'self' &&
-                  //   fieldKey?.toLowerCase() === 'age')
-                ) {
+                if (fieldKey?.toLowerCase() === 'configurationid') {
                   return null;
                 }
 

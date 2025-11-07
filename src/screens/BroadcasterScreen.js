@@ -136,7 +136,6 @@ export default function BroadcasterScreen({route}) {
     if (Platform.OS === 'ios') {
       InCallManager.start({media: 'video', auto: false, ringback: ''});
       InCallManager.setSpeakerphoneOn(false); // Keep speaker OFF
-      console.log('[iOS] Audio configured for recording (no speaker)');
       await new Promise(resolve => setTimeout(resolve, 300));
     }
 
@@ -180,7 +179,6 @@ export default function BroadcasterScreen({route}) {
       return;
     }
     if (isStarting || isStreaming) return;
-    console.log('Checking server capacity before starting stream...');
 
     const canStart = await checkServerCapacity();
     if (!canStart) return;
@@ -404,7 +402,6 @@ export default function BroadcasterScreen({route}) {
         emitCameraSwitch(newIsFront);
       }
 
-      console.log('[CAMERA] Switch completed:', newIsFront ? 'front' : 'back');
     } catch (error) {
       console.error('[CAMERA] Switch error:', error);
       Alert.alert('Camera Error', 'Failed to switch camera. Please try again.');
@@ -472,7 +469,6 @@ export default function BroadcasterScreen({route}) {
       if (Platform.OS === 'ios') {
         try {
           InCallManager.stop();
-          console.log('[iOS] InCallManager stopped');
         } catch (err) {}
       }
       KeepAwake.deactivate();

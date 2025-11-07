@@ -16,10 +16,10 @@ import {
 } from 'react-native';
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import FONTS from '../../theme/Fonts';
-import {Fontisto} from "@react-native-vector-icons/fontisto";
-import {Entypo} from "@react-native-vector-icons/entypo";
-import {Ionicons} from "@react-native-vector-icons/ionicons";
-import {FontAwesome} from "@react-native-vector-icons/fontawesome";
+import {Fontisto} from '@react-native-vector-icons/fontisto';
+import {Entypo} from '@react-native-vector-icons/entypo';
+import {Ionicons} from '@react-native-vector-icons/ionicons';
+import {FontAwesome} from '@react-native-vector-icons/fontawesome';
 import {capitalizeFirstLetter, NOTIFY_MESSAGE} from '../../constant/Module';
 import NetInfo from '@react-native-community/netinfo';
 import COLORS from '../../theme/Color';
@@ -29,7 +29,7 @@ import moment from 'moment';
 import Video from 'react-native-video';
 import ButtonComponent from './ButtonComponent';
 import Loader from './Loader';
-import {MaterialDesignIcons} from "@react-native-vector-icons/material-design-icons";
+import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
 import httpClient from '../../connection/httpClient';
 import NoDataFound from './NoDataFound';
 import {Dropdown} from 'react-native-element-dropdown';
@@ -151,8 +151,6 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
   const [uploadProgress, setUploadProgress] = useState({});
   const [uploadComplete, setUploadComplete] = useState(false);
   const [isComplete, setIsCopmlete] = useState(false);
-  const [dropdownValues, setDropdownValues] = useState({});
-  const [checkboxValues, setCheckboxValues] = useState({});
 
   const [memberShipDetails, setMemberShipDetails] = useState([]);
 
@@ -226,55 +224,6 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       setFormData(parsedContent);
     }
   }, [editItem]);
-
-  const getCheckboxData = async value => {
-    const state = await NetInfo.fetch();
-    if (state.isConnected) {
-      try {
-        const response = await httpClient.get(
-          `module/configuration/dropdown?contentType=RSVP&configurationId=${value}`,
-        );
-        if (response.data.status) {
-          const checkboxValues = response.data.result.map(item => ({
-            label: item.name,
-            value: item.id,
-          }));
-
-          setFormData(prevFields => {
-            const membersField = {
-              ...prevFields.members,
-              values: checkboxValues,
-            };
-
-            const selectedLabels = membersField?.value
-              ?.split(',')
-              ?.map(label => label.trim());
-            const selectedValues = membersField.values
-              ?.filter(option => selectedLabels?.includes(option.label))
-              ?.map(option => option.value);
-
-            membersField.value = selectedValues.join(',');
-
-            return {
-              ...prevFields,
-              members: membersField,
-            };
-          });
-        } else {
-          NOTIFY_MESSAGE(
-            response?.data?.message
-              ? response?.data?.message
-              : 'Something Went Wrong',
-          );
-        }
-      } catch (err) {
-        NOTIFY_MESSAGE(err?.message ? err.message : 'Something Went Wrong');
-      } finally {
-      }
-    } else {
-      NOTIFY_MESSAGE('Please check your internet connectivity');
-    }
-  };
 
   const getMemberShipDetails = () => {
     NetInfo.fetch().then(state => {
@@ -1843,6 +1792,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           }
                           width={'50%'}
                           onPress={() => {
+                            Keyboard.dismiss();
                             setModalVisible(prev => ({
                               ...prev,
                               [item?.name]: true,
@@ -1894,7 +1844,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                                 <View key={index} style={{margin: 5}}>
                                   {getFileType(uri) === 'video' ? (
                                     <View>
-                                      <Video
+                                      {/* <Video
                                         source={{
                                           uri: uri ? IMAGE_URL + uri : null,
                                         }}
@@ -1904,6 +1854,17 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                                         repeat={false}
                                         paused={false}
                                         muted={true}
+                                      /> */}
+                                      <FastImage
+                                        source={{
+                                          uri: uri ? IMAGE_URL + uri : null,
+                                          cache:
+                                            FastImage.cacheControl.immutable,
+                                          priority: FastImage.priority.normal,
+                                        }}
+                                        style={styles.video}
+                                        resizeMode={FastImage.resizeMode.cover}
+                                        defaultSource={require('../../assets/images/Video_placeholder.png')}
                                       />
                                       <TouchableOpacity
                                         style={{
@@ -2377,90 +2338,90 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                     </View>
                   );
 
-                case 'password':
-                  return (
-                    <View key={key} style={{marginBottom: 8, gap: 4}}>
-                      <Text
-                        style={{
-                          fontSize: FONTS.FONTSIZE.SMALL,
-                          fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                          color: COLORS.TITLECOLOR,
-                        }}>
-                        {item?.label}{' '}
-                        {item?.required && (
-                          <Text
-                            style={{
-                              color: errors[key]
-                                ? COLORS.PRIMARYRED
-                                : COLORS.TITLECOLOR,
-                            }}>
-                            *
-                          </Text>
-                        )}
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          borderWidth: 1,
-                          borderColor: errors[key]
-                            ? COLORS.PRIMARYRED
-                            : COLORS.INPUTBORDER,
-                          borderRadius: 10,
-                          justifyContent: 'space-between',
-                          paddingHorizontal: 10,
-                          backgroundColor: COLORS.PRIMARYWHITE,
-                        }}>
-                        <TextInput
-                          editable={editItem ? false : true}
-                          style={{
-                            height: 38,
-                            color: COLORS.PLACEHOLDERCOLOR,
-                            borderRadius: 10,
-                            borderColor: COLORS.INPUTBORDER,
-                            fontSize: FONTS.FONTSIZE.MINI,
-                            fontFamily: FONTS.FONT_FAMILY.REGULAR,
-                            width: '93%',
-                            paddingVertical: 0,
-                          }}
-                          maxLength={
-                            item?.maxLength == 0 ? 250 : item?.maxLength
-                          }
-                          secureTextEntry={!passwordVisible[key]}
-                          placeholder={`Enter ${item?.label}`}
-                          placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
-                          value={item?.value || ' '}
-                          onChangeText={value =>
-                            handlePassword(
-                              item?.name,
-                              value,
-                              item?.label,
-                              item?.required,
-                            )
-                          }
-                        />
-                        <TouchableOpacity
-                          onPress={() => togglePasswordVisibility(key)}>
-                          <Ionicons
-                            name={passwordVisible[key] ? 'eye-off' : 'eye'}
-                            size={24}
-                            color={COLORS.TITLECOLOR}
-                          />
-                        </TouchableOpacity>
-                      </View>
-                      {errors[item?.name] && (
-                        <Text
-                          style={{
-                            color: COLORS.PRIMARYRED,
-                            fontSize: FONTS.FONTSIZE.SMALL,
-                            fontFamily: FONTS.FONT_FAMILY.REGULAR,
-                            marginTop: 4,
-                          }}>
-                          {errors[item?.name]}
-                        </Text>
-                      )}
-                    </View>
-                  );
+                // case 'password':
+                //   return (
+                //     <View key={key} style={{marginBottom: 8, gap: 4}}>
+                //       <Text
+                //         style={{
+                //           fontSize: FONTS.FONTSIZE.SMALL,
+                //           fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                //           color: COLORS.TITLECOLOR,
+                //         }}>
+                //         {item?.label}{' '}
+                //         {item?.required && (
+                //           <Text
+                //             style={{
+                //               color: errors[key]
+                //                 ? COLORS.PRIMARYRED
+                //                 : COLORS.TITLECOLOR,
+                //             }}>
+                //             *
+                //           </Text>
+                //         )}
+                //       </Text>
+                //       <View
+                //         style={{
+                //           flexDirection: 'row',
+                //           alignItems: 'center',
+                //           borderWidth: 1,
+                //           borderColor: errors[key]
+                //             ? COLORS.PRIMARYRED
+                //             : COLORS.INPUTBORDER,
+                //           borderRadius: 10,
+                //           justifyContent: 'space-between',
+                //           paddingHorizontal: 10,
+                //           backgroundColor: COLORS.PRIMARYWHITE,
+                //         }}>
+                //         <TextInput
+                //           editable={editItem ? false : true}
+                //           style={{
+                //             height: 38,
+                //             color: COLORS.PLACEHOLDERCOLOR,
+                //             borderRadius: 10,
+                //             borderColor: COLORS.INPUTBORDER,
+                //             fontSize: FONTS.FONTSIZE.MINI,
+                //             fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                //             width: '93%',
+                //             paddingVertical: 0,
+                //           }}
+                //           maxLength={
+                //             item?.maxLength == 0 ? 250 : item?.maxLength
+                //           }
+                //           secureTextEntry={!passwordVisible[key]}
+                //           placeholder={`Enter ${item?.label}`}
+                //           placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
+                //           value={item?.value || ' '}
+                //           onChangeText={value =>
+                //             handlePassword(
+                //               item?.name,
+                //               value,
+                //               item?.label,
+                //               item?.required,
+                //             )
+                //           }
+                //         />
+                //         <TouchableOpacity
+                //           onPress={() => togglePasswordVisibility(key)}>
+                //           <Ionicons
+                //             name={passwordVisible[key] ? 'eye-off' : 'eye'}
+                //             size={24}
+                //             color={COLORS.TITLECOLOR}
+                //           />
+                //         </TouchableOpacity>
+                //       </View>
+                //       {errors[item?.name] && (
+                //         <Text
+                //           style={{
+                //             color: COLORS.PRIMARYRED,
+                //             fontSize: FONTS.FONTSIZE.SMALL,
+                //             fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                //             marginTop: 4,
+                //           }}>
+                //           {errors[item?.name]}
+                //         </Text>
+                //       )}
+                //     </View>
+                //   );
 
                 case 'textarea':
                   return (

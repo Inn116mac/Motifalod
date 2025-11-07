@@ -43,8 +43,6 @@ const ReportsData = ({route}) => {
     'RSVP May be Responses',
   ];
 
-  const allowedCategories = ['Event Expenses'];
-
   const styles = StyleSheet.create({
     listContainer: {
       marginHorizontal: 10,
@@ -187,8 +185,6 @@ const ReportsData = ({route}) => {
 
   const [reportsData, setReportsData] = useState([]);
 
-  const [additionalData, setAdditionalData] = useState(null);
-
   const [eventData, setEventData] = useState([]);
 
   const [filterLoading, setFilterLoading] = useState(false);
@@ -197,8 +193,6 @@ const ReportsData = ({route}) => {
 
   const [downloadLoading, setDownloadLoading] = useState(false);
 
-  const [totalPages, setTotalpages] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
 
   const [total, setTotal] = useState(null);
@@ -235,11 +229,6 @@ const ReportsData = ({route}) => {
             const {status, message, result} = data;
 
             if (status || (status == true && result)) {
-              // const newEvent = {
-              //   id: 0,
-              //   name: 'All',
-              // };
-              // result.unshift(newEvent);
               const filterEvent = result?.find(
                 item => item?.name === selectedEventFromList?.name,
               );
@@ -287,10 +276,6 @@ const ReportsData = ({route}) => {
           .then(async response => {
             if (response.data.status) {
               const filePath = response.data.result;
-              // const downloadUrl = `${IMAGE_URL}/${filePath}`;
-              // console.log('original : ',`${IMAGE_URL}${filePath}`);
-
-              // await handleDownload(downloadUrl, fileId);
               navigation.navigate('FileViewer', {
                 fileUrl: `${IMAGE_URL}${filePath}`,
               });
@@ -331,18 +316,10 @@ const ReportsData = ({route}) => {
           .post(`Report/Get`, data)
           .then(response => {
             if (response.data.status) {
-              // const totalPages = Math.ceil(
-              //   response?.data?.totalRecords / PAGE_SIZE,
-              // );
               const totalRecords = response?.data?.totalRecords || 0;
 
               const calculatedTotalPages = Math.ceil(totalRecords / PAGE_SIZE);
 
-              if (response.data.additionalData) {
-                setAdditionalData(response.data.additionalData);
-              }
-
-              // setTotalpages(totalPages);
               setTotal(response?.data?.total ?? response?.data?.totalRecords);
               const newData = response?.data?.result;
               if (newData?.length > 0) {
@@ -571,8 +548,6 @@ const ReportsData = ({route}) => {
     );
   };
 
-  // console.log(additionalData);
-
   return (
     <View
       style={{
@@ -581,7 +556,12 @@ const ReportsData = ({route}) => {
       }}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={item1?.label}
         leftOnPress={() => navigation.goBack()}
@@ -636,29 +616,13 @@ const ReportsData = ({route}) => {
                 fontSize: FONTS.FONTSIZE.EXTRASMALL,
                 fontFamily: FONTS.FONT_FAMILY.MEDIUM,
               }}>
-              Total {item1?.label} : {total || 0}
+              {/* Total {item1?.label} : {total || 0} */}
+              {item1?.label?.toLowerCase().includes('total')
+                ? item1?.label
+                : `Total ${item1?.label}`}{' '}
+              : {total || 0}
             </Text>
           )}
-          {/* {additionalData && (
-            <View style={{marginHorizontal: 10}}>
-              <Text
-                style={{
-                  fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                  fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                  color: COLORS.TITLECOLOR,
-                }}>
-                Additional Adults : {additionalData?.numberOfAdult || 0}
-              </Text>
-              <Text
-                style={{
-                  fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                  fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                  color: COLORS.TITLECOLOR,
-                }}>
-                Additional Kids : {additionalData?.numberOfKids || 0}
-              </Text>
-            </View>
-          )} */}
 
           {reportsData?.length > 0 ? (
             <FlatList
@@ -699,21 +663,6 @@ const ReportsData = ({route}) => {
               </TouchableOpacity>
             )}
           </View>
-
-          {/* {reportsData.length > 0 ? (
-            <View style={{flex: 1}}>
-              <ScrollView horizontal style={{paddingBottom: 8}}>
-                <View style={styles.tableContainer}>
-                  {renderTableHeader()}
-                  <ScrollView contentContainerStyle={{flexGrow: 1}}>
-                    {renderTableRows()}
-                  </ScrollView>
-                </View>
-              </ScrollView>
-            </View>
-          ) : (
-            <NoDataFound />
-          )} */}
 
           <Modal
             animationType="none"
@@ -771,33 +720,6 @@ const ReportsData = ({route}) => {
       ) : (
         <Offline />
       )}
-      {/* {isConnected && totalPages > 1 && (
-        <View style={styles.paginationContainer}>
-          <TouchableOpacity
-            onPress={() => handlePageChange('left')}
-            disabled={currentPage === 1}
-            style={styles.arrowButton}>
-            <AntDesign
-              name="caretleft"
-              size={24}
-              color={currentPage === 1 ? 'gray' : COLORS.PRIMARYBLACK}
-            />
-          </TouchableOpacity>
-
-          {renderPaginationButtons()}
-
-          <TouchableOpacity
-            onPress={() => handlePageChange('right')}
-            disabled={currentPage === totalPages}
-            style={styles.arrowButton}>
-            <AntDesign
-              name="caretright"
-              size={24}
-              color={currentPage === totalPages ? 'gray' : COLORS.PRIMARYBLACK}
-            />
-          </TouchableOpacity>
-        </View>
-      )} */}
     </View>
   );
 };

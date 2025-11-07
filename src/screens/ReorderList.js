@@ -101,7 +101,7 @@ const ReorderList = ({}) => {
         <Text
           numberOfLines={2}
           style={{
-            fontSize: FONTS.FONTSIZE.SEMI,
+            fontSize: FONTS.FONTSIZE.EXTRASMALL,
             fontFamily: FONTS.FONT_FAMILY.MEDIUM,
             color: COLORS.PLACEHOLDERCOLOR,
             paddingVertical: 0,

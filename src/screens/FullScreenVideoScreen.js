@@ -5,12 +5,12 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  Platform, // ✅ ADD THIS
+  Platform,
 } from 'react-native';
 import {RTCView} from 'react-native-webrtc';
 import * as mediasoupClient from 'mediasoup-client';
 import io from 'socket.io-client';
-import InCallManager from 'react-native-incall-manager'; // ✅ ADD THIS
+import InCallManager from 'react-native-incall-manager';
 import CustomHeader from '../components/root/CustomHeader';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import COLORS from '../theme/Color';
@@ -40,22 +40,21 @@ export default function FullScreenVideoScreen({route}) {
   const recvTransportRef = useRef(null);
   const consumersRef = useRef([]);
 
-  // ✅ ADD AUDIO SESSION MANAGEMENT
   useEffect(() => {
-    if (Platform.OS === 'ios' && !isRecording) {
+    if (!isRecording) {
       // Start audio session for video viewing (not recording)
       InCallManager.start({media: 'video', auto: false, ringback: ''});
       InCallManager.setForceSpeakerphoneOn(true);
-      console.log('✅ iOS Audio Session started - Speaker enabled');
+      // console.log('✅ iOS Audio Session started - Speaker enabled');
 
       return () => {
         InCallManager.stop();
-        console.log('🛑 iOS Audio Session stopped');
+        InCallManager.setForceSpeakerphoneOn(false);
+        // console.log('🛑 iOS Audio Session stopped');
       };
     }
   }, [isRecording]);
 
-  // Clean up on unmount or room switch
   const cleanup = () => {
     if (consumersRef.current.length) {
       consumersRef.current.forEach(c => {
@@ -139,11 +138,11 @@ export default function FullScreenVideoScreen({route}) {
               if (gotVideo) {
                 setStream(videoStream);
                 // ✅ ENSURE SPEAKER IS ON AFTER STREAM STARTS
-                if (Platform.OS === 'ios') {
-                  setTimeout(() => {
-                    InCallManager.setForceSpeakerphoneOn(true);
-                  }, 500);
-                }
+                // if (Platform.OS === 'ios') {
+                setTimeout(() => {
+                  InCallManager.setForceSpeakerphoneOn(true);
+                }, 500);
+                // }
               } else {
                 NOTIFY_MESSAGE('No video stream found');
               }
@@ -207,9 +206,9 @@ export default function FullScreenVideoScreen({route}) {
             style={{flex: 1}}
             controls={true}
             resizeMode="cover"
-            onError={e =>
-              console.log('Video playback error:', JSON.stringify(e))
-            }
+            onError={e => {
+              // console.log('Video playback error:', JSON.stringify(e))
+            }}
           />
         </View>
       ) : !stream ? (

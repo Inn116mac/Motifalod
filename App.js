@@ -48,8 +48,6 @@ const App = () => {
       const existingToken = await getData('deviceToken');
       if (!existingToken) {
         await requestUserPermission();
-      } else {
-        await subscribeToTopic(existingToken);
       }
     };
     checkDeviceToken();
@@ -77,17 +75,9 @@ const App = () => {
     if (enabled) {
       const token = await messaging().getToken();
       await storeData('deviceToken', token);
-      await subscribeToTopic(existingToken);
     }
   };
-  const subscribeToTopic = async token => {
-    const topic = 'motifalod';
-    try {
-      await messaging().subscribeToTopic(topic);
-    } catch (error) {
-      // console.error('Error subscribing to topic:', error);
-    }
-  };
+
   const createNotification = () => {
     PushNotification.configure({
       onRegister: function (token) {},

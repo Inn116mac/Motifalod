@@ -138,18 +138,19 @@ const VideoViewAllGallery = ({route}) => {
     }));
   });
 
-  const [videoLoading, setVideoLoading] = useState(true);
+  const [videoLoading, setVideoLoading] = useState({});
 
   const renderItem = ({item, index}) => {
     const uniqueKey = index;
-    return !hasError[uniqueKey] ? (
+
+    return (
       <View
         style={{
           borderRadius: 10,
           overflow: 'hidden',
         }}>
         <TouchableOpacity
-          disabled={videoLoading[uniqueKey]}
+          disabled={hasError[uniqueKey]}
           style={styles.imageContainer}
           onPress={() => {
             if (item?.videoPath) {
@@ -158,59 +159,47 @@ const VideoViewAllGallery = ({route}) => {
               });
             }
           }}>
-          {videoLoading[uniqueKey] && (
-            <FastImage
-              source={require('../assets/images/Video_placeholder.png')}
-              style={{
-                height: 100,
-                width: width / 3 - 20,
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                bottom: 0,
-                right: 0,
-                zIndex: 1,
-              }}
-              resizeMode="stretch"
-            />
-          )}
-          <Video
-            onLoadStart={() =>
-              setVideoLoading(prevState => ({
-                ...prevState,
-                [uniqueKey]: true,
-              }))
+          <FastImage
+            source={
+              hasError[uniqueKey]
+                ? require('../assets/images/video.jpg')
+                : {
+                    uri: IMAGE_URL + item?.videoPath,
+                    cache: FastImage.cacheControl.immutable,
+                    priority: FastImage.priority.normal,
+                  }
             }
-            onLoad={() =>
-              setVideoLoading(prevState => ({
-                ...prevState,
-                [uniqueKey]: false,
-              }))
-            }
-            onError={() => handleVideoError(uniqueKey)}
-            source={{uri: IMAGE_URL + item?.videoPath}}
-            resizeMode="stretch"
             style={{
               height: 100,
               width: width / 3 - 20,
+              borderRadius: 10,
             }}
-            muted={true}
-            paused={true}
-            controls={false}
-            shutterColor="transparent"
+            resizeMode={FastImage.resizeMode.cover}
+            defaultSource={require('../assets/images/Video_placeholder.png')}
+            onError={() => {
+              setHasError(prevState => ({
+                ...prevState,
+                [uniqueKey]: true,
+              }));
+            }}
           />
+
+          {!hasError[uniqueKey] && (
+            <View
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: [{translateX: -12}, {translateY: -12}],
+              }}>
+              <FontAwesome6
+                name="circle-play"
+                size={24}
+                color="rgba(255,255,255,0.8)"
+              />
+            </View>
+          )}
         </TouchableOpacity>
-      </View>
-    ) : (
-      <View style={styles.imageContainer}>
-        <FastImage
-          source={require('../assets/images/video.jpg')}
-          style={{
-            height: 100,
-            width: width / 3 - 20,
-            borderRadius: 10,
-          }}
-        />
       </View>
     );
   };

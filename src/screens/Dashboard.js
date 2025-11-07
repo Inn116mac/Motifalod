@@ -271,25 +271,6 @@ const Dashboard = ({route}) => {
         flex: 1,
         backgroundColor: COLORS.BACKGROUNDCOLOR,
       }}>
-      {/* <CustomHeader
-        leftOnPress={() => {
-          openDrawerWithData();
-        }}
-        leftIcon={<Ionicons name="menu" color={COLORS.LABELCOLOR} size={32} />}
-        title={`Welcome ${
-          userData?.user?.firstName ? userData?.user?.firstName : firstName
-        }!`}
-        rightIcon={
-          <MaterialDesignIcons
-            name="sort"
-            color={COLORS.LABELCOLOR}
-            size={28}
-          />
-        }
-        rightOnPress={() => {
-          navigation.navigate('ReorderList');
-        }}
-      /> */}
       <View
         style={{
           flexDirection: 'row',

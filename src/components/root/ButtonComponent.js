@@ -1,9 +1,8 @@
-import {Text, TouchableOpacity, View} from 'react-native';
+import {Text, TouchableOpacity} from 'react-native';
 import React from 'react';
 import COLORS from '../../theme/Color';
 import FONTS from '../../theme/Fonts';
-import {MaterialDesignIcons} from "@react-native-vector-icons/material-design-icons";
-
+import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
 
 export default function ButtonComponent({
   title,
@@ -16,7 +15,7 @@ export default function ButtonComponent({
   borderRadius,
   marginVertical,
   isReport,
-  paddingHorizontal
+  paddingHorizontal,
 }) {
   return (
     <TouchableOpacity
@@ -27,7 +26,7 @@ export default function ButtonComponent({
         paddingVertical: paddingVertical ? paddingVertical : 8,
         marginVertical: marginVertical ? marginVertical : 10,
         paddingHorizontal: paddingHorizontal ? paddingHorizontal : 0,
-        width: width ? width  : '100%',
+        width: width ? width : '100%',
         alignItems: 'center',
         borderWidth: 1,
         borderColor: COLORS.LABELCOLOR,
@@ -37,7 +36,7 @@ export default function ButtonComponent({
         gap: isReport ? 6 : null,
       }}
       onPress={onPress}>
-        {isReport ? (
+      {isReport ? (
         <MaterialDesignIcons
           name="microsoft-excel"
           size={32}

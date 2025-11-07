@@ -9,7 +9,7 @@ import {
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import CustomHeader from '../components/root/CustomHeader';
 import COLORS from '../theme/Color';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import Offline from '../components/root/Offline';
 import FONTS from '../theme/Fonts';
 import {useNavigation} from '@react-navigation/native';
@@ -104,7 +104,12 @@ const DemisesDetails = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={'Demise Details'}
       />
@@ -121,9 +126,6 @@ const DemisesDetails = ({route}) => {
                 return (
                   <View key={idx} style={styles.infoRow}>
                     <Text style={styles.infoLabel}>{infoItem?.label} : </Text>
-                    {/* <Text style={styles.infoValue}>
-                      {infoItem?.value || '-'}
-                    </Text> */}
                     {infoItem.type === 'file' ? (
                       infoItem.value ? (
                         getFileType(

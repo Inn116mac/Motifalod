@@ -12,7 +12,7 @@ import moment from 'moment';
 import COLORS from '../../../theme/Color';
 import FONTS from '../../../theme/Fonts';
 import {IMAGE_URL} from '../../../connection/Config';
-import {AntDesign} from "@react-native-vector-icons/ant-design";
+import {AntDesign} from '@react-native-vector-icons/ant-design';
 import NoDataFound from '../NoDataFound';
 import {getImageUri} from '../../../constant/Module';
 
@@ -92,7 +92,6 @@ export default function SingleCollapse({
     const firstKey = parsedKeys[0];
     const firstKeyValue = parsedContent[firstKey]?.value || '';
 
-    // const number = index >= 0 && index <= 9 ? `0${index + 1}` : `${index + 1}`;
     const number1 = (pageNumber - 1) * PAGE_SIZE + index + 1;
     const number = number1 <= 9 ? `0${number1}` : `${number1}`;
 
@@ -145,7 +144,6 @@ export default function SingleCollapse({
             <View
               style={{
                 backgroundColor: COLORS.LABELCOLOR,
-                // width: widthPercentageToDP('10%'),
                 justifyContent: 'center',
                 alignItems: 'center',
                 borderRadius: 10,
@@ -156,15 +154,8 @@ export default function SingleCollapse({
                 {number}
               </Text>
             </View>
-            <View
-              style={
-                {
-                  // flexDirection: 'row',
-                  // alignItems: 'center',
-                }
-              }>
+            <View style={{}}>
               <Text
-                // numberOfLines={1}
                 style={{
                   fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                   fontSize: FONTS.FONTSIZE.EXTRASMALL,

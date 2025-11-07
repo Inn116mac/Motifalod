@@ -7,11 +7,10 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
-import {widthPercentageToDP} from 'react-native-responsive-screen';
 import FONTS from '../../theme/Fonts';
 import COLORS from '../../theme/Color';
 import NoDataFound from './NoDataFound';
-import {AntDesign} from "@react-native-vector-icons/ant-design";
+import {AntDesign} from '@react-native-vector-icons/ant-design';
 
 export default function DonationView({data, pageNumber, PAGE_SIZE}) {
   const {width} = useWindowDimensions();
@@ -50,7 +49,6 @@ export default function DonationView({data, pageNumber, PAGE_SIZE}) {
 
     const parsedContent = JSON.parse(item?.content);
 
-    // const number = index >= 0 && index <= 9 ? `0${index + 1}` : `${index + 1}`;
     const number1 = (pageNumber - 1) * PAGE_SIZE + index + 1;
     const number = number1 <= 9 ? `0${number1}` : `${number1}`;
 
@@ -131,17 +129,6 @@ export default function DonationView({data, pageNumber, PAGE_SIZE}) {
               paddingHorizontal: 4,
             }}>
             <View>
-              {/* {JSON.parse(item?.content)?.map((data, index) => {
-                return (
-                  <View style={styles.textView} key={index}>
-                    <Text style={styles.titleText}>{`${data.label} :`}</Text>
-                    <Text style={styles.text}>
-                      {data?.value ? data?.value : '-'}
-                    </Text>
-                  </View>
-                );
-              })} */}
-
               {keys.map(key => {
                 const data = parsedContent[key];
                 return (

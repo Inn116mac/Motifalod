@@ -13,11 +13,12 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
+  Platform,
 } from 'react-native';
 import Dashboard from '../screens/Dashboard';
 import MemberScreen from '../screens/MemberScreen';
 import COLORS from '../theme/Color';
-import {Ionicons} from "@react-native-vector-icons/ionicons";
+import {Ionicons} from '@react-native-vector-icons/ionicons';
 import {getData, removeData} from '../utils/Storage';
 import NetInfo from '@react-native-community/netinfo';
 import {IMAGE_URL} from '../connection/Config';
@@ -26,7 +27,7 @@ import FONTS from '../theme/Fonts';
 import httpClient from '../connection/httpClient';
 import {CommonActions} from '@react-navigation/native';
 import {DrawerContext} from '../utils/DrawerContext';
-import {MaterialIcons} from "@react-native-vector-icons/material-icons";
+import {MaterialIcons} from '@react-native-vector-icons/material-icons';
 
 const windowHeight = Dimensions.get('window').height;
 const windowWidth = Dimensions.get('window').width;
@@ -517,20 +518,6 @@ const DrawerNavigator = () => {
           }}
         />
       )}
-
-      {/* <Drawer.Screen
-        name="RSVP"
-        component={RSVPScreen}
-        options={{
-          drawerIcon: ({color, size}) => (
-            <Ionicons
-              name="calendar-outline"
-              color={COLORS.TITLECOLOR}
-              size={size}
-            />
-          ),
-        }}
-      /> */}
     </Drawer.Navigator>
   );
 };
@@ -544,7 +531,7 @@ const styles = StyleSheet.create({
   },
   modalClose: {
     position: 'absolute',
-    top: 40,
+    top: Platform.OS == 'ios' ? 60 : 40,
     right: 20,
     zIndex: 1,
   },

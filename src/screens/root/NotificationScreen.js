@@ -12,7 +12,6 @@ import FONTS from '../../theme/Fonts';
 const NotificationScreen = () => {
   const navigation = useNavigation();
 
-  // Sample notification data based on the image
   const notificationData = [
     {
       id: 1,

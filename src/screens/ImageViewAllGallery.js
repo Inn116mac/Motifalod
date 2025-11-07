@@ -10,7 +10,6 @@ import {
 import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
 import {
   heightPercentageToDP,
-  widthPercentageToDP,
 } from 'react-native-responsive-screen';
 import FONTS from '../theme/Fonts';
 import COLORS from '../theme/Color';

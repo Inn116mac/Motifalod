@@ -86,7 +86,6 @@ export default function ImageGallery({route}) {
     imageContainer: {
       paddingVertical: 4,
       borderRadius: 10,
-      marginBottom: 10,
       overflow: 'hidden',
     },
     txtLabel: {
@@ -107,7 +106,7 @@ export default function ImageGallery({route}) {
     },
     listContainer: {
       padding: 15,
-      paddingBottom: 60,
+      paddingBottom: 80,
     },
     txtTitle: {
       fontFamily: FONTS.FONT_FAMILY.MEDIUM,

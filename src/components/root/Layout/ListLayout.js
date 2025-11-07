@@ -4,7 +4,6 @@ import {
   View,
   Text,
   FlatList,
-  useWindowDimensions,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import moment from 'moment';
@@ -16,7 +15,6 @@ import {getImageUri} from '../../../constant/Module';
 
 export default function ListLayout({data}) {
   const [imageErrors, setImageErrors] = useState({});
-  const {width} = useWindowDimensions();
   const styles = StyleSheet.create({
     card: {
       borderRadius: 10,

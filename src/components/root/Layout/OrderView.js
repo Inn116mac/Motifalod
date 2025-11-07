@@ -50,7 +50,6 @@ export default function OrderView({data, pageNumber, PAGE_SIZE}) {
 
   const renderList = ({item, index}) => {
     const keys = data[0]?.keys ? JSON.parse(data[0]?.keys) : [];
-    // const number = index >= 0 && index <= 9 ? `0${index + 1}` : `${index + 1}`;
     const number1 = (pageNumber - 1) * PAGE_SIZE + index + 1;
     const number = number1 <= 9 ? `0${number1}` : `${number1}`;
     const parsedContent = JSON.parse(item?.content);

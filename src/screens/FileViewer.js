@@ -5,7 +5,7 @@ import {downloadFile} from '../utils/CustomDowenload';
 import COLORS from '../theme/Color';
 import ButtonComponent from '../components/root/ButtonComponent';
 import CustomHeader from '../components/root/CustomHeader';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import {useNavigation} from '@react-navigation/native';
 
 const FileViewer = ({route}) => {
@@ -27,15 +27,16 @@ const FileViewer = ({route}) => {
     setDownloadLoading(false);
   };
 
-  // const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
-  //   fileUrl,
-  // )}&embedded=true`;
-
   return (
     <View style={styles.container}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         leftOnPress={() => navigation.goBack()}
       />

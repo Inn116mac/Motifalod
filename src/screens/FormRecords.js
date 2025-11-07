@@ -6,7 +6,7 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Image
+  Image,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {
@@ -22,12 +22,12 @@ import {NOTIFY_MESSAGE} from '../constant/Module';
 import Loader from '../components/root/Loader';
 import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
-import {AntDesign} from "@react-native-vector-icons/ant-design";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
+import {AntDesign} from '@react-native-vector-icons/ant-design';
 import httpClient from '../connection/httpClient';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import NoDataFound from '../components/root/NoDataFound';
-import { IMAGE_URL } from '../connection/Config';
+import {IMAGE_URL} from '../connection/Config';
 
 const FormRecords = ({route}) => {
   const styles = StyleSheet.create({
@@ -157,6 +157,7 @@ const FormRecords = ({route}) => {
     'EXECUTIVE TEAM': 'Leadership management & decisions',
     'FOOD TEAM': 'Menu planning & Catering management',
     'MEMBERSHIP FEES': 'Member dues & payment tracking',
+    'SAD DEMISES': 'Maintain funeral & memorial ceremony details',
   };
 
   const renderItem = ({item, index}) => {
@@ -226,7 +227,12 @@ const FormRecords = ({route}) => {
       }}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={item?.name}
         leftOnPress={() => navigation.navigate('Dashboard')}

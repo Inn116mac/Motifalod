@@ -383,7 +383,7 @@ const EventAttendee = ({route}) => {
                           }}>
                           <Text style={styles.memberText}>Check In : </Text>
                           <Text style={styles.membervalue}>
-                            {member.checkIn}
+                            {member.checkIn || '-'}
                           </Text>
                         </View>
                         <View
@@ -393,7 +393,7 @@ const EventAttendee = ({route}) => {
                           }}>
                           <Text style={styles.memberText}>Member Name : </Text>
                           <Text style={styles.membervalue}>
-                            {member.memberName}
+                            {member.memberName || '-'}
                           </Text>
                         </View>
                       </View>

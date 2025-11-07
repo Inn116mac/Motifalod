@@ -131,7 +131,6 @@ const startDownload = async (
 
   try {
     const result = await downloadFileWithNoTimeout(options);
-    // console.log('res : ', JSON.stringify(result));
 
     if (result.statusCode === 200) {
       // const fileName = downloadDest.split('/').pop();

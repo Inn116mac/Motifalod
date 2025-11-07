@@ -17,11 +17,11 @@ import {
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import FONTS from '../../theme/Fonts';
 import ButtonComponent from './ButtonComponent';
-import {Entypo} from "@react-native-vector-icons/entypo";
-import {Fontisto} from "@react-native-vector-icons/fontisto";
-import {Ionicons} from "@react-native-vector-icons/ionicons";
-import {FontAwesome} from "@react-native-vector-icons/fontawesome";
-import {MaterialDesignIcons} from "@react-native-vector-icons/material-design-icons";
+import {Entypo} from '@react-native-vector-icons/entypo';
+import {Fontisto} from '@react-native-vector-icons/fontisto';
+import {Ionicons} from '@react-native-vector-icons/ionicons';
+import {FontAwesome} from '@react-native-vector-icons/fontawesome';
+import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
 import {capitalizeFirstLetter, NOTIFY_MESSAGE} from '../../constant/Module';
 import NetInfo from '@react-native-community/netinfo';
 import COLORS from '../../theme/Color';
@@ -43,8 +43,8 @@ import {
   ShareDialog,
   GraphRequestManager,
 } from 'react-native-fbsdk-next';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
-import {Feather} from "@react-native-vector-icons/feather";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
+import {Feather} from '@react-native-vector-icons/feather';
 
 const APP_ID = '1173536437853030';
 const APP_SECRET = '72e5b8d18e367ca47a066f5d8801e693';
@@ -2430,6 +2430,7 @@ export default function CustomTab({
                           }
                           width={'50%'}
                           onPress={() => {
+                            Keyboard.dismiss();
                             if (formData[item?.key]?.length >= 6) {
                               Alert.alert(
                                 `Maximum ${
@@ -2491,7 +2492,7 @@ export default function CustomTab({
                                 <View key={index} style={{margin: 5}}>
                                   {isVideoGallery ? (
                                     <View style={{}}>
-                                      <Video
+                                      {/* <Video
                                         source={{uri: IMAGE_URL + uri}}
                                         style={styles.video}
                                         controls={false}
@@ -2499,6 +2500,15 @@ export default function CustomTab({
                                         repeat={false}
                                         paused={false}
                                         muted={true}
+                                      /> */}
+                                      <FastImage
+                                        defaultSource={require('../../assets/images/Video_placeholder.png')}
+                                        source={{
+                                          uri: IMAGE_URL + uri,
+                                          priority: FastImage.priority.normal,
+                                        }}
+                                        style={styles.video}
+                                        resizeMode={FastImage.resizeMode.cover}
                                       />
                                       <TouchableOpacity
                                         style={{
@@ -3641,7 +3651,12 @@ export default function CustomTab({
                       ]}
                       activeOpacity={0.7}>
                       {syncWithFacebook && (
-                        <FontAwesome6 iconStyle='solid' name="check" size={16} color={'#fff'} />
+                        <FontAwesome6
+                          iconStyle="solid"
+                          name="check"
+                          size={16}
+                          color={'#fff'}
+                        />
                       )}
                     </View>
                     <Text style={styles.label}>Share with Facebook?</Text>
@@ -3811,18 +3826,24 @@ export default function CustomTab({
                     gap: 10,
                   }}>
                   {activeTab == 0 ? (
-                    <ButtonComponent title="Next" onPress={handleNext} />
+                    <ButtonComponent
+                      title="Next"
+                      onPress={handleNext}
+                      disabled={activeButton}
+                    />
                   ) : (
                     <>
                       <ButtonComponent
                         title="Previous"
                         onPress={handlePrivious}
                         width={'45%'}
+                        disabled={activeButton}
                       />
                       <ButtonComponent
                         title="Next"
                         onPress={handleNext}
                         width={'45%'}
+                        disabled={activeButton}
                       />
                     </>
                   )}

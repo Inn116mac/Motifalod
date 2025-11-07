@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
-import {widthPercentageToDP} from 'react-native-responsive-screen';
 import FONTS from '../../theme/Fonts';
 import COLORS from '../../theme/Color';
 import NoDataFound from './NoDataFound';
