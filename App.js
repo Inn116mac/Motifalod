@@ -37,7 +37,7 @@ const App = () => {
     };
     checkDeviceId();
   }, []);
-  useEffect(() => {
+   useEffect(() => {
     const initializeNotifications = async () => {
       createNotification();
     };
