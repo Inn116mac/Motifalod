@@ -1806,11 +1806,15 @@ export default function CustomTab({
                 navigation.navigate('Dashboard');
               }
             } else {
-              NOTIFY_MESSAGE(
-                response?.data?.message
-                  ? response?.data?.message
-                  : 'Something went wrong',
-              );
+              if (isSignUp || isSignupFromDashboard) {
+                alert(response?.data?.message || 'Something went wrong');
+              } else {
+                NOTIFY_MESSAGE(
+                  response?.data?.message
+                    ? response?.data?.message
+                    : 'Something went wrong',
+                );
+              }
             }
           })
           .catch(err => {
@@ -2492,24 +2496,33 @@ export default function CustomTab({
                                 <View key={index} style={{margin: 5}}>
                                   {isVideoGallery ? (
                                     <View style={{}}>
-                                      {/* <Video
-                                        source={{uri: IMAGE_URL + uri}}
-                                        style={styles.video}
-                                        controls={false}
-                                        resizeMode="cover"
-                                        repeat={false}
-                                        paused={false}
-                                        muted={true}
-                                      /> */}
-                                      <FastImage
-                                        defaultSource={require('../../assets/images/Video_placeholder.png')}
-                                        source={{
-                                          uri: IMAGE_URL + uri,
-                                          priority: FastImage.priority.normal,
-                                        }}
-                                        style={styles.video}
-                                        resizeMode={FastImage.resizeMode.cover}
-                                      />
+                                      {Platform.OS == 'ios' && (
+                                        <Video
+                                          poster={{
+                                            source: require('../../assets/images/Video_placeholder.png'),
+                                            resizeMode: 'cover',
+                                          }}
+                                          source={{uri: IMAGE_URL + uri}}
+                                          style={styles.video}
+                                          controls={false}
+                                          resizeMode="stretch"
+                                          paused={true}
+                                          muted={true}
+                                          shutterColor="transparent"
+                                        />
+                                      )}
+                                      {Platform.OS == 'android' && (
+                                        <FastImage
+                                          defaultSource={require('../../assets/images/Video_placeholder.png')}
+                                          source={{
+                                            uri: IMAGE_URL + uri,
+                                          }}
+                                          style={styles.video}
+                                          resizeMode={
+                                            FastImage.resizeMode.cover
+                                          }
+                                        />
+                                      )}
                                       <TouchableOpacity
                                         style={{
                                           position: 'absolute',
@@ -2531,12 +2544,14 @@ export default function CustomTab({
                                   ) : (
                                     <View style={{}}>
                                       <FastImage
+                                        defaultSource={require('../../assets/images/Image_placeholder.png')}
                                         source={{
                                           uri: IMAGE_URL + uri,
                                           cache:
                                             FastImage.cacheControl.immutable,
                                           priority: FastImage.priority.normal,
                                         }}
+                                        resizeMode="cover"
                                         style={styles.image}
                                       />
                                       <TouchableOpacity
@@ -2824,7 +2839,7 @@ export default function CustomTab({
                         ) : null}
                       </View>
 
-                      {item?.values?.length > 0 ? (
+                      {/* {item?.values?.length > 0 ? (
                         item?.values?.map((checkboxItem, index) => (
                           <TouchableOpacity
                             key={index}
@@ -2875,7 +2890,61 @@ export default function CustomTab({
                           }}>
                           Please Select Member to get Family Members list.
                         </Text>
-                      )}
+                      )} */}
+                      {selectedEvent &&
+                        !selectedMember &&
+                        response1?.constantName == 'RSVP' && (
+                          <Text
+                            style={{
+                              fontSize: FONTS.FONTSIZE.SMALL,
+                              fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                              color: COLORS.PRIMARYRED,
+                            }}>
+                            Please Select Member to get Family Members list.
+                          </Text>
+                        )}
+                      {item?.values?.length > 0 &&
+                        item?.values?.map((checkboxItem, index) => (
+                          <TouchableOpacity
+                            key={index}
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 8,
+                            }}
+                            onPress={() =>
+                              handleCheckboxSelect(
+                                item?.key,
+                                checkboxItem.value,
+                                item?.required,
+                                item?.label,
+                              )
+                            }>
+                            {formData[item?.key]
+                              ?.split(',')
+                              ?.includes(String(checkboxItem.value)) ? (
+                              <Fontisto
+                                name="checkbox-active"
+                                size={16}
+                                color={COLORS.TITLECOLOR}
+                              />
+                            ) : (
+                              <Fontisto
+                                name="checkbox-passive"
+                                size={16}
+                                color={COLORS.TITLECOLOR}
+                              />
+                            )}
+                            <Text
+                              style={{
+                                fontSize: FONTS.FONTSIZE.SMALL,
+                                fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                                color: COLORS.TITLECOLOR,
+                              }}>
+                              {checkboxItem.label}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
                       {errors[item.key] && (
                         <Text
                           style={{

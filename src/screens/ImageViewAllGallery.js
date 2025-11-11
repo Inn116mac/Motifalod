@@ -1,4 +1,273 @@
-import React, {useEffect, useState} from 'react';
+// import React, {useEffect, useState} from 'react';
+// import {
+//   StyleSheet,
+//   View,
+//   Text,
+//   TouchableOpacity,
+//   useWindowDimensions,
+//   FlatList,
+// } from 'react-native';
+// import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+// import {
+//   heightPercentageToDP,
+// } from 'react-native-responsive-screen';
+// import FONTS from '../theme/Fonts';
+// import COLORS from '../theme/Color';
+// import {IMAGE_URL} from '../connection/Config';
+// import {NOTIFY_MESSAGE} from '../constant/Module';
+// import Loader from '../components/root/Loader';
+// import {useNavigation} from '@react-navigation/native';
+// import FastImage from 'react-native-fast-image';
+// import NetInfo from '@react-native-community/netinfo';
+// import Offline from '../components/root/Offline';
+// import {useNetworkStatus} from '../connection/UseNetworkStatus';
+// import CustomHeader from '../components/root/CustomHeader';
+// import NoDataFound from '../components/root/NoDataFound';
+// import httpClient from '../connection/httpClient';
+
+// export default function ImageViewAllGallery({route}) {
+//   const [isRenderLoading, setIsRenderLoading] = useState(true);
+//   const [rsvpConfig, setGalleryConfig] = useState([]);
+
+//   const [pageNumber, setPageNumber] = useState(1);
+//   const [hasMore, setHasMore] = useState(true);
+//   const {width} = useWindowDimensions();
+
+//   const styles = StyleSheet.create({
+//     headingText: {
+//       fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+//       fontSize: FONTS.FONTSIZE.LARGE,
+//       color: COLORS.PRIMARYWHITE,
+//       textAlign: 'center',
+//     },
+//     imageContainer: {
+//       borderRadius: 12,
+//       marginTop: 10,
+//       marginHorizontal: 4,
+//       marginVertical: 4,
+//     },
+//     image: {
+//       height: heightPercentageToDP(13),
+//       width: width / 3 - 15,
+//       borderRadius: 10,
+//     },
+//     container: {
+//       flex: 1,
+//     },
+//   });
+
+//   const navigation = useNavigation();
+//   const PAGE_SIZE = 4;
+
+//   useEffect(() => {
+//     if (pageNumber) {
+//       getImageGallery();
+//     }
+//   }, [pageNumber, PAGE_SIZE]);
+
+//   const getImageGallery = () => {
+//     NetInfo.fetch().then(state => {
+//       if (state.isConnected) {
+//         setIsRenderLoading(true);
+//         const data = {
+//           category: route?.params?.name,
+//           moduleName: 'IMAGE GALLERY',
+//           pageNumber: pageNumber,
+//           pageSize: PAGE_SIZE,
+//           orderBy: 'order',
+//         };
+
+//         httpClient
+//           .post('module/getimagedatabycategory', data)
+//           .then(response => {
+//             const totalRecords = response?.data?.result?.totalRecord || 0;
+//             const calculatedTotalPages = Math.ceil(totalRecords / PAGE_SIZE);
+//             const {data} = response;
+//             const {status, message, result} = data;
+//             if (status && result?.data.length) {
+//               const newData = result?.data;
+//               if (newData?.length > 0) {
+//                 setGalleryConfig(newData);
+//               } else {
+//                 setGalleryConfig([]);
+//               }
+//               const canLoadMore =
+//                 pageNumber < calculatedTotalPages && newData.length > 0;
+//               setHasMore(canLoadMore);
+//             } else {
+//               NOTIFY_MESSAGE(
+//                 response?.data?.message
+//                   ? response?.data?.message
+//                   : 'Something Went Wrong',
+//               );
+//             }
+//           })
+//           .catch(error => {
+//             NOTIFY_MESSAGE(
+//               error || error?.message ? 'Something Went Wrong' : null,
+//             );
+//             setIsRenderLoading(false);
+//           })
+//           .finally(() => {
+//             setIsRenderLoading(false);
+//           });
+//       } else {
+//         NOTIFY_MESSAGE('Please check your internet connectivity');
+//       }
+//     });
+//   };
+
+//   const loadMore = () => {
+//     if (hasMore) {
+//       setPageNumber(prevPage => prevPage + 1);
+//     }
+//   };
+
+//   const {isConnected, networkLoading} = useNetworkStatus();
+
+//   const [hasError, setHasError] = useState({});
+
+//   const handleimgError = index => {
+//     setHasError(prevState => ({
+//       ...prevState,
+//       [index]: true,
+//     }));
+//   };
+
+//   const allImages = rsvpConfig.flatMap(item => {
+//     const imagePaths = Array.isArray(item.imagePath)
+//       ? item.imagePath
+//       : typeof item.imagePath === 'string' &&
+//         item.imagePath.trim().startsWith('[')
+//       ? JSON.parse(item.imagePath)
+//       : [item.imagePath];
+
+//     return imagePaths.map(imagePath => ({
+//       imagePath: imagePath,
+//       createdAt: item.createdAt,
+//     }));
+//   });
+
+//   const renderItem = ({item, index}) => {
+//     return (
+//       <View key={index}>
+//         <TouchableOpacity
+//           disabled={hasError[index]}
+//           key={index}
+//           style={styles.imageContainer}
+//           onPress={() =>
+//             navigation.navigate('FullImageScreen', {
+//               image: item?.imagePath,
+//             })
+//           }>
+//           <FastImage
+//             defaultSource={require('../assets/images/Image_placeholder.png')}
+//             source={
+//               hasError[index]
+//                 ? require('../assets/images/noimage.png')
+//                 : {
+//                     uri: IMAGE_URL + item?.imagePath,
+//                     cache: FastImage.cacheControl.immutable,
+//                     priority: FastImage.priority.normal,
+//                   }
+//             }
+//             style={styles.image}
+//             resizeMode={FastImage.resizeMode.cover}
+//             onError={() => handleimgError(index)}
+//           />
+//         </TouchableOpacity>
+//       </View>
+//     );
+//   };
+
+//   return (
+//     <View style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}>
+//       <CustomHeader
+//         leftIcon={
+//           <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+//         }
+//         title={route?.params?.header || '-'}
+//         leftOnPress={() => navigation.goBack()}
+//       />
+
+//       <View style={[styles.container]}>
+//         {networkLoading || isRenderLoading ? (
+//           <Loader />
+//         ) : isConnected ? (
+//           <>
+//             <FlatList
+//               contentContainerStyle={{
+//                 padding: 10,
+//                 paddingBottom: 10,
+//               }}
+//               numColumns={3}
+//               data={allImages}
+//               keyExtractor={(item, index) => index?.toString()}
+//               showsVerticalScrollIndicator={false}
+//               ListEmptyComponent={() => <NoDataFound />}
+//               renderItem={renderItem}
+//               maxToRenderPerBatch={10}
+//               windowSize={10}
+//               initialNumToRender={10}
+//               removeClippedSubviews={true}
+//             />
+//             {(hasMore || pageNumber > 1) && rsvpConfig.length > 0 && (
+//               <View
+//                 style={{
+//                   flexDirection: 'row',
+//                   justifyContent: 'center',
+//                   gap: 30,
+//                 }}>
+//                 {pageNumber > 1 && (
+//                   <TouchableOpacity
+//                     onPress={() =>
+//                       setPageNumber(prevPage => Math.max(prevPage - 1, 1))
+//                     }
+//                     style={{
+//                       paddingVertical: heightPercentageToDP('1%'),
+//                     }}>
+//                     <Text
+//                       style={{
+//                         fontSize: FONTS.FONTSIZE.SMALL,
+//                         color: 'blue',
+//                         textAlign: 'center',
+//                         fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+//                       }}>
+//                       Previous
+//                     </Text>
+//                   </TouchableOpacity>
+//                 )}
+//                 {hasMore && (
+//                   <TouchableOpacity
+//                     onPress={loadMore}
+//                     style={{
+//                       paddingVertical: heightPercentageToDP('1%'),
+//                     }}>
+//                     <Text
+//                       style={{
+//                         fontSize: FONTS.FONTSIZE.SMALL,
+//                         color: 'blue',
+//                         textAlign: 'center',
+//                         fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+//                       }}>
+//                       Load More
+//                     </Text>
+//                   </TouchableOpacity>
+//                 )}
+//               </View>
+//             )}
+//           </>
+//         ) : (
+//           <Offline />
+//         )}
+//       </View>
+//     </View>
+//   );
+// }
+
+
+
+import React, {useEffect, useState, useRef, useCallback} from 'react';
 import {
   StyleSheet,
   View,
@@ -6,11 +275,11 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   FlatList,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
-import {
-  heightPercentageToDP,
-} from 'react-native-responsive-screen';
+import {heightPercentageToDP} from 'react-native-responsive-screen';
 import FONTS from '../theme/Fonts';
 import COLORS from '../theme/Color';
 import {IMAGE_URL} from '../connection/Config';
@@ -28,7 +297,6 @@ import httpClient from '../connection/httpClient';
 export default function ImageViewAllGallery({route}) {
   const [isRenderLoading, setIsRenderLoading] = useState(true);
   const [rsvpConfig, setGalleryConfig] = useState([]);
-
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const {width} = useWindowDimensions();
@@ -50,20 +318,57 @@ export default function ImageViewAllGallery({route}) {
       height: heightPercentageToDP(13),
       width: width / 3 - 15,
       borderRadius: 10,
+      // backgroundColor: '#f0f0f0',
     },
     container: {
       flex: 1,
     },
+    loadingOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(255, 255, 255, 0.7)',
+      borderRadius: 10,
+    },
   });
 
   const navigation = useNavigation();
-  const PAGE_SIZE = 4;
+  const PAGE_SIZE = 4; // API page size (number of records per page)
+
+  // 🔥 Batch loading system
+  const [visibleImages, setVisibleImages] = useState(new Set());
+  const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
+  const [allImageKeys, setAllImageKeys] = useState([]);
+  const loadingImages = useRef(new Set());
+  const BATCH_SIZE = 6; // Number of images to load at once
+  const processingBatchTransition = useRef(false);
+
+  // 🔥 Retry system
+  const [hasError, setHasError] = useState({});
+  const [retryCount, setRetryCount] = useState({});
+  const [retryKey, setRetryKey] = useState({});
+  const retryTimeouts = useRef({});
+  const MAX_RETRIES = 3;
+  const RETRY_DELAYS = [1000, 2000, 3000];
+
+  const {isConnected, networkLoading} = useNetworkStatus();
 
   useEffect(() => {
     if (pageNumber) {
       getImageGallery();
     }
-  }, [pageNumber, PAGE_SIZE]);
+  }, [pageNumber]);
+
+  // 🔥 Reset batch when data changes
+  useEffect(() => {
+    if (Platform.OS === 'ios' && rsvpConfig.length > 0) {
+      buildImageKeysList();
+    }
+  }, [rsvpConfig]);
 
   const getImageGallery = () => {
     NetInfo.fetch().then(state => {
@@ -83,29 +388,41 @@ export default function ImageViewAllGallery({route}) {
             const totalRecords = response?.data?.result?.totalRecord || 0;
             const calculatedTotalPages = Math.ceil(totalRecords / PAGE_SIZE);
             const {data} = response;
-            const {status, message, result} = data;
+            const {status, result} = data;
+
             if (status && result?.data.length) {
               const newData = result?.data;
               if (newData?.length > 0) {
                 setGalleryConfig(newData);
+                // Reset batch loading for new page
+                if (Platform.OS === 'ios') {
+                  setCurrentBatchIndex(0);
+                  setVisibleImages(new Set());
+                  loadingImages.current = new Set();
+                  processingBatchTransition.current = false;
+                }
+
+                // Reset error states for new page
+                setHasError({});
+                setRetryCount({});
+                setRetryKey({});
+
+                Object.values(retryTimeouts.current).forEach(timeout => {
+                  clearTimeout(timeout);
+                });
               } else {
                 setGalleryConfig([]);
               }
+
               const canLoadMore =
                 pageNumber < calculatedTotalPages && newData.length > 0;
               setHasMore(canLoadMore);
             } else {
-              NOTIFY_MESSAGE(
-                response?.data?.message
-                  ? response?.data?.message
-                  : 'Something Went Wrong',
-              );
+              NOTIFY_MESSAGE(response?.data?.message || 'Something Went Wrong');
             }
           })
           .catch(error => {
-            NOTIFY_MESSAGE(
-              error || error?.message ? 'Something Went Wrong' : null,
-            );
+            NOTIFY_MESSAGE('Something Went Wrong');
             setIsRenderLoading(false);
           })
           .finally(() => {
@@ -117,24 +434,134 @@ export default function ImageViewAllGallery({route}) {
     });
   };
 
+  // 🔥 Build flat list of image keys
+  const buildImageKeysList = () => {
+    if (Platform.OS === 'android') return;
+    const allImgs = rsvpConfig.flatMap((item, itemIndex) => {
+      const imagePaths = Array.isArray(item.imagePath)
+        ? item.imagePath
+        : typeof item.imagePath === 'string' &&
+          item.imagePath.trim().startsWith('[')
+        ? JSON.parse(item.imagePath)
+        : [item.imagePath];
+
+      return imagePaths.map((_, pathIndex) => `${itemIndex}_${pathIndex}`);
+    });
+
+    setAllImageKeys(allImgs);
+    setCurrentBatchIndex(0);
+  };
+
+  // 🔥 Load next batch when current batch index changes
+  useEffect(() => {
+    if (Platform.OS === 'android') return;
+    if (allImageKeys.length === 0) return;
+
+    // Reset the transition flag when starting a new batch
+    processingBatchTransition.current = false;
+
+    const startIndex = currentBatchIndex * BATCH_SIZE;
+    const endIndex = Math.min(startIndex + BATCH_SIZE, allImageKeys.length);
+    const currentBatch = allImageKeys.slice(startIndex, endIndex);
+
+    if (currentBatch.length > 0) {
+
+      setVisibleImages(prev => {
+        const newSet = new Set(prev);
+        currentBatch.forEach(key => newSet.add(key));
+        return newSet;
+      });
+
+      currentBatch.forEach(key => loadingImages.current.add(key));
+    }
+  }, [allImageKeys, currentBatchIndex, BATCH_SIZE]);
+
+  // 🔥 Handle successful image load
+  const handleImageLoad = useCallback(
+    imageKey => {
+      const attempts = retryCount[imageKey] || 0;
+      setHasError(prev => ({...prev, [imageKey]: false}));
+
+      if (Platform.OS === 'ios') {
+        loadingImages.current.delete(imageKey);
+        checkBatchCompletion();
+      }
+    },
+    [retryCount, currentBatchIndex, allImageKeys],
+  );
+
+  // 🔥 Handle image error with retry
+  const handleImageError = useCallback(
+    imageKey => {
+      const attempts = retryCount[imageKey] || 0;
+
+      if (attempts < MAX_RETRIES) {
+        const nextAttempt = attempts + 1;
+        const delay = RETRY_DELAYS[attempts] || 1000;
+
+        retryTimeouts.current[imageKey] = setTimeout(() => {
+
+          setRetryCount(prev => ({...prev, [imageKey]: nextAttempt}));
+          setRetryKey(prev => ({...prev, [imageKey]: Date.now()}));
+
+          loadingImages.current.add(imageKey);
+        }, delay);
+      } else {
+        setHasError(prev => ({...prev, [imageKey]: true}));
+        loadingImages.current.delete(imageKey);
+
+        checkBatchCompletion();
+      }
+    },
+    [retryCount, currentBatchIndex, allImageKeys],
+  );
+
+  // 🔥 Check if batch is complete
+  const checkBatchCompletion = useCallback(() => {
+    if (Platform.OS === 'android') return;
+    const startIndex = currentBatchIndex * BATCH_SIZE;
+    const endIndex = Math.min(startIndex + BATCH_SIZE, allImageKeys.length);
+    const currentBatch = allImageKeys.slice(startIndex, endIndex);
+
+    const batchComplete = currentBatch.every(
+      key => !loadingImages.current.has(key),
+    );
+
+    if (batchComplete && !processingBatchTransition.current) {
+      processingBatchTransition.current = true;
+
+      setTimeout(() => {
+        const nextStartIndex = (currentBatchIndex + 1) * BATCH_SIZE;
+        if (nextStartIndex < allImageKeys.length) {
+          setCurrentBatchIndex(prev => prev + 1);
+        } else {
+        }
+      }, 300);
+    }
+  }, [currentBatchIndex, allImageKeys, BATCH_SIZE]);
+
+  // 🔥 Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(retryTimeouts.current).forEach(timeout => {
+        clearTimeout(timeout);
+      });
+    };
+  }, []);
+
   const loadMore = () => {
-    if (hasMore) {
+    if (hasMore && !isRenderLoading) {
       setPageNumber(prevPage => prevPage + 1);
     }
   };
 
-  const {isConnected, networkLoading} = useNetworkStatus();
-
-  const [hasError, setHasError] = useState({});
-
-  const handleimgError = index => {
-    setHasError(prevState => ({
-      ...prevState,
-      [index]: true,
-    }));
+  const loadPrevious = () => {
+    if (pageNumber > 1 && !isRenderLoading) {
+      setPageNumber(prevPage => Math.max(prevPage - 1, 1));
+    }
   };
 
-  const allImages = rsvpConfig.flatMap(item => {
+  const allImages = rsvpConfig.flatMap((item, itemIndex) => {
     const imagePaths = Array.isArray(item.imagePath)
       ? item.imagePath
       : typeof item.imagePath === 'string' &&
@@ -142,18 +569,79 @@ export default function ImageViewAllGallery({route}) {
       ? JSON.parse(item.imagePath)
       : [item.imagePath];
 
-    return imagePaths.map(imagePath => ({
+    return imagePaths.map((imagePath, pathIndex) => ({
       imagePath: imagePath,
       createdAt: item.createdAt,
+      imageKey: `${itemIndex}_${pathIndex}`,
     }));
   });
 
-  const renderItem = ({item, index}) => {
+  const renderItemIOS = ({item, index}) => {
+    const imageKey = item.imageKey;
+    const shouldLoad = visibleImages.has(imageKey);
+    const currentRetryKey = retryKey[imageKey] || 0;
+    const fullUrl = IMAGE_URL + item?.imagePath;
+
+    return (
+      <View key={`wrapper_${index}`} style={styles.imageContainer}>
+        <TouchableOpacity
+          disabled={hasError[imageKey]}
+          style={styles.imageContainer}
+          onPress={() =>
+            navigation.navigate('FullImageScreen', {
+              image: item?.imagePath,
+            })
+          }>
+          <View style={{position: 'relative'}}>
+            {shouldLoad ? (
+              <FastImage
+                key={`${imageKey}_${currentRetryKey}`}
+                defaultSource={require('../assets/images/Image_placeholder.png')}
+                source={
+                  hasError[imageKey]
+                    ? require('../assets/images/noimage.png')
+                    : {
+                        uri: fullUrl,
+                        priority: FastImage.priority.normal,
+                        cache: FastImage.cacheControl.immutable,
+                      }
+                }
+                style={styles.image}
+                resizeMode="cover"
+                onLoad={() => handleImageLoad(imageKey)}
+                onError={() => {
+                  handleImageError(imageKey);
+                }}
+              />
+            ) : (
+              <FastImage
+                source={require('../assets/images/Image_placeholder.png')}
+                style={styles.image}
+                resizeMode="cover"
+              />
+            )}
+
+            {/* Loading indicator */}
+            {shouldLoad &&
+              loadingImages.current.has(imageKey) &&
+              !hasError[imageKey] && (
+                <View style={styles.loadingOverlay}>
+                  <ActivityIndicator size="small" color={COLORS.LABELCOLOR} />
+                </View>
+              )}
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderItemAndroid = ({item, index}) => {
+    const imageKey = item?.imageKey || index;
+    const fullUrl = IMAGE_URL + item?.imagePath;
     return (
       <View key={index}>
         <TouchableOpacity
-          disabled={hasError[index]}
-          key={index}
+          disabled={hasError[imageKey]}
           style={styles.imageContainer}
           onPress={() =>
             navigation.navigate('FullImageScreen', {
@@ -163,17 +651,19 @@ export default function ImageViewAllGallery({route}) {
           <FastImage
             defaultSource={require('../assets/images/Image_placeholder.png')}
             source={
-              hasError[index]
+              hasError[imageKey]
                 ? require('../assets/images/noimage.png')
                 : {
-                    uri: IMAGE_URL + item?.imagePath,
+                    uri: fullUrl,
+                    priority: FastImage.priority.high,
                     cache: FastImage.cacheControl.immutable,
-                    priority: FastImage.priority.normal,
                   }
             }
             style={styles.image}
-            resizeMode={FastImage.resizeMode.cover}
-            onError={() => handleimgError(index)}
+            resizeMode="cover"
+            onError={() => {
+              setHasError(prev => ({...prev, [imageKey]: true}));
+            }}
           />
         </TouchableOpacity>
       </View>
@@ -197,39 +687,42 @@ export default function ImageViewAllGallery({route}) {
           <>
             <FlatList
               contentContainerStyle={{
-                padding: 10,
                 paddingBottom: 10,
+                padding: Platform.OS == 'android' ? 10 : 0,
               }}
               numColumns={3}
               data={allImages}
-              keyExtractor={(item, index) => index?.toString()}
+              keyExtractor={(item, index) =>
+                `${pageNumber}_${item.imageKey}_${index}`
+              }
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={() => <NoDataFound />}
-              renderItem={renderItem}
-              maxToRenderPerBatch={10}
-              windowSize={10}
-              initialNumToRender={10}
+              renderItem={
+                Platform.OS === 'android' ? renderItemAndroid : renderItemIOS
+              }
+              maxToRenderPerBatch={Platform.OS === 'android' ? 12 : 6}
+              windowSize={Platform.OS === 'android' ? 10 : 5}
+              initialNumToRender={Platform.OS === 'android' ? 12 : 6}
               removeClippedSubviews={true}
+              updateCellsBatchingPeriod={200}
             />
             {(hasMore || pageNumber > 1) && rsvpConfig.length > 0 && (
               <View
                 style={{
                   flexDirection: 'row',
                   justifyContent: 'center',
+                  alignItems: 'center',
                   gap: 30,
+                  paddingVertical: 10,
                 }}>
                 {pageNumber > 1 && (
                   <TouchableOpacity
-                    onPress={() =>
-                      setPageNumber(prevPage => Math.max(prevPage - 1, 1))
-                    }
-                    style={{
-                      paddingVertical: heightPercentageToDP('1%'),
-                    }}>
+                    onPress={loadPrevious}
+                    disabled={isRenderLoading}>
                     <Text
                       style={{
                         fontSize: FONTS.FONTSIZE.SMALL,
-                        color: 'blue',
+                        color: isRenderLoading ? COLORS.LABELCOLOR : 'blue',
                         textAlign: 'center',
                         fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                       }}>
@@ -237,16 +730,15 @@ export default function ImageViewAllGallery({route}) {
                     </Text>
                   </TouchableOpacity>
                 )}
+
                 {hasMore && (
                   <TouchableOpacity
                     onPress={loadMore}
-                    style={{
-                      paddingVertical: heightPercentageToDP('1%'),
-                    }}>
+                    disabled={isRenderLoading}>
                     <Text
                       style={{
                         fontSize: FONTS.FONTSIZE.SMALL,
-                        color: 'blue',
+                        color: isRenderLoading ? COLORS.LABELCOLOR : 'blue',
                         textAlign: 'center',
                         fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                       }}>

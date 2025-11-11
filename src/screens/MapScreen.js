@@ -36,21 +36,21 @@
 //   const [searchLoading, setSearchLoading] = useState(false);
 //   const [isOnline, setIsOnline] = useState(true);
 
-  // const apiKeys = [
-  //   '634fc5372c154780b0856a1cd18932ff',
-  //   '217b31c8acb045d9a31d3319ea9f4875',
-  //   'c6b353e96f9a456796f8004d6c600234',
-  //   'e80a242e57d24c4eaf30ea8f448d194a',
-  //   'ceafee16de904b7da61cec2fa0be9d3f',
-  //   'e5414f3130ab4dba85381256091884ae',
-  //   'ac227cc474944266b2fffea1c371128c',
-  //   '26d64443025a4162826c67c6df59d97d',
-  //   '02d5fe32ddf94e1da7d85d3b98cf3237',
-  //   'f80d9dc7b2804c05ba1b891d90610b48',
-  //   '7e66e73054da43ce87a279e184110edf',
-  //   '66ad375eb7514b32835d8c91fe295419',
-  //   '6b28bda8af634d2a92d2b843b1691c8a',
-  // ];
+// const apiKeys = [
+//   '634fc5372c154780b0856a1cd18932ff',
+//   '217b31c8acb045d9a31d3319ea9f4875',
+//   'c6b353e96f9a456796f8004d6c600234',
+//   'e80a242e57d24c4eaf30ea8f448d194a',
+//   'ceafee16de904b7da61cec2fa0be9d3f',
+//   'e5414f3130ab4dba85381256091884ae',
+//   'ac227cc474944266b2fffea1c371128c',
+//   '26d64443025a4162826c67c6df59d97d',
+//   '02d5fe32ddf94e1da7d85d3b98cf3237',
+//   'f80d9dc7b2804c05ba1b891d90610b48',
+//   '7e66e73054da43ce87a279e184110edf',
+//   '66ad375eb7514b32835d8c91fe295419',
+//   '6b28bda8af634d2a92d2b843b1691c8a',
+// ];
 
 //   const [currentApiKeyIndex, setCurrentApiKeyIndex] = useState(0);
 
@@ -382,8 +382,6 @@
 
 // export default MapScreen;
 
-
-
 import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
@@ -398,9 +396,9 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import * as MapLibreRN from '@maplibre/maplibre-react-native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import Feather from 'react-native-vector-icons/Feather';
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
+import {AntDesign} from '@react-native-vector-icons/ant-design';
+import {Feather} from '@react-native-vector-icons/feather';
 import COLORS from '../theme/Color';
 import FONTS from '../theme/Fonts';
 import CustomHeader from '../components/root/CustomHeader';
@@ -423,7 +421,7 @@ const MapScreen = ({route}) => {
 
   const [searchLoading, setSearchLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
-  
+
   const cameraRef = useRef(null); // Add camera ref
 
   const apiKeys = [
@@ -500,20 +498,20 @@ const MapScreen = ({route}) => {
     const {formatted} = location;
     const latitude = location?.lat;
     const longitude = location?.lon;
-    
+
     // Update state with proper structure
     const newLocation = {
       latitude,
       longitude,
       coordinates: [longitude, latitude], // [lng, lat] for MapLibre
     };
-    
+
     setSelectedLocation(newLocation);
     setLabel(formatted);
     onLabelSelect(formatted);
     setResults([]);
     setSearchQuery('');
-    
+
     // Force re-render on iOS
     if (Platform.OS === 'ios') {
       setMapKey(prev => prev + 1);
@@ -581,7 +579,7 @@ const MapScreen = ({route}) => {
             };
             setSelectedLocation(newLocation);
             setLabel(firstResult.formatted || currentLocation);
-            
+
             if (Platform.OS === 'ios') {
               setMapKey(prev => prev + 1);
             }
@@ -606,7 +604,12 @@ const MapScreen = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={'Map'}
       />
@@ -682,7 +685,7 @@ const MapScreen = ({route}) => {
                 style={styles.resultsList}
               />
             )}
-            
+
             {/* Map Container */}
             <View
               style={{
@@ -693,11 +696,10 @@ const MapScreen = ({route}) => {
                 borderWidth: 1,
                 borderColor: COLORS.PRIMARYWHITE,
               }}>
-              <MapLibreRN.MapView 
+              <MapLibreRN.MapView
                 key={mapKey} // Force re-render on iOS
-                style={styles.map} 
-                mapStyle={styleUrl}
-              >
+                style={styles.map}
+                mapStyle={styleUrl}>
                 <MapLibreRN.Camera
                   ref={cameraRef}
                   centerCoordinate={
@@ -710,28 +712,27 @@ const MapScreen = ({route}) => {
                   animationMode="flyTo"
                   animationDuration={1000}
                 />
-                
+
                 {selectedLocation && (
                   <MapLibreRN.MarkerView
                     key={`marker-${selectedLocation.latitude}-${selectedLocation.longitude}`}
                     id="selected-marker"
-                    coordinate={selectedLocation.coordinates}
-                  >
+                    coordinate={selectedLocation.coordinates}>
                     <View style={{alignItems: 'center'}}>
                       <FontAwesome6
+                        iconStyle="solid"
                         name="location-dot"
                         size={32}
                         color={COLORS.red700}
                       />
-                      <MapLibreRN.Callout 
+                      <MapLibreRN.Callout
                         title={label}
                         style={{
                           backgroundColor: COLORS.PRIMARYWHITE,
                           padding: 8,
                           borderRadius: 8,
                           maxWidth: 200,
-                        }}
-                      >
+                        }}>
                         <Text
                           numberOfLines={2}
                           style={{

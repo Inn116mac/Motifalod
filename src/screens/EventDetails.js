@@ -11,7 +11,7 @@ import {
   useWindowDimensions,
   ImageBackground,
 } from 'react-native';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import moment from 'moment';
 import FONTS from '../theme/Fonts';
 import COLORS from '../theme/Color';
@@ -25,9 +25,9 @@ import Loader from '../components/root/Loader';
 import httpClient from '../connection/httpClient';
 import NetInfo from '@react-native-community/netinfo';
 import {getImageUri, NOTIFY_MESSAGE} from '../constant/Module';
-import { SimpleLineIcons } from "@react-native-vector-icons/simple-line-icons";
-import {AntDesign} from "@react-native-vector-icons/ant-design";
-import {Ionicons} from "@react-native-vector-icons/ionicons";
+import {SimpleLineIcons} from '@react-native-vector-icons/simple-line-icons';
+import {AntDesign} from '@react-native-vector-icons/ant-design';
+import {Ionicons} from '@react-native-vector-icons/ionicons';
 
 const EventDetails = ({route}) => {
   const {width, height} = useWindowDimensions();
@@ -246,7 +246,12 @@ const EventDetails = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         rightIcon={
           qrImageUri && (
@@ -457,7 +462,12 @@ const EventDetails = ({route}) => {
               </TouchableOpacity>
               <View style={[styles.tabContianer]}>
                 <Text style={styles.label}>Message from the Host</Text>
-                <Text style={styles.txtLabel}>
+                <Text
+                  style={{
+                    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                    fontSize: FONTS.FONTSIZE.SEMIMINI,
+                    color: COLORS.PLACEHOLDERCOLOR,
+                  }}>
                   {evnentObj.messagefromtheHost
                     ? evnentObj.messagefromtheHost
                     : '-'}

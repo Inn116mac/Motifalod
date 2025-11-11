@@ -136,6 +136,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       fontSize: FONTS.FONTSIZE.MEDIUM,
     },
   });
+
   const navigation = useNavigation();
   const [formData, setFormData] = useState({});
   const [datePickerVisible, setDatePickerVisible] = useState({});
@@ -208,7 +209,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
             .split(',')
             .map(l => l.trim());
           const selectedOptions = fieldConfig.values.filter(option =>
-            selectedLabels.includes(option.label),
+            selectedLabels.includes(option.label?.trim()),
           );
 
           if (selectedOptions.length > 0) {
@@ -1844,28 +1845,34 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                                 <View key={index} style={{margin: 5}}>
                                   {getFileType(uri) === 'video' ? (
                                     <View>
-                                      {/* <Video
-                                        source={{
-                                          uri: uri ? IMAGE_URL + uri : null,
-                                        }}
-                                        style={styles.video}
-                                        controls={false}
-                                        resizeMode="cover"
-                                        repeat={false}
-                                        paused={false}
-                                        muted={true}
-                                      /> */}
-                                      <FastImage
-                                        source={{
-                                          uri: uri ? IMAGE_URL + uri : null,
-                                          cache:
-                                            FastImage.cacheControl.immutable,
-                                          priority: FastImage.priority.normal,
-                                        }}
-                                        style={styles.video}
-                                        resizeMode={FastImage.resizeMode.cover}
-                                        defaultSource={require('../../assets/images/Video_placeholder.png')}
-                                      />
+                                      {Platform.OS == 'ios' && (
+                                        <Video
+                                          poster={{
+                                            source: require('../../assets/images/Video_placeholder.png'),
+                                            resizeMode: 'cover',
+                                          }}
+                                          source={{
+                                            uri: uri ? IMAGE_URL + uri : null,
+                                          }}
+                                          style={styles.video}
+                                          controls={false}
+                                          resizeMode="cover"
+                                          paused={true}
+                                          muted={true}
+                                        />
+                                      )}
+                                      {Platform.OS == 'android' && (
+                                        <FastImage
+                                          source={{
+                                            uri: uri ? IMAGE_URL + uri : null,
+                                          }}
+                                          style={styles.video}
+                                          resizeMode={
+                                            FastImage.resizeMode.cover
+                                          }
+                                          defaultSource={require('../../assets/images/Video_placeholder.png')}
+                                        />
+                                      )}
                                       <TouchableOpacity
                                         style={{
                                           position: 'absolute',
@@ -1887,9 +1894,14 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                                   ) : getFileType(uri) === 'image' ? (
                                     <View>
                                       <FastImage
+                                        defaultSource={require('../../assets/images/Image_placeholder.png')}
                                         source={{
                                           uri: uri ? IMAGE_URL + uri : null,
+                                          cache:
+                                            FastImage.cacheControl.immutable,
+                                          priority: FastImage.priority.normal,
                                         }}
+                                        resizeMode="cover"
                                         style={styles.image}
                                       />
                                       <TouchableOpacity

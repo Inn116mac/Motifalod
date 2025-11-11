@@ -29,4 +29,8 @@ export const API_HOST = 'https://motifalodapi.inngenius.com/api/v1/';
 export const IMAGE_URL = 'https://motifalodapi.inngenius.com/';
 export const IMAGE_URL_ICONS = 'https://motifalodapi.inngenius.com/icon/';
 
+// export const API_HOST = 'https://tsgapi.inngenius.com/api/v1/';
+// export const IMAGE_URL = 'https://tsgapi.inngenius.com/';
+// export const IMAGE_URL_ICONS = 'https://tsgapi.inngenius.com/icon/';
+
 export const mapKey = 'AIzaSyCD0wcgK3JYBzUu4Zu4usrDO50O-IJzJmw';

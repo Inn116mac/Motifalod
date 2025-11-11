@@ -2064,7 +2064,7 @@ const Registration1 = ({route}) => {
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 10,
+              gap: 8,
               width: width / 1.6,
             }}>
             <View
@@ -2073,7 +2073,7 @@ const Registration1 = ({route}) => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 borderRadius: 10,
-                width: widthPercentageToDP('10%'),
+                width: widthPercentageToDP('8%'),
               }}>
               <Text
                 style={[styles.pkgLblofNumber, {color: COLORS.PRIMARYWHITE}]}>
@@ -2084,7 +2084,7 @@ const Registration1 = ({route}) => {
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                width: width / 1.45,
+                width: width / 1.3,
               }}>
               <Text
                 numberOfLines={1}
@@ -2092,6 +2092,7 @@ const Registration1 = ({route}) => {
                   fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                   fontSize: FONTS.FONTSIZE.EXTRASMALL,
                   color: COLORS.PLACEHOLDERCOLOR,
+                  width: '60%',
                 }}>
                 {item.firstName?.value} {item.middleName?.value}{' '}
                 {item.lastName?.value}
@@ -2103,9 +2104,11 @@ const Registration1 = ({route}) => {
                     fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                     fontSize: FONTS.FONTSIZE.EXTRASMALL,
                     color: COLORS.PLACEHOLDERCOLOR,
-                    width: '50%',
+                    width: '40%',
+                    textAlign: 'right',
+                    paddingRight: 6,
                   }}>
-                  , {item.relationship?.value}
+                  {item.relationship?.value}
                 </Text>
               )}
             </View>
