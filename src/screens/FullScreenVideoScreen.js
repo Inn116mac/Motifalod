@@ -185,6 +185,8 @@ export default function FullScreenVideoScreen({route}) {
     };
   }, [stream]);
 
+  const [videoLoading, setVideoLoading] = useState(true);
+
   return (
     <SafeAreaView style={styles.container}>
       <CustomHeader
@@ -201,13 +203,24 @@ export default function FullScreenVideoScreen({route}) {
       />
       {isRecording ? (
         <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.65)'}}>
+          {videoLoading && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator color={COLORS.PRIMARYWHITE} size="large" />
+            </View>
+          )}
           <Video
             source={{uri: fullVideoUrl}}
             style={{flex: 1}}
             controls={true}
             resizeMode="cover"
             onError={e => {
-              // console.log('Video playback error:', JSON.stringify(e))
+              setVideoLoading(false);
+            }}
+            onLoad={() => {
+              setVideoLoading(false);
+            }}
+            onBuffer={({isBuffering}) => {
+              setVideoLoading(isBuffering);
             }}
           />
         </View>
@@ -242,6 +255,13 @@ export default function FullScreenVideoScreen({route}) {
 }
 
 const styles = StyleSheet.create({
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 999,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.BACKGROUNDCOLOR,

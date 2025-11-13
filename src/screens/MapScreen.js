@@ -705,9 +705,10 @@ const MapScreen = ({route}) => {
                   centerCoordinate={
                     selectedLocation
                       ? selectedLocation.coordinates
-                      : [72.9824, 20.7702]
+                      : // : [72.9824, 20.7702]
+                        [-98.5795, 39.8282]
                   }
-                  zoomLevel={selectedLocation ? 15 : 5}
+                  zoomLevel={selectedLocation ? 15 : 4}
                   pitch={50}
                   animationMode="flyTo"
                   animationDuration={1000}

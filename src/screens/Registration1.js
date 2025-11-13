@@ -2034,6 +2034,8 @@ const Registration1 = ({route}) => {
     return 0;
   });
 
+  const isFolded = width >= 600;
+
   const renderTime = ({item, index}) => {
     const number = index >= 0 && index <= 9 ? `0${index + 1}` : `${index + 1}`;
     const handleToggle = index => {
@@ -2084,7 +2086,7 @@ const Registration1 = ({route}) => {
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                width: width / 1.3,
+                width: isFolded ? width / 1.2 : width / 1.3,
               }}>
               <Text
                 numberOfLines={1}
