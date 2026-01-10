@@ -477,11 +477,12 @@ const VideoViewAllGallery = ({route}) => {
                     }
               }
               style={{
-                height: 100,
+                height: heightPercentageToDP(12),
                 width: width / 3 - 20,
                 borderRadius: 10,
+                backgroundColor: '#f0f0f0',
               }}
-              resizeMode={FastImage.resizeMode.cover}
+              resizeMode={hasError[uniqueKey] ? 'contain' : 'cover'}
               defaultSource={require('../assets/images/Video_placeholder.png')}
               onError={() => {
                 setHasError(prevState => ({

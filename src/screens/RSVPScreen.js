@@ -306,9 +306,7 @@ export default function RsvpList({}) {
                     fontSize: FONTS.FONTSIZE.SMALL,
                     color: COLORS.PLACEHOLDERCOLOR,
                     width:
-                      res?.toLowerCase() == 'may be'
-                        ? width / 1.8
-                        : width / 1.7,
+                    res?.toLowerCase() == 'may be' ? width / 1.6 : width / 1.45,
                   }}>
                   {eventEntry ? eventEntry : null}
                 </Text>
@@ -431,7 +429,7 @@ export default function RsvpList({}) {
                 fontSize: FONTS.FONTSIZE.SMALL,
                 fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                 color: COLORS.PRIMARYWHITE,
-                maxWidth: width / 1.2,
+                maxWidth: width / 1.25,
               }}>
               {selectedEvent?.name || 'Events'}
             </Text>

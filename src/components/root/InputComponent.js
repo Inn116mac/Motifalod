@@ -48,7 +48,7 @@ const InputComponent = ({
         <View
           style={{
             width: givenWidth ? givenWidth : width / 1.2,
-            marginVertical: 8,
+            // marginVertical: 8,
           }}>
           <TextInput
             keyboardType={keyboardType}
@@ -62,7 +62,7 @@ const InputComponent = ({
             style={{
               fontSize: FONTS.FONTSIZE.MINI,
               fontFamily: FONTS.FONT_FAMILY.REGULAR,
-              height: 24,
+              height: 38,
               paddingVertical: 0,
               color: COLORS.PRIMARYBLACK,
               width: '100%',

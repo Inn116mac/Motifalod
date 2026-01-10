@@ -187,6 +187,21 @@ const RegistrationPreview = ({route}) => {
                         } catch (error) {
                           mediaUris = item.value ? [item.value] : [];
                         }
+                        const getDisplayValue = () => {
+                          if (
+                            item.type === 'select' &&
+                            item.value &&
+                            item.values
+                          ) {
+                            const selectedOption = item.values.find(
+                              val => val.value === item.value,
+                            );
+                            return selectedOption
+                              ? selectedOption.label
+                              : item.value;
+                          }
+                          return item.value;
+                        };
 
                         return item.value && item.type === 'file' ? (
                           <View key={index} style={styles.lstImgrow}>
@@ -228,7 +243,7 @@ const RegistrationPreview = ({route}) => {
                               {item?.label + ' : '}
                             </Text>
                             <Text style={styles.txtlstvalue}>
-                              {item?.value ? item?.value : '-'}
+                              {getDisplayValue() || '-'}
                             </Text>
                           </View>
                         );

@@ -8,6 +8,7 @@ import {
   TextInput,
   Platform,
   KeyboardAvoidingView,
+  RefreshControl,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -127,7 +128,7 @@ const TableScreen = ({route}) => {
   const [allUserData, setAllUserData] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
-
+  const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
 
   const [pageNumber, setPageNumber] = useState(1);
@@ -849,6 +850,59 @@ const TableScreen = ({route}) => {
     }
   };
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setPageNumber(1);
+    setOpenIndex(null);
+    setSearchKeyword('');
+
+    let data = {
+      pageNumber: 1,
+      pageSize: PAGE_SIZE,
+      keyword: item?.constantName === 'FOOD TEAM' ? 'All' : '',
+      orderBy: 'order',
+      orderType: -1,
+      type: item?.constantName,
+      searchKeyword: '',
+    };
+
+    NetInfo.fetch().then(state => {
+      if (state.isConnected) {
+        httpClient
+          .post(`module/mobile/configuration/pagination`, data)
+          .then(response => {
+            if (response.data.status) {
+              const newData = response?.data?.result?.data;
+
+              const totalRecords = response.data.result.totalRecord || 0;
+              const calculatedTotalPages = Math.ceil(totalRecords / PAGE_SIZE);
+
+              if (newData?.length > 0) {
+                setAllUserData(newData);
+              } else {
+                setAllUserData([]);
+              }
+              const canLoadMore =
+                1 < calculatedTotalPages && newData.length > 0;
+              setHasMore(canLoadMore);
+            } else {
+              NOTIFY_MESSAGE(response.data.message);
+            }
+          })
+          .catch(error => {
+            NOTIFY_MESSAGE(
+              error || error.message ? 'Something Went Wrong' : null,
+            );
+          })
+          .finally(() => {
+            setRefreshing(false);
+          });
+      } else {
+        NOTIFY_MESSAGE('Please check your internet connectivity');
+        setRefreshing(false);
+      }
+    });
+  }, [item, PAGE_SIZE]);
   return (
     <KeyboardAvoidingView
       style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}
@@ -936,6 +990,9 @@ const TableScreen = ({route}) => {
               keyExtractor={(item, index) => index?.toString()}
               renderItem={renderItem}
               contentContainerStyle={styles.listContainer}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
             />
           ) : (
             <NoDataFound />

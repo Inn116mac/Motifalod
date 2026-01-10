@@ -21,14 +21,14 @@ const SERVER_URL = 'http://applivestream.inngenius.com:3000';
 // const SERVER_URL = 'http://10.108.200.211:8080';
 
 function VideoList({data, onPressItem, isLive}) {
-  if (!data.length)
-    return (
-      <View style={styles.emptyView}>
-        <Text style={styles.text}>
-          No {isLive ? 'live' : 'recorded'} videos to display.
-        </Text>
-      </View>
-    );
+  // if (!data.length)
+  //   return (
+  //     <View style={styles.emptyView}>
+  //       <Text style={styles.text}>
+  //         No {isLive ? 'live' : 'recorded'} videos to display.
+  //       </Text>
+  //     </View>
+  //   );
 
   return (
     <FlatList

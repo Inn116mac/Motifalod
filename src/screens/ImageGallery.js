@@ -643,9 +643,6 @@
 //   );
 // }
 
-
-
-
 import React, {useEffect, useState, useRef, useCallback} from 'react';
 import {
   View,
@@ -671,8 +668,8 @@ import Offline from '../components/root/Offline';
 import {IMAGE_URL} from '../connection/Config';
 import NetInfo from '@react-native-community/netinfo';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
-import {AntDesign} from "@react-native-vector-icons/ant-design";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
+import {AntDesign} from '@react-native-vector-icons/ant-design';
 import {heightPercentageToDP} from 'react-native-responsive-screen';
 import NoDataFound from '../components/root/NoDataFound';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
@@ -739,7 +736,7 @@ export default function ImageGallery({route}) {
       textAlign: 'center',
     },
     image: {
-      height: 100,
+      height: heightPercentageToDP(12),
       width: width / 3 - 17,
       marginTop: 4,
       borderRadius: 10,
@@ -761,7 +758,7 @@ export default function ImageGallery({route}) {
     },
     txtAddress: {
       fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-      fontSize: 10,
+      fontSize: FONTS.FONTSIZE.EXTRAMINI * 0.75,
       color: 'grey',
       marginTop: heightPercentageToDP(1),
       width: '100%',
@@ -1118,7 +1115,6 @@ export default function ImageGallery({route}) {
       );
 
       if (batchComplete) {
-
         setTimeout(() => {
           if (endIndex < allImageKeys.length) {
             setCurrentBatchIndex(prev => prev + 1);
@@ -1206,7 +1202,7 @@ export default function ImageGallery({route}) {
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                width: width / 1.6,
+                width: width / 1.7,
               }}>
               <Text numberOfLines={1} style={[styles.txtTitle]}>
                 {item?.eventName && item?.eventName !== 'null'
@@ -1358,7 +1354,7 @@ export default function ImageGallery({route}) {
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                width: width / 1.6,
+                width: width / 1.7,
               }}>
               <Text numberOfLines={1} style={[styles.txtTitle]}>
                 {item?.eventName && item?.eventName !== 'null'
@@ -1436,7 +1432,7 @@ export default function ImageGallery({route}) {
                           }
                     }
                     style={styles.image}
-                    resizeMode="cover"
+                    resizeMode={hasError[imageKey] ? 'contain' : 'cover'}
                     onError={e => {
                       const err = e?.nativeEvent?.error || 'Unknown error';
                       handleimgError(imageKey);
@@ -1461,7 +1457,12 @@ export default function ImageGallery({route}) {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26}  color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={item?.name}
       />

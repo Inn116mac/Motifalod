@@ -11,12 +11,19 @@ import COLORS from './src/theme/Color';
 import ZoomableView from './src/components/root/ZoomableView';
 // import {NodeMediaClient} from 'react-native-nodemediaclient';
 let PushNotification;
+let PushNotificationIOS;
 if (Platform.OS === 'android') {
   PushNotification = require('react-native-push-notification');
 } else if (Platform.OS === 'ios') {
   PushNotification = require('@react-native-community/push-notification-ios');
+  PushNotificationIOS =
+    require('@react-native-community/push-notification-ios').default;
 }
 LogBox.ignoreAllLogs();
+messaging().setBackgroundMessageHandler(async remoteMessage => {
+  // Background handler - Firebase handles notifications automatically
+  // Only add custom logic if needed (e.g., data processing)
+});
 const App = () => {
   // if (Platform.OS === 'ios') {
   //   NodeMediaClient.setLicense('');
@@ -37,7 +44,7 @@ const App = () => {
     };
     checkDeviceId();
   }, []);
-   useEffect(() => {
+  useEffect(() => {
     const initializeNotifications = async () => {
       createNotification();
     };
@@ -78,46 +85,89 @@ const App = () => {
     }
   };
 
+  // const createNotification = () => {
+  //   PushNotification.configure({
+  //     onRegister: function (token) {},
+  //     onNotification: function (notification) {
+  //       PushNotification.createChannel({
+  //         channelId: 'default-channel-id',
+  //         channelName: `Default channel`,
+  //         channelDescription: 'A default channel',
+  //         vibrate: true,
+  //         playSound: true,
+  //         importance: 4,
+  //         soundName: 'default',
+  //       });
+  //     },
+  //     permissions: {
+  //       alert: false,
+  //       badge: false,
+  //       sound: false,
+  //     },
+  //     popInitialNotification: true,
+  //     requestPermissions: true,
+  //   });
+  //   messaging().onMessage(async remoteMessage => {
+  //     // console.log('remoteMessage : ', JSON.stringify(remoteMessage));
+  //     if (Platform.OS === 'android') {
+  //       PushNotification.localNotification({
+  //         title: remoteMessage.notification.title,
+  //         message: remoteMessage.notification.body,
+  //         channelId: 'default-channel-id',
+  //         playSound: true,
+  //         vibrate: true,
+  //       });
+  //     } else if (Platform.OS === 'ios') {
+  //     }
+  //   });
+  //   messaging().setBackgroundMessageHandler(async remoteMessage => {
+  //     // console.log('background : ', JSON.stringify(remoteMessage));
+  //   });
+  // };
+
   const createNotification = () => {
+    if (Platform.OS === 'android') {
+      PushNotification.createChannel({
+        channelId: 'default-channel-id',
+        channelName: 'Default channel',
+        channelDescription: 'A default channel',
+        vibrate: true,
+        playSound: true,
+        importance: 4,
+        soundName: 'default',
+      });
+    }
+
     PushNotification.configure({
       onRegister: function (token) {},
       onNotification: function (notification) {
-        PushNotification.createChannel({
-          channelId: 'default-channel-id',
-          channelName: `Default channel`,
-          channelDescription: 'A default channel',
-          vibrate: true,
-          playSound: true,
-          importance: 4,
-          soundName: 'default',
-        });
+        if (Platform.OS === 'ios') {
+          notification.finish(PushNotificationIOS.FetchResult.NoData);
+        }
       },
       permissions: {
-        alert: false,
-        badge: false,
-        sound: false,
+        alert: true,
+        badge: true,
+        sound: true,
       },
       popInitialNotification: true,
-      requestPermissions: true,
+      requestPermissions: Platform.OS === 'ios',
     });
+
+    // Handle foreground messages
     messaging().onMessage(async remoteMessage => {
-      // console.log('remoteMessage : ', JSON.stringify(remoteMessage));
       if (Platform.OS === 'android') {
         PushNotification.localNotification({
-          title: remoteMessage.notification.title,
-          message: remoteMessage.notification.body,
+          id: Math.floor(Math.random() * 1000000), // Add unique ID
           channelId: 'default-channel-id',
+          title: remoteMessage.notification?.title || '',
+          message: remoteMessage.notification?.body || '',
           playSound: true,
           vibrate: true,
         });
-      } else if (Platform.OS === 'ios') {
       }
     });
-    messaging().setBackgroundMessageHandler(async remoteMessage => {
-      // console.log('background : ', JSON.stringify(remoteMessage));
-    });
   };
-
   const scrollRef = useRef(null);
 
   return (

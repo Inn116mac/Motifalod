@@ -132,7 +132,7 @@ const NewsDetails = ({route}) => {
           </View>
           <View
             style={{
-              marginHorizontal: 20,
+              marginHorizontal: 10,
               marginVertical: 10,
             }}>
             <Text style={styles.title}>{heading}</Text>
@@ -142,7 +142,9 @@ const NewsDetails = ({route}) => {
                   ? `${
                       date &&
                       moment(formatDate(date)).format('DD MMMM YYYY') + ' @'
-                    } ${timeValue ? formattedTime(timeValue) : ''}`
+                      }${date ? ' ' : ''}${
+                      timeValue ? formattedTime(timeValue) : ''
+                    }`
                   : null}
               </Text>
             </View>

@@ -490,6 +490,14 @@ const Registration1 = ({route}) => {
 
   useEffect(() => {
     if (userValues?.length > 0 && moduleDate1.length > 0) {
+      let selfMembershipAmount = null;
+      const selfUser = userValues.find(
+        user => user?.relationship?.value?.toLowerCase() === 'self',
+      );
+      if (selfUser) {
+        selfMembershipAmount = selfUser?.membershipamount?.value;
+      }
+
       const initializedData = moduleDate1.map(header => {
         if (header.isMultiple) {
           return {...header, headerConfig: userValues};
@@ -499,7 +507,9 @@ const Registration1 = ({route}) => {
           item => {
             let initialValue;
 
-            if (
+            if (item?.name === 'totalmembershipamount') {
+              initialValue = item?.value ? item?.value : selfMembershipAmount;
+            } else if (
               item.type === 'text' ||
               item.type === 'password' ||
               item.type === 'textarea' ||
@@ -1728,9 +1738,10 @@ const Registration1 = ({route}) => {
 
     if (editedUserIndex !== null) {
       const oldMembershipAmount = parseFloat(
-        formData[activeTab].headerConfig[
-          editedUserIndex
-        ].membershipamount.value.replace(/[^0-9.-]+/g, '') || '0',
+        (
+          formData[activeTab].headerConfig[editedUserIndex]?.membershipamount
+            ?.value ?? ''
+        ).replace(/[^0-9.-]+/g, '') || '0',
       );
 
       const updatedFormData = formData.map(section => {
@@ -1760,9 +1771,10 @@ const Registration1 = ({route}) => {
       setFormData(updatedFormData);
 
       const newMembershipAmount = parseFloat(
-        updatedFormData[activeTab].headerConfig[
-          editedUserIndex
-        ].membershipamount.value.replace(/[^0-9.-]+/g, '') || '0',
+        (
+          updatedFormData[activeTab].headerConfig[editedUserIndex]
+            ?.membershipamount?.value ?? ''
+        ).replace(/[^0-9.-]+/g, '') || '0',
       );
 
       updateTotalMembershipAmount(
@@ -1802,7 +1814,10 @@ const Registration1 = ({route}) => {
       setFormData(updatedFormData);
 
       const newMembershipAmount = parseFloat(
-        userData[0].membershipamount.value.replace(/[^0-9.-]+/g, '') || '0',
+        (userData[0]?.membershipamount?.value ?? '').replace(
+          /[^0-9.-]+/g,
+          '',
+        ) || '0',
       );
 
       updateTotalMembershipAmount(
@@ -1883,7 +1898,7 @@ const Registration1 = ({route}) => {
 
             if (membershipField && membershipField.value) {
               const value = parseFloat(
-                membershipField.value.replace(/[^0-9.-]+/g, ''),
+                membershipField?.value?.replace(/[^0-9.-]+/g, ''),
               );
               return sum + (isNaN(value) ? 0 : value);
             }
@@ -2151,18 +2166,18 @@ const Registration1 = ({route}) => {
                   return null;
                 }
 
-                if (
-                  (!fieldData?.label ||
-                    fieldData?.value === null ||
-                    fieldData?.value === undefined ||
-                    fieldData?.value === '') &&
-                  (item?.relationship?.value?.toLowerCase() === 'self' ||
-                    item?.relationship?.value?.toLowerCase() ===
-                      'single parent' ||
-                    item?.relationship?.value?.toLowerCase() === 'additional')
-                ) {
-                  return null;
-                }
+                // if (
+                //   (!fieldData?.label ||
+                //     fieldData?.value === null ||
+                //     fieldData?.value === undefined ||
+                //     fieldData?.value === '') &&
+                //   (item?.relationship?.value?.toLowerCase() === 'self' ||
+                //     item?.relationship?.value?.toLowerCase() ===
+                //       'single parent' ||
+                //     item?.relationship?.value?.toLowerCase() === 'additional')
+                // ) {
+                //   return null;
+                // }
 
                 return (
                   <View style={{flexDirection: 'row'}} key={fieldKey}>
@@ -2175,13 +2190,12 @@ const Registration1 = ({route}) => {
                   </View>
                 );
               })}
-              {!(
-                item?.relationship &&
-                (item?.relationship?.value?.toLowerCase() === 'self' ||
-                  item?.relationship?.value?.toLowerCase() ===
-                    'single parent' ||
-                  item?.relationship?.value?.toLowerCase() === 'additional')
-              ) && (
+              {item?.relationship && (
+                //   (item?.relationship?.value?.toLowerCase() === 'self' ||
+                //     item?.relationship?.value?.toLowerCase() ===
+                //       'single parent' ||
+                //     item?.relationship?.value?.toLowerCase() === 'additional')
+                // ) && (
                 <View
                   style={{
                     flexDirection: 'row',
@@ -2198,17 +2212,24 @@ const Registration1 = ({route}) => {
                       size={22}
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() =>
-                      handleDelete(index, item?.configurationid?.value)
-                    }
-                    style={styles.itemAction}>
-                    <AntDesign
-                      name={'delete'}
-                      color={COLORS.PRIMARYBLACK}
-                      size={22}
-                    />
-                  </TouchableOpacity>
+                  {!(
+                    item?.relationship?.value?.toLowerCase() === 'self' ||
+                    item?.relationship?.value?.toLowerCase() ===
+                      'single parent' ||
+                    item?.relationship?.value?.toLowerCase() === 'additional'
+                  ) && (
+                    <TouchableOpacity
+                      onPress={() =>
+                        handleDelete(index, item?.configurationid?.value)
+                      }
+                      style={styles.itemAction}>
+                      <AntDesign
+                        name={'delete'}
+                        color={COLORS.PRIMARYBLACK}
+                        size={22}
+                      />
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
             </View>
@@ -2280,20 +2301,63 @@ const Registration1 = ({route}) => {
   };
 
   const handleTabClick = index => {
+    // if (moduleData[activeTab]?.headerKey === 'personalInfo') {
+    //   const firstTabConfigLength = formData[activeTab]?.headerConfig?.length;
+
+    //   if (
+    //     firstTabConfigLength > 0 &&
+    //     firstTabConfigLength === 1 &&
+    //     userData1?.role == 'member'
+    //   ) {
+    if (index < activeTab) {
+      setActiveTab(index);
+      return;
+    }
+
+    // For forward navigation (jumping ahead)
+    if (index > activeTab + 1) {
+      // Check if all tabs between current and target are already filled
+      let allPreviousTabsValid = true;
+
+      for (let i = activeTab; i < index; i++) {
+        const tabGroup = formData[i];
+
+        // Special check for personalInfo tab
+        if (moduleData[i]?.headerKey === 'personalInfo') {
+          const tabConfigLength = formData[i]?.headerConfig?.length;
+          if (tabConfigLength === 0) {
+            allPreviousTabsValid = false;
+            break;
+          }
+        }
+
+        // Validate the tab
+        const tabErrors = validateFieldsInGroup(tabGroup, formData);
+        if (Object.keys(tabErrors).length > 0) {
+          allPreviousTabsValid = false;
+          break;
+        }
+      }
+
+      if (!allPreviousTabsValid) {
+        Alert.alert(
+          'Info',
+          'Please complete all previous tabs before jumping ahead.',
+        );
+        return;
+        // } else if (firstTabConfigLength == 0) {
+      }
+
+      // All previous tabs are valid, allow jump
+      setActiveTab(index);
+      return;
+    }
+
+    // Validate current tab before moving to next tab (activeTab + 1)
     if (moduleData[activeTab]?.headerKey === 'personalInfo') {
       const firstTabConfigLength = formData[activeTab]?.headerConfig?.length;
 
-      if (
-        firstTabConfigLength > 0 &&
-        firstTabConfigLength === 1 &&
-        userData1?.role == 'member'
-      ) {
-        Alert.alert(
-          'Info',
-          'Please add at least one family member to register.',
-        );
-        return;
-      } else if (firstTabConfigLength == 0) {
+      if (firstTabConfigLength == 0) {
         return Alert.alert(
           'Info',
           'Please add at least one family member to register.',
@@ -2301,12 +2365,18 @@ const Registration1 = ({route}) => {
       }
 
       if (firstTabConfigLength > 0 && !validateCurrentTab()) {
-        alert('Please fill all required fields before switching tabs.');
+        Alert.alert(
+          'Error',
+          'Please fill all required fields before switching tabs.',
+        );
         return;
       }
     } else {
       if (!validateCurrentTab()) {
-        alert('Please fill all required fields before switching tabs.');
+        Alert.alert(
+          'Error',
+          'Please fill all required fields before switching tabs.',
+        );
         return;
       }
     }
@@ -2322,10 +2392,10 @@ const Registration1 = ({route}) => {
       return;
     }
 
-    if (group?.headerConfig?.length === 1 && userData1?.role == 'member') {
-      Alert.alert('Info', 'Please add at least one family member to register.');
-      return;
-    }
+    // if (group?.headerConfig?.length === 1 && userData1?.role == 'member') {
+    //   Alert.alert('Info', 'Please add at least one family member to register.');
+    //   return;
+    // }
 
     const errors = validateFieldsInGroup(group, formData);
     setErrors(errors);
@@ -2684,7 +2754,7 @@ const Registration1 = ({route}) => {
                   !isAddPerson && (
                     <FlatList
                       contentContainerStyle={{
-                        paddingBottom: 20,
+                        paddingBottom: 30,
                       }}
                       style={{margin: 10, marginTop: 0}}
                       data={sortedTimes}
@@ -2737,6 +2807,20 @@ const Registration1 = ({route}) => {
                         : item?.type
                         ? item?.type
                         : 'text';
+
+                    if (
+                      moduleData[activeTab]?.headerKey === 'personalInfo' &&
+                      item?.name == 'relationship' &&
+                      moduleData[activeTab].isMultiple &&
+                      (userData[0]?.[item.key]?.value?.toLowerCase() ==
+                        'self' ||
+                        userData[0]?.[item.key]?.value?.toLowerCase() ==
+                          'additional' ||
+                        userData[0]?.[item.key]?.value?.toLowerCase() ==
+                          'single parent')
+                    ) {
+                      return null;
+                    }
 
                     switch (itemType) {
                       case 'text':

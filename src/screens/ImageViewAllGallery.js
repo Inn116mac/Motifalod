@@ -265,8 +265,6 @@
 //   );
 // }
 
-
-
 import React, {useEffect, useState, useRef, useCallback} from 'react';
 import {
   StyleSheet,
@@ -278,7 +276,7 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import {heightPercentageToDP} from 'react-native-responsive-screen';
 import FONTS from '../theme/Fonts';
 import COLORS from '../theme/Color';
@@ -319,6 +317,7 @@ export default function ImageViewAllGallery({route}) {
       width: width / 3 - 15,
       borderRadius: 10,
       // backgroundColor: '#f0f0f0',
+      backgroundColor: '#f0f0f0',
     },
     container: {
       flex: 1,
@@ -465,7 +464,6 @@ export default function ImageViewAllGallery({route}) {
     const currentBatch = allImageKeys.slice(startIndex, endIndex);
 
     if (currentBatch.length > 0) {
-
       setVisibleImages(prev => {
         const newSet = new Set(prev);
         currentBatch.forEach(key => newSet.add(key));
@@ -500,7 +498,6 @@ export default function ImageViewAllGallery({route}) {
         const delay = RETRY_DELAYS[attempts] || 1000;
 
         retryTimeouts.current[imageKey] = setTimeout(() => {
-
           setRetryCount(prev => ({...prev, [imageKey]: nextAttempt}));
           setRetryKey(prev => ({...prev, [imageKey]: Date.now()}));
 
@@ -607,7 +604,7 @@ export default function ImageViewAllGallery({route}) {
                       }
                 }
                 style={styles.image}
-                resizeMode="cover"
+                resizeMode={hasError[imageKey] ? 'contain' : 'cover'}
                 onLoad={() => handleImageLoad(imageKey)}
                 onError={() => {
                   handleImageError(imageKey);
@@ -674,7 +671,12 @@ export default function ImageViewAllGallery({route}) {
     <View style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={route?.params?.header || '-'}
         leftOnPress={() => navigation.goBack()}

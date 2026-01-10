@@ -34,18 +34,18 @@ export default function NewsView({data}) {
       height: height / 7,
       width: width / 3.2,
       borderRadius: 10,
-      resizeMode: 'cover',
+      backgroundColor: '#f0f0f0',
     },
     title: {
       fontSize: FONTS.FONTSIZE.EXTRASMALL,
-      marginBottom: 4,
+      // marginBottom: 4,
       fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
       color: COLORS.TITLECOLOR,
       width: width / 1.8,
     },
     date: {
       fontSize: FONTS.FONTSIZE.EXTRASMALL,
-      marginBottom: 4,
+      // marginBottom: 4,
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
       color: COLORS.PLACEHOLDERCOLOR,
       width: width / 1.8,
@@ -125,6 +125,7 @@ export default function NewsView({data}) {
           }
           onError={() => handleImageError(index)}
           style={styles.image}
+          resizeMode={imageErrors[index] ? 'contain' : 'cover'}
         />
         <View style={{}}>
           <Text numberOfLines={2} style={styles.title}>
@@ -134,7 +135,7 @@ export default function NewsView({data}) {
             {date || time
               ? `${
                   date && moment(formatDate(date)).format('DD MMMM YYYY') + ' @'
-                } ${time ? formattedTime(time) : ''}`
+                }${date ? ' ' : ''}${time ? formattedTime(time) : ''}`
               : null}
           </Text>
 

@@ -452,7 +452,7 @@ const ReportsData = ({route}) => {
                 let value = item[key];
                 let isArray = Array.isArray(value);
 
-                let finalKey = key == 'FamilyMembers' ? 'family Members' : key;
+                 let finalKey = key == 'FamilyMembers' ? 'Members' : key;
 
                 return (
                   <View
@@ -601,6 +601,7 @@ const ReportsData = ({route}) => {
                     fontSize: FONTS.FONTSIZE.SMALL,
                     fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                     color: COLORS.PRIMARYWHITE,
+                    maxWidth: width / 1.2,
                   }}>
                   {selectedEvent?.name || 'Events'}
                 </Text>

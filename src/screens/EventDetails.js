@@ -28,6 +28,7 @@ import {getImageUri, NOTIFY_MESSAGE} from '../constant/Module';
 import {SimpleLineIcons} from '@react-native-vector-icons/simple-line-icons';
 import {AntDesign} from '@react-native-vector-icons/ant-design';
 import {Ionicons} from '@react-native-vector-icons/ionicons';
+import FastImage from 'react-native-fast-image';
 
 const EventDetails = ({route}) => {
   const {width, height} = useWindowDimensions();
@@ -286,8 +287,8 @@ const EventDetails = ({route}) => {
                 height: isFolded ? height / 3 : height / 5,
                 width: '100%',
               }}>
-              <ImageBackground
-                // defaultSource={require('../assets/images/Image_placeholder.png')}
+            <FastImage
+                defaultSource={require('../assets/images/Image_placeholder.png')}
                 onError={() => {
                   setHasError(true);
                 }}
@@ -354,7 +355,7 @@ const EventDetails = ({route}) => {
                     </Text>
                   </View>
                 </View> */}
-              </ImageBackground>
+           </FastImage>
             </View>
 
             <View

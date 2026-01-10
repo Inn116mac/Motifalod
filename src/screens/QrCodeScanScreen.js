@@ -231,7 +231,7 @@ const QrCodeScanScreen = ({route}) => {
         const response = await httpClient.post(
           `common/ReadQRCode/${value}?scanFor=${
             isSelfCheckIn ? 'EVENT' : 'SIGN UP'
-          }`,
+         }&eventId=${isSelfCheckIn ? 0 : selectedEvent?.id}`,
         );
 
         const {data} = response;

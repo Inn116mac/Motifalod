@@ -7,6 +7,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
   StyleSheet,
+  RefreshControl,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
@@ -66,7 +67,7 @@ const ReportsList = ({route}) => {
   const [eventData, setEventData] = useState([]);
   const [isEventDataModal, setIsEventDataModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-
+  const [refreshing, setRefreshing] = useState(false);
   useEffect(() => {
     if (selectedEvent) {
       getReportsList();
@@ -165,6 +166,50 @@ const ReportsList = ({route}) => {
     });
   };
 
+  const onRefresh = () => {
+    setRefreshing(true);
+
+    NetInfo.fetch().then(state => {
+      if (state.isConnected) {
+        httpClient
+          .post(
+            `Report/dashboard/count?eventId=${
+              selectedEvent ? selectedEvent?.id : 0
+            }`,
+          )
+          .then(async response => {
+            if (response.data.status) {
+              if (response?.data?.result?.length > 0) {
+                const reportObj = response.data.result[0];
+                const reportItems = Object.entries(reportObj).map(
+                  ([label, value]) => ({
+                    label: formatLabel(label),
+                    value,
+                  }),
+                );
+                setReportsList(reportItems);
+              } else {
+                setReportsList([]);
+              }
+            } else {
+              NOTIFY_MESSAGE(response?.data?.message);
+            }
+          })
+          .catch(error => {
+            NOTIFY_MESSAGE(
+              error || error.message ? 'Something Went Wrong' : null,
+            );
+          })
+          .finally(() => {
+            setRefreshing(false);
+          });
+      } else {
+        NOTIFY_MESSAGE('Please check your internet connectivity');
+        setRefreshing(false);
+      }
+    });
+  };
+
   return (
     <View
       style={{
@@ -203,6 +248,7 @@ const ReportsList = ({route}) => {
                   fontSize: FONTS.FONTSIZE.SMALL,
                   fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                   color: COLORS.PRIMARYWHITE,
+                  maxWidth: width / 1.2,
                 }}>
                 {selectedEvent?.name || 'Events'}
               </Text>
@@ -258,6 +304,9 @@ const ReportsList = ({route}) => {
               );
             }}
             ListEmptyComponent={!loading ? () => <NoDataFound /> : null}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
           />
           <Modal
             animationType="none"

@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import COLORS from './../theme/Color';
-import {MaterialDesignIcons} from "@react-native-vector-icons/material-design-icons";
-import {Ionicons} from "@react-native-vector-icons/ionicons";
+import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
+import {Ionicons} from '@react-native-vector-icons/ionicons';
 import FONTS from '../theme/Fonts';
 import {NOTIFY_MESSAGE} from '../constant/Module';
 import Loader from '../components/root/Loader';
@@ -18,7 +18,7 @@ import {getData} from '../utils/Storage';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import httpClient from '../connection/httpClient';
 import FastImage from 'react-native-fast-image';
@@ -94,7 +94,7 @@ export default function RegistrationPreviewAfterQrCode({route}) {
     httpClient
       .get(
         `GetQRCode?Qrcodeid=${
-          userData?.member
+          isSelfCheckIn
             ? userData?.member?.configurationId
             : route?.params?.memberId
         }`,
@@ -151,7 +151,7 @@ export default function RegistrationPreviewAfterQrCode({route}) {
       return {
         id: 0,
         eventid: selectedEvent ? selectedEvent.id : route?.params?.memberId,
-        memberid: userData?.member
+        memberid: isSelfCheckIn
           ? userData?.member?.configurationId
           : route?.params?.memberId,
         firstname: i?.firstName?.value,
@@ -515,7 +515,12 @@ export default function RegistrationPreviewAfterQrCode({route}) {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={
           route?.params?.selectedEvent

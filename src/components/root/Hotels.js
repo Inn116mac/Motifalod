@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
-import {heightPercentageToDP} from 'react-native-responsive-screen';
 import FastImage from 'react-native-fast-image';
 import {useNavigation} from '@react-navigation/native';
 import FONTS from '../../theme/Fonts';
@@ -17,7 +16,7 @@ import NoDataFound from './NoDataFound';
 import {getImageUri} from '../../constant/Module';
 
 export default function Hotels({data}) {
-  const {width} = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const navigation = useNavigation();
 
   const styles = StyleSheet.create({
@@ -52,7 +51,7 @@ export default function Hotels({data}) {
         key={index}
         style={{
           borderRadius: 15,
-          marginVertical: heightPercentageToDP(0.9),
+       marginVertical: 10,
           flex: 1,
           borderBottomWidth: 0.6,
           borderBottomColor: COLORS.BOTTOMBORDERCOLOR,
@@ -80,7 +79,12 @@ export default function Hotels({data}) {
                       priority: FastImage.priority.normal,
                     }
               }
-              style={{width: 110, height: 110, borderRadius: 10}}
+               style={{
+                height: height / 7,
+                width: width / 3.5,
+                borderRadius: 10,
+                backgroundColor: '#f0f0f0',
+              }}
               resizeMode={FastImage.resizeMode.cover}
               onError={() => handleImageError(index)}
             />

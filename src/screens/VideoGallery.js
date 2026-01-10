@@ -760,13 +760,13 @@ const VideoGallery = ({route}) => {
       fontFamily: FONTS.FONT_FAMILY.MEDIUM,
       fontSize: FONTS.FONTSIZE.SEMIMINI,
       color: COLORS.TITLECOLOR,
-      width: widthPercentageToDP(60),
+      width: '80%',
       letterSpacing: 1,
       marginBottom: 4,
     },
     txtAddress: {
       fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-      fontSize: 10,
+   fontSize: FONTS.FONTSIZE.EXTRAMINI * 0.75,
       color: 'gray',
       marginTop: heightPercentageToDP(1),
       textAlign: 'center',
@@ -1060,11 +1060,16 @@ const VideoGallery = ({route}) => {
                             }
                       }
                       style={{
-                        height: 100,
+                        height: heightPercentageToDP(12),
                         width: width / 3 - 18,
                         borderRadius: 10,
+                          backgroundColor: '#f0f0f0',
                       }}
-                      resizeMode={FastImage.resizeMode.cover}
+                       resizeMode={
+                        hasError[`${img?.videoPath}_${imgIndex}`]
+                          ? 'contain'
+                          : 'cover'
+                      }
                       onError={() => {
                         setHasError(prevState => ({
                           ...prevState,

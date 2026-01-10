@@ -1531,7 +1531,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                             width: '85%',
                             paddingVertical: 0,
                           }}
-                          value={item?.value || ' '}
+                          value={item?.value || ''}
                           maxLength={
                             item?.maxLength == 0 ? 250 : item?.maxLength
                           }

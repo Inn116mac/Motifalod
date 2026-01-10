@@ -189,18 +189,18 @@ const MemberScreen = () => {
                 return null;
               }
 
-              if (
-                (!fieldData?.label ||
-                  fieldData?.value === null ||
-                  fieldData?.value === undefined ||
-                  fieldData?.value === '') &&
-                (item?.relationship?.value?.toLowerCase() === 'self' ||
-                  item?.relationship?.value?.toLowerCase() ===
-                    'single parent' ||
-                  item?.relationship?.value?.toLowerCase() === 'additional')
-              ) {
-                return null;
-              }
+              // if (
+              //   (!fieldData?.label ||
+              //     fieldData?.value === null ||
+              //     fieldData?.value === undefined ||
+              //     fieldData?.value === '') &&
+              //   (item?.relationship?.value?.toLowerCase() === 'self' ||
+              //     item?.relationship?.value?.toLowerCase() ===
+              //       'single parent' ||
+              //     item?.relationship?.value?.toLowerCase() === 'additional')
+              // ) {
+              //   return null;
+              // }
 
               return (
                 <View style={{flexDirection: 'row'}} key={fieldKey}>
