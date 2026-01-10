@@ -10,26 +10,15 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import CustomHeader from '../components/root/CustomHeader';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
-import {Entypo} from "@react-native-vector-icons/entypo";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
+import {Entypo} from '@react-native-vector-icons/entypo';
 import COLORS from '../theme/Color';
 import FONTS from '../theme/Fonts';
 import Loader from '../components/root/Loader';
 
 const SERVER_URL = 'http://applivestream.inngenius.com:3000';
-// const SERVER_URL = 'http://192.168.1.107:8080';
-// const SERVER_URL = 'http://10.108.200.211:8080';
 
 function VideoList({data, onPressItem, isLive}) {
-  // if (!data.length)
-  //   return (
-  //     <View style={styles.emptyView}>
-  //       <Text style={styles.text}>
-  //         No {isLive ? 'live' : 'recorded'} videos to display.
-  //       </Text>
-  //     </View>
-  //   );
-
   return (
     <FlatList
       data={data}
@@ -109,7 +98,6 @@ export default function ViewerScreen({route}) {
       const data = await res.json();
       setLiveEvents(data);
     } catch (err) {
-      // console.log('Fetch liveEvents error:', err.message);
       setLiveEvents([]);
     } finally {
       clearTimeout(timeoutId);
@@ -133,7 +121,6 @@ export default function ViewerScreen({route}) {
 
       setRecordedEvents(data);
     } catch (err) {
-      // console.log('Fetch recordings error:', err.message);
       setRecordedEvents([]);
     } finally {
       clearTimeout(timeoutId);
@@ -163,7 +150,6 @@ export default function ViewerScreen({route}) {
       const response = await fetch(`${SERVER_URL}/api/server-capacity`);
       const data = await response.json();
 
-
       if (data.status === 'FULL' || data.utilizationPercent >= 95) {
         Alert.alert('Server at Capacity', 'Please try again later.');
         return false;
@@ -171,7 +157,6 @@ export default function ViewerScreen({route}) {
 
       return true;
     } catch (error) {
-      console.error('Error checking server capacity:', error);
       // In case of error, allow stream to continue
       return true;
     }
@@ -206,7 +191,12 @@ export default function ViewerScreen({route}) {
       <CustomHeader
         leftOnPress={() => navigation.goBack()}
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={item?.name}
       />

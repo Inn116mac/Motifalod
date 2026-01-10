@@ -17,7 +17,11 @@ import {
   heightPercentageToDP,
   widthPercentageToDP,
 } from 'react-native-responsive-screen';
-import {NOTIFY_MESSAGE} from '../constant/Module';
+import {
+  formatPhoneToUS,
+  isPhoneField,
+  NOTIFY_MESSAGE,
+} from '../constant/Module';
 import NetInfo from '@react-native-community/netinfo';
 import httpClient from '../connection/httpClient';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
@@ -269,7 +273,6 @@ const NameListScreen = ({route}) => {
                 let value = item[key];
                 let isArray = false;
 
-                // Try to parse if string starts with '['
                 if (typeof value === 'string' && value.trim().startsWith('[')) {
                   try {
                     const parsed = JSON.parse(value);
@@ -283,6 +286,8 @@ const NameListScreen = ({route}) => {
                 } else if (Array.isArray(value)) {
                   isArray = true;
                 }
+
+                const isPhone = isPhoneField(key);
 
                 return (
                   <View
@@ -322,37 +327,49 @@ const NameListScreen = ({route}) => {
                               {typeof arrItem === 'object' &&
                               arrItem !== null ? (
                                 <View style={{}}>
-                                  {Object.entries(arrItem).map(([k, v], i) => (
-                                    <View
-                                      key={i}
-                                      style={{
-                                        flexDirection: 'row',
-                                        marginBottom: 2,
-                                        alignItems: 'flex-start',
-                                      }}>
-                                      <Text
+                                  {Object.entries(arrItem).map(([k, v], i) => {
+                                    // ✅ Check if this nested key is a phone field
+                                    const isNestedPhone = isPhoneField(k);
+
+                                    // ✅ Format phone number if it's a phone field
+                                    const displayValue =
+                                      isNestedPhone && v
+                                        ? formatPhoneToUS(v)
+                                        : v || '-';
+
+                                    return (
+                                      <View
+                                        key={i}
                                         style={{
-                                          fontFamily: FONTS.FONT_FAMILY.REGULAR,
-                                          fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                                          color: COLORS.PRIMARYBLACK,
-                                          marginRight: 2,
-                                          width: '45%',
+                                          flexDirection: 'row',
+                                          marginBottom: 2,
+                                          alignItems: 'flex-start',
                                         }}>
-                                        {k} :
-                                      </Text>
-                                      <Text
-                                        style={{
-                                          fontFamily:
-                                            FONTS.FONT_FAMILY.SEMI_BOLD,
-                                          fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                                          color: COLORS.PLACEHOLDERCOLOR,
-                                          marginLeft: 4,
-                                          width: '50%',
-                                        }}>
-                                        {v || '-'}
-                                      </Text>
-                                    </View>
-                                  ))}
+                                        <Text
+                                          style={{
+                                            fontFamily:
+                                              FONTS.FONT_FAMILY.REGULAR,
+                                            fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                            color: COLORS.PRIMARYBLACK,
+                                            marginRight: 2,
+                                            width: '45%',
+                                          }}>
+                                          {k} :
+                                        </Text>
+                                        <Text
+                                          style={{
+                                            fontFamily:
+                                              FONTS.FONT_FAMILY.SEMI_BOLD,
+                                            fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                            color: COLORS.PLACEHOLDERCOLOR,
+                                            marginLeft: 4,
+                                            width: '50%',
+                                          }}>
+                                          {displayValue}
+                                        </Text>
+                                      </View>
+                                    );
+                                  })}
                                 </View>
                               ) : (
                                 <Text style={styles.text}>{arrItem}</Text>
@@ -364,7 +381,9 @@ const NameListScreen = ({route}) => {
                     ) : (
                       <Text style={styles.text}>
                         {value !== null && value !== undefined && value !== ''
-                          ? value.toString()
+                          ? isPhone && value
+                            ? formatPhoneToUS(value.toString()) // ✅ Format phone for non-array values
+                            : value.toString()
                           : '-'}
                       </Text>
                     )}

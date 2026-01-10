@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
-import React  from 'react';
+import React from 'react';
 import FONTS from '../../theme/Fonts';
 import COLORS from '../../theme/Color';
 
@@ -20,6 +20,7 @@ const InputComponent = ({
   secureTextEntry,
   keyboardType,
   givenWidth,
+  maxLength,
 }) => {
   const {width} = useWindowDimensions();
 
@@ -48,7 +49,6 @@ const InputComponent = ({
         <View
           style={{
             width: givenWidth ? givenWidth : width / 1.2,
-            // marginVertical: 8,
           }}>
           <TextInput
             keyboardType={keyboardType}
@@ -58,6 +58,7 @@ const InputComponent = ({
             onChangeText={txt => setText(txt)}
             placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
             placeholder={placeholder}
+            maxLength={maxLength}
             autoCapitalize="none"
             style={{
               fontSize: FONTS.FONTSIZE.MINI,

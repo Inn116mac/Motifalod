@@ -14,12 +14,18 @@ import {
   Alert,
   Modal,
   Platform,
+  SafeAreaView,
 } from 'react-native';
 import Dashboard from '../screens/Dashboard';
 import MemberScreen from '../screens/MemberScreen';
 import COLORS from '../theme/Color';
 import {Ionicons} from '@react-native-vector-icons/ionicons';
-import {getData, removeData} from '../utils/Storage';
+import {
+  getData,
+  getEventAdminVerified,
+  removeData,
+  setEventAdminVerified,
+} from '../utils/Storage';
 import NetInfo from '@react-native-community/netinfo';
 import {IMAGE_URL} from '../connection/Config';
 import {NOTIFY_MESSAGE} from '../constant/Module';
@@ -28,6 +34,7 @@ import httpClient from '../connection/httpClient';
 import {CommonActions} from '@react-navigation/native';
 import {DrawerContext} from '../utils/DrawerContext';
 import {MaterialIcons} from '@react-native-vector-icons/material-icons';
+import OTPVerificationComponent from '../components/root/OTPVerificationComponent';
 
 const windowHeight = Dimensions.get('window').height;
 const windowWidth = Dimensions.get('window').width;
@@ -41,6 +48,11 @@ const CustomDrawerContent = props => {
   const [qrImageModalVisible, setQrImageModalVisible] = useState(false);
   const [firstName, setFirstName] = useState('');
 
+  const [otpModalVisible, setOtpModalVisible] = useState(false);
+  const [isEventAdminVerified, setIsEventAdminVerified] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+
   const handleImagePress = () => {
     setQrImageModalVisible(true);
   };
@@ -49,6 +61,15 @@ const CustomDrawerContent = props => {
   const isEventAdmin = drawerData?.find(
     item => item?.constantName == 'EVENT ADMIN',
   );
+
+  useEffect(() => {
+    checkEventAdminVerification();
+  }, []);
+
+  const checkEventAdminVerification = async () => {
+    const verified = await getEventAdminVerified();
+    setIsEventAdminVerified(verified);
+  };
 
   useEffect(() => {
     if (userData && userData?.role === 'member') {
@@ -149,6 +170,110 @@ const CustomDrawerContent = props => {
     );
   };
 
+  const handleEventAdminClick = async () => {
+    if (userData?.role == 'Super Admin') {
+      navigateToEventAdmin();
+    } else {
+      const verified = await getEventAdminVerified();
+      navigateToEventAdmin();
+
+      // if (verified) {
+      //   navigateToEventAdmin();
+      // } else {
+      //   sendOtpEmail();
+      // }
+    }
+  };
+
+  // Send OTP email
+  const sendOtpEmail = () => {
+    const userIdentifier = getUserIdentifier();
+
+    if (!userIdentifier) {
+      NOTIFY_MESSAGE('Email address not found!');
+      return;
+    }
+
+    NetInfo.fetch().then(state => {
+      if (state.isConnected) {
+        setIsSendingOtp(true);
+        httpClient
+          .post(`member/forgetpassword?userName=${userIdentifier}`)
+          .then(response => {
+            if (response.data.status) {
+              NOTIFY_MESSAGE(
+                response?.data?.message || 'OTP sent to your email',
+              );
+              setPendingNavigation({
+                screen: 'FormRecords',
+                params: {
+                  data: {
+                    item: isEventAdmin,
+                    isTabView: isEventAdmin?.isForm,
+                  },
+                },
+              });
+              // Show OTP modal
+              setOtpModalVisible(true);
+            } else {
+              NOTIFY_MESSAGE(
+                response?.data?.message ||
+                  'Failed to send OTP. Please try again.',
+              );
+            }
+          })
+          .catch(err => {
+            NOTIFY_MESSAGE(
+              err?.message || err
+                ? 'Failed to send OTP. Please try again.'
+                : null,
+            );
+          })
+          .finally(() => {
+            setIsSendingOtp(false);
+          });
+      } else {
+        NOTIFY_MESSAGE('Please check your internet connectivity');
+      }
+    });
+  };
+
+  const navigateToEventAdmin = () => {
+    let data = {
+      item: isEventAdmin,
+      isTabView: isEventAdmin?.isForm,
+    };
+    navigation.navigate('FormRecords', {
+      data: data,
+    });
+  };
+
+  // Handle successful OTP verification
+  const handleOtpVerifySuccess = async data => {
+    // Set verification flag to true
+    await setEventAdminVerified(true);
+    setIsEventAdminVerified(true);
+
+    // Close modal
+    setOtpModalVisible(false);
+
+    // Navigate to Event Admin
+    if (pendingNavigation) {
+      navigation.navigate(pendingNavigation.screen, pendingNavigation.params);
+      setPendingNavigation(null);
+    }
+  };
+
+  const handleOtpVerifyError = error => {
+    console.log('OTP Verification Failed:', error);
+    // Modal stays open, user can try again
+  };
+
+  const handleOtpModalClose = () => {
+    setOtpModalVisible(false);
+    setPendingNavigation(null);
+  };
+
   useEffect(() => {
     if (userData && userData?.member) {
       const member = userData?.member?.content;
@@ -157,6 +282,23 @@ const CustomDrawerContent = props => {
       setFirstName(firstName?.value);
     }
   }, [userData]);
+
+  const getUserIdentifier = () => {
+    if (userData?.user?.email) {
+      return userData.user.email;
+    }
+    if (userData?.user?.userName) {
+      return userData.user.userName;
+    }
+    if (userData?.member) {
+      const member = userData?.member?.content;
+      const memberParse = JSON.parse(member);
+      return (
+        memberParse?.emailAddress?.value || memberParse?.email?.value || ''
+      );
+    }
+    return '';
+  };
 
   return (
     <View style={{flex: 1}}>
@@ -293,14 +435,9 @@ const CustomDrawerContent = props => {
                 padding: 10,
                 marginLeft: 10,
               }}
+              disabled={isSendingOtp}
               onPress={() => {
-                let data = {
-                  item: isEventAdmin,
-                  isTabView: isEventAdmin?.isForm,
-                };
-                navigation.navigate('FormRecords', {
-                  data: data,
-                });
+                handleEventAdminClick();
               }}>
               <MaterialIcons
                 name="admin-panel-settings"
@@ -314,8 +451,20 @@ const CustomDrawerContent = props => {
                   fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                   color: COLORS.PLACEHOLDERCOLOR,
                 }}>
-                EVENT ADMIN
+                {isSendingOtp ? 'Sending OTP...' : 'EVENT ADMIN'}
               </Text>
+              {isEventAdminVerified && (
+                <Ionicons
+                  name="checkmark-circle"
+                  color={COLORS.SUCCESSCOLOR || 'green'}
+                  size={20}
+                  style={{
+                    marginLeft: 10,
+                    includeFontPadding: false,
+                    marginTop: -4,
+                  }}
+                />
+              )}
             </TouchableOpacity>
           )}
 
@@ -431,17 +580,44 @@ const CustomDrawerContent = props => {
         visible={qrImageModalVisible}
         transparent={true}
         onRequestClose={() => setQrImageModalVisible(false)}>
-        <View style={styles.modalContainer}>
-          <TouchableOpacity
-            style={styles.modalClose}
-            onPress={() => setQrImageModalVisible(false)}>
-            <Ionicons name="close-circle-outline" color={'#fff'} size={36} />
-          </TouchableOpacity>
-          <Image
-            source={{uri: `${IMAGE_URL}${qrImageUri}`}}
-            style={styles.fullscreenImage}
-          />
-        </View>
+        <SafeAreaView style={{flex: 1}}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              style={styles.modalClose}
+              onPress={() => setQrImageModalVisible(false)}>
+              <Ionicons name="close-circle-outline" color={'#fff'} size={36} />
+            </TouchableOpacity>
+            <Image
+              source={{uri: `${IMAGE_URL}${qrImageUri}`}}
+              style={styles.fullscreenImage}
+            />
+          </View>
+        </SafeAreaView>
+      </Modal>
+      <Modal
+        animationType="slide"
+        visible={otpModalVisible}
+        transparent={false}
+        onRequestClose={handleOtpModalClose}>
+        <SafeAreaView style={{flex: 1}}>
+          <View style={{flex: 1}}>
+            <OTPVerificationComponent
+              userName={getUserIdentifier()}
+              onVerifySuccess={handleOtpVerifySuccess}
+              onVerifyError={handleOtpVerifyError}
+              onBack={handleOtpModalClose}
+              otpLength={6}
+              initialTimer={60}
+              showHeader={true}
+              showLogo={false}
+              // headerTitle="EVENT ADMIN"
+              instructionText="Please enter the OTP sent to your email to access Event Admin panel."
+              verifyApiEndpoint="member/verifyotp"
+              resendApiEndpoint="member/forgetpassword"
+              isFromDrawer={true}
+            />
+          </View>
+        </SafeAreaView>
       </Modal>
     </View>
   );
@@ -531,7 +707,7 @@ const styles = StyleSheet.create({
   },
   modalClose: {
     position: 'absolute',
-    top: Platform.OS == 'ios' ? 60 : 40,
+    top: 20,
     right: 20,
     zIndex: 1,
   },

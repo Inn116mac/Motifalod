@@ -6,7 +6,6 @@ const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 // Use the smaller dimension for scaling
 const SCALE = Math.min(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-// Base width for scaling calculations (e.g., iPhone 6/7/8 width)
 const BASE_WIDTH = 375;
 
 // Font size configuration based on device type and size category
@@ -53,7 +52,6 @@ const getScreenSizeCategory = () => {
 export const getFontSize = size => {
   const deviceType = getDeviceType();
   const screenCategory = getScreenSizeCategory();
-  // console.log(deviceType,screenCategory);
 
   const config = fontConfig[deviceType][screenCategory];
 

@@ -21,8 +21,6 @@ import Video from 'react-native-video';
 import KeepAwake from 'react-native-keep-awake';
 
 const SERVER_URL = 'http://applivestream.inngenius.com:3000';
-// const SERVER_URL = 'http://192.168.1.107:8080';
-// const SERVER_URL = 'http://10.108.200.211:8080';
 
 export default function FullScreenVideoScreen({route}) {
   const {roomId, title, item, videoUrl, isRecording} = route.params;
@@ -42,15 +40,12 @@ export default function FullScreenVideoScreen({route}) {
 
   useEffect(() => {
     if (!isRecording) {
-      // Start audio session for video viewing (not recording)
       InCallManager.start({media: 'video', auto: false, ringback: ''});
       InCallManager.setForceSpeakerphoneOn(true);
-      // console.log('✅ iOS Audio Session started - Speaker enabled');
 
       return () => {
         InCallManager.stop();
         InCallManager.setForceSpeakerphoneOn(false);
-        // console.log('🛑 iOS Audio Session stopped');
       };
     }
   }, [isRecording]);
@@ -137,8 +132,6 @@ export default function FullScreenVideoScreen({route}) {
 
               if (gotVideo) {
                 setStream(videoStream);
-                // ✅ ENSURE SPEAKER IS ON AFTER STREAM STARTS
-                // if (Platform.OS === 'ios') {
                 setTimeout(() => {
                   InCallManager.setForceSpeakerphoneOn(true);
                 }, 500);

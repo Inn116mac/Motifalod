@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  BackHandler,
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import {NOTIFY_MESSAGE} from '../../constant/Module';
@@ -14,7 +15,7 @@ import COLORS from '../../theme/Color';
 import {widthPercentageToDP} from 'react-native-responsive-screen';
 import FONTS from '../../theme/Fonts';
 import ButtonComponent from '../../components/root/ButtonComponent';
-import {useNavigation} from '@react-navigation/native';
+import {CommonActions, useNavigation} from '@react-navigation/native';
 import CustomHeader from '../../components/root/CustomHeader';
 import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import Offline from '../../components/root/Offline';
@@ -85,6 +86,32 @@ const NewPassword = ({route}) => {
       hide.remove();
     };
   }, []);
+
+  useEffect(() => {
+    const handleBackPress = () => {
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'Login',
+            },
+          ],
+        }),
+      );
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress,
+    );
+
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
+
   return (
     <KeyboardAvoidingView
       style={{flex: 1}}
@@ -96,7 +123,16 @@ const NewPassword = ({route}) => {
         }}>
         <CustomHeader
           leftOnPress={() => {
-            navigation.goBack();
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: 'Login',
+                  },
+                ],
+              }),
+            );
           }}
           leftIcon={
             <FontAwesome6

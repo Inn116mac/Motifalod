@@ -9,7 +9,11 @@ import {
 import React, {useEffect, useState} from 'react';
 import {getData} from '../utils/Storage';
 import {IMAGE_URL} from '../connection/Config';
-import {NOTIFY_MESSAGE} from '../constant/Module';
+import {
+  formatPhoneToUS,
+  isPhoneField,
+  NOTIFY_MESSAGE,
+} from '../constant/Module';
 import COLORS from '../theme/Color';
 import Loader from '../components/root/Loader';
 import {useNavigation} from '@react-navigation/native';
@@ -19,7 +23,6 @@ import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
 import httpClient from '../connection/httpClient';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
-import FastImage from 'react-native-fast-image';
 
 const RegistrationPreview = ({route}) => {
   const {formData, item} = route?.params;
@@ -90,9 +93,9 @@ const RegistrationPreview = ({route}) => {
         leftIcon={
           <FontAwesome6
             name="angle-left"
-            iconStyle="solid"
             size={26}
             color={COLORS.LABELCOLOR}
+            iconStyle="solid"
           />
         }
         title={'Registration Preview'}
@@ -110,7 +113,7 @@ const RegistrationPreview = ({route}) => {
               <Image
                 style={{height: 100, width: 100}}
                 source={{uri: IMAGE_URL + qrImgUrl}}
-                resizeMode="contain"
+                resizeMode="cover"
               />
             </View>
           </View>
@@ -127,32 +130,98 @@ const RegistrationPreview = ({route}) => {
                 </Text>
                 <View style={styles.lstCont}>
                   {data?.isMultiple && finalData
-                    ? finalData?.map((data, index) => {
+                    ? finalData?.map((data, memberIndex) => {
                         return (
-                          <View key={index} style={styles.listItem}>
+                          <View key={memberIndex} style={styles.listItem}>
+                            {/* Member Index Header */}
+                            <Text style={styles.memberIndexHeader}>
+                              Member {memberIndex + 1}
+                            </Text>
+
                             {Object.keys(data).map((key, keyIndex) => {
                               const item = data[key];
+
+                              if (item?.type == 'hidden') {
+                                return null;
+                              }
+
+                              const isPhone = isPhoneField(item?.name);
+
+                              // Handle file type
+                              if (item?.type === 'file' && item?.value) {
+                                let mediaUris = [];
+
+                                try {
+                                  const parsedValue = JSON.parse(item.value);
+                                  if (Array.isArray(parsedValue)) {
+                                    // Filter out null, empty strings, and undefined
+                                    mediaUris = parsedValue.filter(
+                                      uri =>
+                                        uri !== null &&
+                                        uri !== undefined &&
+                                        uri !== '',
+                                    );
+                                  } else {
+                                    mediaUris = [parsedValue];
+                                  }
+                                } catch (error) {
+                                  mediaUris = [item.value];
+                                }
+
+                                // Only render if there are valid URIs
+                                if (mediaUris.length === 0) {
+                                  return null;
+                                }
+
+                                return (
+                                  <View key={keyIndex} style={styles.lstrow}>
+                                    <Text style={styles.txtlstLbl}>
+                                      {item?.label
+                                        ? item?.label + ' : '
+                                        : key + ' : '}
+                                    </Text>
+                                    <View style={{flex: 1}}>
+                                      {mediaUris.map((uri, uriIndex) => {
+                                        // Extract filename from URI
+                                        const fileName =
+                                          uri.split('/').pop() || uri;
+                                        return (
+                                          <TouchableOpacity
+                                            key={uriIndex}
+                                            onPress={() => {
+                                              navigation.navigate(
+                                                'FullImageScreen',
+                                                {
+                                                  image: uri,
+                                                },
+                                              );
+                                            }}
+                                            style={{marginBottom: 4}}>
+                                            <Text
+                                              style={[
+                                                styles.txtlstvalue,
+                                                {
+                                                  color: COLORS.TITLECOLOR,
+                                                  textDecorationLine:
+                                                    'underline',
+                                                },
+                                              ]}>
+                                              {uriIndex + 1}. {fileName}
+                                            </Text>
+                                          </TouchableOpacity>
+                                        );
+                                      })}
+                                    </View>
+                                  </View>
+                                );
+                              }
 
                               if (
                                 item !== undefined &&
                                 key !== 'configurationid' &&
                                 key !== 'value'
                               ) {
-                                if (
-                                  key?.toLowerCase() === 'configurationid' ||
-                                  (data?.relationship &&
-                                    data?.relationship?.value?.toLowerCase() ===
-                                      'self' &&
-                                    key?.toLowerCase() === 'age')
-                                ) {
-                                  return null;
-                                }
-
-                                if (
-                                  !item?.label ||
-                                  item?.value === null ||
-                                  item?.value === undefined
-                                ) {
+                                if (!item?.label) {
                                   return null;
                                 }
                                 return (
@@ -163,7 +232,11 @@ const RegistrationPreview = ({route}) => {
                                         : key + ' : '}
                                     </Text>
                                     <Text style={styles.txtlstvalue}>
-                                      {item?.value ? item?.value : '-'}
+                                      {item?.value && isPhone
+                                        ? formatPhoneToUS(item?.value)
+                                        : item?.value
+                                        ? item?.value
+                                        : '-'}
                                     </Text>
                                   </View>
                                 );
@@ -177,16 +250,27 @@ const RegistrationPreview = ({route}) => {
                     ? data?.headerConfig?.map((headerItem, index) => {
                         const key = Object.keys(headerItem)[0];
                         const item = headerItem[key];
+                        if (item?.type == 'hidden') {
+                          return null;
+                        }
+
                         let mediaUris = [];
 
                         try {
                           const parsedValue = JSON.parse(item.value);
-                          mediaUris = Array.isArray(parsedValue)
-                            ? parsedValue
-                            : [parsedValue];
+                          if (Array.isArray(parsedValue)) {
+                            // Filter out null, empty strings, and undefined
+                            mediaUris = parsedValue.filter(
+                              uri =>
+                                uri !== null && uri !== undefined && uri !== '',
+                            );
+                          } else {
+                            mediaUris = [parsedValue];
+                          }
                         } catch (error) {
                           mediaUris = item.value ? [item.value] : [];
                         }
+
                         const getDisplayValue = () => {
                           if (
                             item.type === 'select' &&
@@ -204,38 +288,33 @@ const RegistrationPreview = ({route}) => {
                         };
 
                         return item.value && item.type === 'file' ? (
-                          <View key={index} style={styles.lstImgrow}>
+                          <View key={index} style={styles.lstFileContainer}>
                             <Text style={styles.txtlstLbl}>
                               {item?.label} :
                             </Text>
-                            <ScrollView
-                              contentContainerStyle={{gap: 10}}
-                              horizontal
-                              showsHorizontalScrollIndicator={false}>
-                              {mediaUris.map((uri, uriIndex) => (
-                                <TouchableOpacity
-                                  key={uriIndex}
-                                  onPress={() => {
-                                    navigation.navigate('FullImageScreen', {
-                                      image: uri,
-                                    });
-                                  }}>
-                                  <FastImage
-                                    style={{
-                                      height: 100,
-                                      width: 100,
-                                      borderRadius: 10,
-                                      marginRight: 5,
+                            <View style={styles.fileLinksContainer}>
+                              {mediaUris.map((uri, uriIndex) => {
+                                // Extract just the filename part after the last slash
+                                const pathParts = uri.split('/');
+                                const fileName =
+                                  pathParts[pathParts.length - 1] || uri;
+
+                                return (
+                                  <TouchableOpacity
+                                    key={uriIndex}
+                                    onPress={() => {
+                                      navigation.navigate('FullImageScreen', {
+                                        image: uri,
+                                      });
                                     }}
-                                    source={{
-                                      uri: IMAGE_URL + uri,
-                                      cache: FastImage.cacheControl.immutable,
-                                      priority: FastImage.priority.normal,
-                                    }}
-                                  />
-                                </TouchableOpacity>
-                              ))}
-                            </ScrollView>
+                                    style={styles.fileLinkItem}>
+                                    <Text style={styles.fileLinkText}>
+                                      {uriIndex + 1}. {fileName}
+                                    </Text>
+                                  </TouchableOpacity>
+                                );
+                              })}
+                            </View>
                           </View>
                         ) : (
                           <View key={index} style={styles.lstrow}>
@@ -262,13 +341,41 @@ const RegistrationPreview = ({route}) => {
 };
 
 const styles = StyleSheet.create({
+  lstFileContainer: {
+    paddingVertical: 5,
+    flexDirection: 'column',
+    // marginBottom: 8,
+  },
+  fileLinksContainer: {
+    marginTop: 4,
+    paddingLeft: 10,
+  },
+  fileLinkItem: {
+    paddingVertical: 3,
+  },
+  fileLinkText: {
+    fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+    fontSize: FONTS.FONTSIZE.SMALL,
+    color: COLORS.TITLECOLOR,
+    textDecorationLine: 'underline',
+  },
   container: {
     flex: 1,
   },
   listItem: {
-    padding: 5,
-    marginBottom: 15,
+    padding: 10,
+    marginBottom: 10,
     borderRadius: 10,
+    backgroundColor: COLORS.BACKGROUNDCOLOR,
+  },
+  memberIndexHeader: {
+    fontFamily: FONTS.FONT_FAMILY.BOLD,
+    fontSize: FONTS.FONTSIZE.SMALL,
+    color: COLORS.TITLECOLOR,
+    marginBottom: 8,
+    paddingBottom: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.PLACEHOLDERCOLOR,
   },
   tabContianer: {
     paddingHorizontal: 15,

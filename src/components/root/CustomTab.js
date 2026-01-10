@@ -22,7 +22,11 @@ import {Fontisto} from '@react-native-vector-icons/fontisto';
 import {Ionicons} from '@react-native-vector-icons/ionicons';
 import {FontAwesome} from '@react-native-vector-icons/fontawesome';
 import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
-import {capitalizeFirstLetter, NOTIFY_MESSAGE} from '../../constant/Module';
+import {
+  capitalizeFirstLetter,
+  formatPhoneToUS,
+  NOTIFY_MESSAGE,
+} from '../../constant/Module';
 import NetInfo from '@react-native-community/netinfo';
 import COLORS from '../../theme/Color';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
@@ -40,11 +44,11 @@ import {
   AccessToken,
   GraphRequest,
   LoginManager,
-  ShareDialog,
   GraphRequestManager,
 } from 'react-native-fbsdk-next';
 import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import {Feather} from '@react-native-vector-icons/feather';
+import {unformatPhone, isPhoneField} from '../../constant/Module';
 
 const APP_ID = '1173536437853030';
 const APP_SECRET = '72e5b8d18e367ca47a066f5d8801e693';
@@ -86,8 +90,8 @@ export default function CustomTab({
       backgroundColor: 'transparent',
     },
     checkboxChecked: {
-      backgroundColor: '#F26904',
-      borderColor: '#F26904',
+      backgroundColor: COLORS.LABELCOLOR,
+      borderColor: COLORS.LABELCOLOR,
     },
     label: {
       marginLeft: 8,
@@ -136,21 +140,6 @@ export default function CustomTab({
     buttonRow: {
       flexDirection: 'row',
     },
-    modalTitle: {
-      fontSize: 18,
-      marginBottom: 20,
-    },
-    button: {
-      padding: 10,
-      borderRadius: 5,
-      backgroundColor: COLORS.TITLECOLOR,
-      marginVertical: 5,
-      width: '100%',
-      alignItems: 'center',
-    },
-    buttonText: {
-      color: COLORS.PRIMARYWHITE,
-    },
     select_Button: {
       padding: 10,
       borderRadius: 5,
@@ -174,26 +163,12 @@ export default function CustomTab({
       width: 60,
       height: 60,
       borderRadius: 30,
-      backgroundColor: '#4369c3',
+      backgroundColor: '#007bff',
       justifyContent: 'center',
       alignItems: 'center',
       margin: 10,
     },
   });
-
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
-  useEffect(() => {
-    const show = Keyboard.addListener('keyboardDidShow', () =>
-      setKeyboardOpen(true),
-    );
-    const hide = Keyboard.addListener('keyboardDidHide', () =>
-      setKeyboardOpen(false),
-    );
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, []);
 
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState(0);
@@ -436,6 +411,7 @@ export default function CustomTab({
         initialFormData[item?.key] = selectedOption ? selectedOption.value : '';
       } else if (item.type === 'select') {
         const selectedOption = item?.values?.find(option => option.selected);
+
         initialFormData[item?.key] = selectedOption
           ? selectedOption.value
           : isRsvp && item?.name == 'event'
@@ -443,11 +419,11 @@ export default function CustomTab({
           : '';
 
         if (item?.name === 'event') {
-          const eventId = selectedOption ? selectedOption.value : null;
+          const eventId = selectedOption ? selectedOption.value : 0;
           setSelectedEvent(eventId);
         }
         if (item?.name === 'member') {
-          const memberId = selectedOption ? selectedOption.value : null;
+          const memberId = selectedOption ? selectedOption.value : 0;
           setSelectedMember(memberId);
         }
         if (item?.name === 'member' || item?.name === 'eventCoordinator') {
@@ -500,22 +476,47 @@ export default function CustomTab({
     setFormData(initialFormData);
   }, [data, userData]);
 
-  const handleNumberChange = (key, value, name, isRequired, label) => {
-    const numericValue = value.replace(/[^0-9]/g, '');
+  const handleNumberChange = (
+    key,
+    value,
+    name,
+    isRequired,
+    label,
+    className,
+  ) => {
+    const allowDecimal = className?.toLowerCase().includes('decimal');
 
+    let numericValue;
+
+    if (allowDecimal) {
+      // Allow numbers and ONE decimal point only
+      numericValue = value.replace(/[^0-9.]/g, '');
+
+      // Ensure only one decimal point
+      const parts = numericValue.split('.');
+      if (parts.length > 2) {
+        // Keep first part + decimal + second part, ignore rest
+        numericValue = parts[0] + '.' + parts.slice(1).join('');
+      }
+
+      if (parts.length === 2 && parts[1].length > 2) {
+        numericValue = parts[0] + '.' + parts[1].substring(0, 2);
+      }
+    } else {
+      // Only integers for other fields
+      numericValue = value.replace(/[^0-9]/g, '');
+    }
+
+    // ✅ Store numeric value (with decimal if allowed)
     setFormData(prevData => ({...prevData, [key]: numericValue}));
 
     const isValueEmpty = numericValue.trim() === '';
-    const isAllZeros = /^0+$/.test(numericValue);
+    const isAllZeros = /^0+(\.0+)?$/.test(numericValue); // Updated regex to handle decimal zeros
     let isLengthInvalid = false;
 
-    if (
-      name === 'contact' ||
-      name === 'phoneNumber' ||
-      name === 'coordinateNumber' ||
-      name === 'contactnumber' ||
-      name === 'eventcoordinatornumber'
-    ) {
+    const isPhone = isPhoneField(name);
+
+    if (isPhone) {
       isLengthInvalid = numericValue.length !== 10;
     } else if (name === 'age') {
       isLengthInvalid = numericValue.length < 1 || numericValue.length > 3;
@@ -530,28 +531,14 @@ export default function CustomTab({
         if (isValueEmpty) {
           updatedErrors[key] = `${label} is required.`;
         } else if (isLengthInvalid) {
-          if (
-            name === 'contact' ||
-            name === 'phoneNumber' ||
-            name === 'coordinateNumber' ||
-            name === 'contactnumber' ||
-            name === 'eventcoordinatornumber'
-          ) {
+          if (isPhone) {
             updatedErrors[key] = `${label} must be 10 digits.`;
           } else if (name === 'age') {
             updatedErrors[key] = `${label} must be between 1 and 3 digits.`;
           } else if (name === 'zIP') {
             updatedErrors[key] = `${label} must be exactly 5 digits.`;
           }
-        } else if (
-          isAllZeros &&
-          (name === 'contact' ||
-            name === 'phoneNumber' ||
-            name === 'coordinateNumber' ||
-            name === 'contactnumber' ||
-            name === 'eventcoordinatornumber' ||
-            name === 'age')
-        ) {
+        } else if (isAllZeros && (isPhone || name === 'age')) {
           updatedErrors[key] = `${label} cannot be all zeros.`;
         } else {
           delete updatedErrors[key];
@@ -559,22 +546,9 @@ export default function CustomTab({
       } else {
         if (
           !isValueEmpty &&
-          (isLengthInvalid ||
-            (isAllZeros &&
-              (name === 'contact' ||
-                name === 'phoneNumber' ||
-                name === 'coordinateNumber' ||
-                name === 'contactnumber' ||
-                name === 'eventcoordinatornumber' ||
-                name === 'age')))
+          (isLengthInvalid || (isAllZeros && (isPhone || name === 'age')))
         ) {
-          if (
-            name === 'contact' ||
-            name === 'phoneNumber' ||
-            name === 'coordinateNumber' ||
-            name === 'contactnumber' ||
-            name === 'eventcoordinatornumber'
-          ) {
+          if (isPhone) {
             if (isLengthInvalid) {
               updatedErrors[key] = `${label} must be 10 digits.`;
             } else {
@@ -604,7 +578,6 @@ export default function CustomTab({
       const newValue = Math.max(0, current + value);
 
       if (isNaN(newValue)) {
-        // console.error('Invalid value detected', {key, current, value});
         return prevFormData;
       }
 
@@ -879,7 +852,6 @@ export default function CustomTab({
           userData?.role == 'member' &&
           isFromEventAdmin)
       ) {
-        // onChangeEvent(selectedEvent, value);
         if (shouldCallApi(selectedEvent, value)) {
           onChangeEvent(selectedEvent, value);
         }
@@ -892,14 +864,12 @@ export default function CustomTab({
         isRsvp &&
         userData?.role !== 'member'
       ) {
-        // onChangeEvent(value, selectedMember);
         if (shouldCallApi(value, selectedMember)) {
           onChangeEvent(value, selectedMember);
         }
       }
 
       if (name == 'event' && value && isRsvp && userData?.role == 'member') {
-        // onChangeEvent(value, selectedMember);
         if (shouldCallApi(value, selectedMember)) {
           onChangeEvent(value, selectedMember);
         }
@@ -930,7 +900,6 @@ export default function CustomTab({
     isMultiple,
   ) => {
     const validFiles = Array.isArray(files) ? files : [files];
-
     const isValidFiles = validFiles.length > 0;
 
     if (isRequired && !isValidFiles) {
@@ -1249,18 +1218,8 @@ export default function CustomTab({
   };
 
   const [currentLengths, setCurrentLengths] = useState({});
-  const [colors, setColors] = useState([
-    COLORS.PRIMARYGREEN,
-    COLORS.PRIMARYRED,
-    COLORS.PRIMARYORANGE,
-  ]);
 
-  // const handleDeleteImage = (key, uri) => {
-  //   setFormData(prevFormData => ({
-  //     ...prevFormData,
-  //     [key]: prevFormData[key].filter(imageUri => imageUri !== uri),
-  //   }));
-  // };
+  const colors = [COLORS.PRIMARYGREEN, COLORS.PRIMARYRED, COLORS.PRIMARYORANGE];
 
   const handleDeleteImage = (key, index) => {
     setFormData(prevFormData => {
@@ -1302,6 +1261,8 @@ export default function CustomTab({
             new Map(combinedValues.map(item => [item.value, item])).values(),
           );
 
+          originalMemberValues.current = uniqueValues;
+
           setNewData(prevFields =>
             prevFields.map(field => {
               if (
@@ -1334,12 +1295,15 @@ export default function CustomTab({
         );
       }
     } catch (error) {
-      // console.error('Dropdown search API error:', error);
+      console.error('Dropdown search API error:', error);
     }
   }, []);
 
   const handleSearchChange = async (text, name) => {
-    if ((name === 'member' || name === 'eventCoordinator') && text === '') {
+    if (name !== 'member' && name !== 'eventCoordinator') return;
+
+    if (!text || text.trim() === '') {
+      // clear search → restore full merged list
       setNewData(prevFields =>
         prevFields.map(field => {
           if (
@@ -1351,10 +1315,25 @@ export default function CustomTab({
           return field;
         }),
       );
-    } else if ((name === 'member' || name === 'eventCoordinator') && text) {
-      fetchData(text);
+      return;
     }
+
+    await fetchData(text); // search via API
   };
+
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', () =>
+      setKeyboardOpen(true),
+    );
+    const hide = Keyboard.addListener('keyboardDidHide', () =>
+      setKeyboardOpen(false),
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   const [userToken, setUserToken] = useState(null);
   const [syncWithFacebook, setSyncWithFacebook] = useState(false);
@@ -1436,12 +1415,10 @@ export default function CustomTab({
         setUserToken(token);
         fetchPages(token);
         setSyncWithFacebook(true);
-        // getUserInfo(token);
       } else {
         Alert.alert('Failed to get access token');
       }
     } else {
-      // setSyncWithFacebook(prev => !prev);
       setSyncWithFacebook(prevSync => {
         const newSync = !prevSync;
 
@@ -1526,7 +1503,6 @@ export default function CustomTab({
       }
       return false;
     } catch (error) {
-      // console.error('Error checking token validity:', error);
       return false;
     }
   };
@@ -1536,7 +1512,6 @@ export default function CustomTab({
       const token = await getData(TOKEN_STORAGE_KEY);
       if (token && (await checkTokenValidity(token))) {
         setUserToken(token);
-        // getUserInfoFromStorage();
       } else {
         setUserToken(null);
       }
@@ -1690,17 +1665,6 @@ export default function CustomTab({
     }
 
     const fileItems = data.filter(item => item.type === 'file');
-    // const allMediaUris = [];
-
-    // fileItems.forEach(item => {
-    //   const filesForKey = imageUris[item.key] || [];
-    //   allMediaUris.push(...filesForKey);
-    // });
-
-    // if (allMediaUris.length === 0) {
-    //   Alert.alert('No Media', 'Please add some media before sharing');
-    //   return;
-    // }
 
     if (
       syncWithFacebook &&
@@ -1731,6 +1695,7 @@ export default function CustomTab({
       content: JSON.stringify(content),
       contentType: response1?.constantName,
     };
+    // return
 
     NetInfo.fetch().then(state => {
       if (state.isConnected) {
@@ -1767,7 +1732,6 @@ export default function CustomTab({
                       });
                     } catch (uploadErr) {
                       NOTIFY_MESSAGE('Failed to upload media to Facebook.');
-                      console.error('Upload failed:', uploadErr);
                     }
                   }
                 }
@@ -1775,16 +1739,6 @@ export default function CustomTab({
               } else {
                 NOTIFY_MESSAGE(response?.data?.message);
               }
-              // if (
-              //   syncWithFacebook &&
-              //   (isImageGallery || isVideoGallery) &&
-              //   allMediaUris.length > 0
-              // ) {
-              //   await shareToPersonalProfile(allMediaUris);
-              //   NOTIFY_MESSAGE(response?.data?.message);
-              // } else {
-              //   NOTIFY_MESSAGE(response?.data?.message);
-              // }
 
               if (isFromEventAdmin) {
                 navigation.goBack();
@@ -1856,9 +1810,9 @@ export default function CustomTab({
                         justifyContent: 'center',
                         borderBottomWidth: activeTab === index ? 2 : 0,
                         borderBottomColor: COLORS.TITLECOLOR,
-                        paddingHorizontal: 8,
                         borderBottomLeftRadius: 20,
                         borderBottomRightRadius: 20,
+                        paddingHorizontal: 10,
                       }}
                       onPress={() => handleTabClick(index)}>
                       <Text
@@ -1885,7 +1839,7 @@ export default function CustomTab({
           style={{
             flex: 1,
             marginHorizontal: 16,
-            marginTop: 16,
+            marginTop: 10,
             overflow: 'hidden',
             borderColor: COLORS.PRIMARYWHITE,
           }}>
@@ -2146,7 +2100,10 @@ export default function CustomTab({
                               }}>
                               <TouchableOpacity
                                 activeOpacity={0.3}
-                                style={{}}
+                                style={{
+                                  position: 'relative',
+                                  paddingTop: 8,
+                                }}
                                 onPress={() =>
                                   handleRadioSelect(
                                     item?.key,
@@ -2155,35 +2112,49 @@ export default function CustomTab({
                                     item?.label,
                                   )
                                 }>
-                                {formData[item?.key] === radioItem.value ? (
-                                  <Text
+                                <Text
+                                  style={{
+                                    fontSize: FONTS.FONTSIZE.SMALL,
+                                    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                                    color: COLORS.PRIMARYWHITE,
+                                    backgroundColor:
+                                      colors[index % colors.length],
+                                    paddingVertical: 4,
+                                    borderRadius: 6,
+                                    width: widthPercentageToDP(22),
+                                    textAlign: 'center',
+                                    borderWidth:
+                                      formData[item?.key] === radioItem.value
+                                        ? 2
+                                        : 0,
+                                    borderColor:
+                                      formData[item?.key] === radioItem.value
+                                        ? '#3b83f6'
+                                        : 'transparent',
+                                  }}>
+                                  {radioItem.label}
+                                </Text>
+
+                                {formData[item?.key] === radioItem.value && (
+                                  <View
                                     style={{
-                                      fontSize: FONTS.FONTSIZE.SMALL,
-                                      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                                      color: COLORS.PRIMARYWHITE,
-                                      backgroundColor: COLORS.grey500,
-                                      paddingVertical: 4,
-                                      borderRadius: 6,
-                                      width: widthPercentageToDP(22),
-                                      textAlign: 'center',
+                                      position: 'absolute',
+                                      right: -8,
+                                      width: 24,
+                                      height: 24,
+                                      borderRadius: 12,
+                                      backgroundColor: '#3b83f6',
+                                      justifyContent: 'center',
+                                      alignItems: 'center',
+                                      borderWidth: 2,
+                                      borderColor: COLORS.PRIMARYWHITE,
                                     }}>
-                                    {radioItem.label}
-                                  </Text>
-                                ) : (
-                                  <Text
-                                    style={{
-                                      fontSize: FONTS.FONTSIZE.SMALL,
-                                      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                                      color: COLORS.PRIMARYWHITE,
-                                      backgroundColor:
-                                        colors[index % colors.length],
-                                      paddingVertical: 4,
-                                      borderRadius: 6,
-                                      width: widthPercentageToDP(22),
-                                      textAlign: 'center',
-                                    }}>
-                                    {radioItem.label}
-                                  </Text>
+                                    <Ionicons
+                                      name="checkmark"
+                                      size={14}
+                                      color={COLORS.PRIMARYWHITE}
+                                    />
+                                  </View>
                                 )}
                               </TouchableOpacity>
                             </View>
@@ -2346,6 +2317,7 @@ export default function CustomTab({
                         valueField="value"
                         value={formData[item?.key]}
                         onChange={item1 => {
+                          Keyboard.dismiss();
                           handleSelectDropdown(
                             item.key,
                             item1.value,
@@ -2453,7 +2425,7 @@ export default function CustomTab({
                             }));
                           }}
                         />
-                        {uploadComplete[item?.key] && (
+                        {/* {uploadComplete[item?.key] && (
                           <Text
                             numberOfLines={2}
                             style={{
@@ -2463,7 +2435,7 @@ export default function CustomTab({
                             }}>
                             Upload complete!
                           </Text>
-                        )}
+                        )} */}
                       </View>
                       {uploadProgress[item?.key] > 0 &&
                         imageUris[item?.key] &&
@@ -2542,7 +2514,19 @@ export default function CustomTab({
                                       </TouchableOpacity>
                                     </View>
                                   ) : (
-                                    <View style={{}}>
+                                    <TouchableOpacity
+                                      disabled={
+                                        response1?.constantName ==
+                                          'IMAGE GALLERY' ||
+                                        response1?.constantName ==
+                                          'VIDEO GALLERY'
+                                      }
+                                      style={{}}
+                                      onPress={() => {
+                                        navigation.navigate('FullImageScreen', {
+                                          image: uri,
+                                        });
+                                      }}>
                                       <FastImage
                                         defaultSource={require('../../assets/images/Image_placeholder.png')}
                                         source={{
@@ -2571,7 +2555,7 @@ export default function CustomTab({
                                           color={COLORS.PRIMARYRED}
                                         />
                                       </TouchableOpacity>
-                                    </View>
+                                    </TouchableOpacity>
                                   )}
                                 </View>
                               ))}
@@ -2839,58 +2823,6 @@ export default function CustomTab({
                         ) : null}
                       </View>
 
-                      {/* {item?.values?.length > 0 ? (
-                        item?.values?.map((checkboxItem, index) => (
-                          <TouchableOpacity
-                            key={index}
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              gap: 8,
-                            }}
-                            onPress={() =>
-                              handleCheckboxSelect(
-                                item?.key,
-                                checkboxItem.value,
-                                item?.required,
-                                item?.label,
-                              )
-                            }>
-                            {formData[item?.key]
-                              ?.split(',')
-                              ?.includes(String(checkboxItem.value)) ? (
-                              <Fontisto
-                                name="checkbox-active"
-                                size={16}
-                                color={COLORS.TITLECOLOR}
-                              />
-                            ) : (
-                              <Fontisto
-                                name="checkbox-passive"
-                                size={16}
-                                color={COLORS.TITLECOLOR}
-                              />
-                            )}
-                            <Text
-                              style={{
-                                fontSize: FONTS.FONTSIZE.SMALL,
-                                fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                                color: COLORS.TITLECOLOR,
-                              }}>
-                              {checkboxItem.label}
-                            </Text>
-                          </TouchableOpacity>
-                        ))
-                      ) : (
-                        <Text
-                          style={{
-                            fontSize: FONTS.FONTSIZE.SMALL,
-                            fontFamily: FONTS.FONT_FAMILY.REGULAR,
-                            color: COLORS.PRIMARYRED,
-                          }}>
-                          Please Select Member to get Family Members list.
-                        </Text>
-                      )} */}
                       {selectedEvent &&
                         !selectedMember &&
                         response1?.constantName == 'RSVP' && (
@@ -2940,6 +2872,7 @@ export default function CustomTab({
                                 fontSize: FONTS.FONTSIZE.SMALL,
                                 fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                                 color: COLORS.TITLECOLOR,
+                                includeFontPadding: false,
                               }}>
                               {checkboxItem.label}
                             </Text>
@@ -3019,97 +2952,6 @@ export default function CustomTab({
                           color={COLORS.PLACEHOLDERCOLOR}
                         />
                       </TouchableOpacity>
-
-                      {/* {timePickerVisible[item?.key] && Platform.OS === 'ios' && (
-                      <Modal
-                        transparent={true}
-                        animationType="slide"
-                        visible={timePickerVisible[item?.key]}
-                        onRequestClose={() => {
-                          setTimePickerVisible(prev => ({
-                            ...prev,
-                            [item?.key]: false,
-                          }));
-                        }}>
-                        <View
-                          style={{
-                            flex: 1,
-                            justifyContent: 'center',
-                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                            alignItems: 'center',
-                          }}>
-                          <TouchableWithoutFeedback
-                            onPress={() => {
-                              setTimePickerVisible(prev => ({
-                                ...prev,
-                                [item?.key]: false,
-                              }));
-                            }}>
-                            <View
-                              style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                              }}
-                            />
-                          </TouchableWithoutFeedback>
-                          <View
-                            style={{
-                              backgroundColor: COLORS.PRIMARYWHITE,
-                              padding: 18,
-                              borderRadius: 10,
-                              width: '80%',
-                              maxHeight: '50%',
-                              overflow: 'hidden',
-                            }}>
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                marginBottom: 20,
-                              }}>
-                              <Text
-                                style={{
-                                  color: COLORS.PRIMARYBLACK,
-                                  textAlign: 'center',
-                                  fontSize: FONTS.FONTSIZE.LARGE,
-                                  fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-                                }}>
-                                Select Time
-                              </Text>
-                              <TouchableOpacity
-                                onPress={() => {
-                                  setTimePickerVisible(prev => ({
-                                    ...prev,
-                                    [item?.key]: false,
-                                  }));
-                                }}>
-                                <AntDesign name="closecircle" size={24} />
-                              </TouchableOpacity>
-                            </View>
-
-                            <DateTimePicker
-                              value={selectedTime[item?.key] || new Date()}
-                              mode="time"
-                              display="spinner"
-                              textColor={COLORS.PRIMARYBLACK}
-                              onChange={(event, time) =>
-                                onTimeChange(
-                                  event,
-                                  time,
-                                  item?.label,
-                                  item?.key,
-                                )
-                              }
-                            />
-                          </View>
-                        </View>
-                      </Modal>
-                    )} */}
 
                       {timePickerVisible[item?.key] && (
                         <DateTimePickerModal
@@ -3501,22 +3343,36 @@ export default function CustomTab({
                           backgroundColor: COLORS.PRIMARYWHITE,
                           paddingVertical: 0,
                         }}
-                        maxLength={item?.maxLength == 0 ? 250 : item?.maxLength}
+                        maxLength={
+                          isPhoneField(item?.name)
+                            ? 14
+                            : item?.maxLength == 0
+                            ? 250
+                            : item?.maxLength
+                        }
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
-                        keyboardType="number-pad"
+                        keyboardType="numeric"
                         placeholder={`${item.label}`}
-                        value={formData[item?.key]}
+                        value={
+                          isPhoneField(item?.name)
+                            ? formatPhoneToUS(formData[item?.key])
+                            : formData[item?.key]
+                        }
                         onChangeText={value => {
+                          const numericValue = isPhoneField(item?.name)
+                            ? unformatPhone(value)
+                            : value;
                           setCurrentLengths(prev => ({
                             ...prev,
-                            [item?.key]: value.length,
+                            [item?.key]: numericValue?.length,
                           }));
                           handleNumberChange(
                             item?.key,
-                            value,
+                            numericValue,
                             item?.name,
                             item?.required,
                             item?.label,
+                            item?.className,
                           );
                         }}
                       />
@@ -3572,21 +3428,36 @@ export default function CustomTab({
                           paddingVertical: 0,
                         }}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
-                        keyboardType="number-pad"
+                        keyboardType="numeric"
                         placeholder={`${item.label}`}
-                        value={formData[item?.key]}
-                        maxLength={item?.maxLength == 0 ? 250 : item?.maxLength}
+                        value={
+                          isPhoneField(item?.name)
+                            ? formatPhoneToUS(formData[item?.key])
+                            : formData[item?.key]
+                        }
+                        maxLength={
+                          isPhoneField(item?.name)
+                            ? 14
+                            : item?.maxLength == 0
+                            ? 250
+                            : item?.maxLength
+                        }
                         onChangeText={value => {
+                          const numericValue = isPhoneField(item?.name)
+                            ? unformatPhone(value)
+                            : value;
+
                           setCurrentLengths(prev => ({
                             ...prev,
-                            [item?.key]: value.length,
+                            [item?.key]: numericValue?.length,
                           }));
                           handleNumberChange(
                             item?.key,
-                            value,
+                            numericValue,
                             item?.name,
                             item?.required,
                             item?.label,
+                            item?.className,
                           );
                         }}
                       />
@@ -3721,10 +3592,10 @@ export default function CustomTab({
                       activeOpacity={0.7}>
                       {syncWithFacebook && (
                         <FontAwesome6
-                          iconStyle="solid"
                           name="check"
                           size={16}
                           color={'#fff'}
+                          iconStyle="solid"
                         />
                       )}
                     </View>
@@ -3738,34 +3609,11 @@ export default function CustomTab({
                       <Ionicons
                         name="log-out-outline"
                         size={22}
-                        color="#F26904"
+                        color={COLORS.LABELCOLOR}
                       />
                     </TouchableOpacity>
                   )}
                 </View>
-                {/* {userInfo && (
-                  <View
-                    style={{
-                      backgroundColor: '#1877F2',
-                      paddingHorizontal: 10,
-                      paddingVertical: 4,
-                      justifyContent: 'space-between',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      borderRadius: 10,
-                    }}>
-                    <Text
-                      style={{
-                        color: COLORS.PRIMARYWHITE,
-                        fontSize: FONTS.FONTSIZE.SMALL,
-                        fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                      }}>
-                      {userInfo?.name || 'User'}
-                    </Text>
-                  </View>
-                )} */}
-
-                {/* {userInfo && syncWithFacebook && <ShareIconComponent />} */}
 
                 {showNoPagesMessage && (
                   <View style={{marginTop: 0}}>

@@ -17,7 +17,7 @@ import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
 import Loader from '../components/root/Loader';
 import FONTS from '../theme/Fonts';
-import {NOTIFY_MESSAGE} from '../constant/Module';
+import {formatPhoneToUS, isPhoneField, NOTIFY_MESSAGE} from '../constant/Module';
 import NetInfo from '@react-native-community/netinfo';
 import httpClient from '../connection/httpClient';
 import NoDataFound from '../components/root/NoDataFound';
@@ -355,7 +355,6 @@ const ReportsData = ({route}) => {
   const renderItem = ({item, index}) => {
     const number1 = (pageNumber - 1) * PAGE_SIZE + index + 1;
     const number = number1 <= 9 ? `0${number1}` : `${number1}`;
-    // console.log(JSON.stringify(item));
 
     const member =
       item1?.label == 'Donation'
@@ -364,7 +363,7 @@ const ReportsData = ({route}) => {
         ? item['event']
         : item['Member'] || item['member'] || '-';
 
-    // const member = item['Member'] || '-';
+
     const total = item['Total'];
 
     const keys = Object.keys(item);
@@ -452,7 +451,9 @@ const ReportsData = ({route}) => {
                 let value = item[key];
                 let isArray = Array.isArray(value);
 
-                 let finalKey = key == 'FamilyMembers' ? 'Members' : key;
+                let finalKey = key == 'FamilyMembers' ? 'Members' : key;
+
+                const isPhone = isPhoneField(key);
 
                 return (
                   <View
@@ -492,37 +493,50 @@ const ReportsData = ({route}) => {
                               {typeof arrItem === 'object' &&
                               arrItem !== null ? (
                                 <View style={{}}>
-                                  {Object.entries(arrItem).map(([k, v], i) => (
-                                    <View
-                                      key={i}
-                                      style={{
-                                        flexDirection: 'row',
-                                        marginBottom: 2,
-                                        alignItems: 'flex-start',
-                                      }}>
-                                      <Text
+                                  {Object.entries(arrItem).map(([k, v], i) => {
+                                    const isPhone = isPhoneField(k);
+
+                                    // ✅ Format phone number if it's a phone field
+                                    const displayValue =
+                                      isPhone && v
+                                        ? formatPhoneToUS(v)
+                                        : v
+                                        ? v
+                                        : '-';
+
+                                    return (
+                                      <View
+                                        key={i}
                                         style={{
-                                          fontFamily: FONTS.FONT_FAMILY.REGULAR,
-                                          fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                                          color: COLORS.PRIMARYBLACK,
-                                          marginRight: 2,
-                                          width: '45%',
+                                          flexDirection: 'row',
+                                          marginBottom: 2,
+                                          alignItems: 'flex-start',
                                         }}>
-                                        {k} :
-                                      </Text>
-                                      <Text
-                                        style={{
-                                          fontFamily:
-                                            FONTS.FONT_FAMILY.SEMI_BOLD,
-                                          fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                                          color: COLORS.PLACEHOLDERCOLOR,
-                                          marginLeft: 4,
-                                          width: '50%',
-                                        }}>
-                                        {v ? v : '-'}
-                                      </Text>
-                                    </View>
-                                  ))}
+                                        <Text
+                                          style={{
+                                            fontFamily:
+                                              FONTS.FONT_FAMILY.REGULAR,
+                                            fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                            color: COLORS.PRIMARYBLACK,
+                                            marginRight: 2,
+                                            width: '45%',
+                                          }}>
+                                          {k} :
+                                        </Text>
+                                        <Text
+                                          style={{
+                                            fontFamily:
+                                              FONTS.FONT_FAMILY.SEMI_BOLD,
+                                            fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                            color: COLORS.PLACEHOLDERCOLOR,
+                                            marginLeft: 4,
+                                            width: '50%',
+                                          }}>
+                                          {displayValue}
+                                        </Text>
+                                      </View>
+                                    );
+                                  })}
                                 </View>
                               ) : (
                                 <Text style={styles.text}>{arrItem}</Text>
@@ -534,7 +548,9 @@ const ReportsData = ({route}) => {
                     ) : (
                       <Text style={styles.text}>
                         {value !== null && value !== undefined && value !== ''
-                          ? value.toString()
+                          ? isPhone && value
+                            ? formatPhoneToUS(value.toString()) // ✅ Format phone for non-array values
+                            : value.toString()
                           : '-'}
                       </Text>
                     )}
@@ -617,7 +633,6 @@ const ReportsData = ({route}) => {
                 fontSize: FONTS.FONTSIZE.EXTRASMALL,
                 fontFamily: FONTS.FONT_FAMILY.MEDIUM,
               }}>
-              {/* Total {item1?.label} : {total || 0} */}
               {item1?.label?.toLowerCase().includes('total')
                 ? item1?.label
                 : `Total ${item1?.label}`}{' '}

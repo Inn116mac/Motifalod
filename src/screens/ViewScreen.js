@@ -12,7 +12,7 @@ import {
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import COLORS from '../theme/Color';
 import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
-import {useNavigation} from '@react-navigation/native';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
 import {NOTIFY_MESSAGE} from '../constant/Module';
 import Loader from '../components/root/Loader';
@@ -44,6 +44,14 @@ const ViewScreen = ({route}) => {
   const {width, height} = useWindowDimensions();
 
   const styles = StyleSheet.create({
+    plusButton: {
+      height: 40,
+      width: 40,
+      borderRadius: 20,
+      backgroundColor: COLORS.LABELCOLOR,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
     paginationText: {
       fontSize: FONTS.FONTSIZE.SMALL,
       color: 'blue',
@@ -58,17 +66,29 @@ const ViewScreen = ({route}) => {
       paddingVertical: 4,
       marginHorizontal: 10,
       alignItems: 'center',
-      width: width / 3.5,
+      // width: width / 3.5,
     },
     activeTab: {
       borderBottomWidth: 2,
       borderColor: COLORS.TITLECOLOR,
     },
     tabText: {
-      fontSize: FONTS.FONTSIZE.MEDIUM,
+      fontSize: FONTS.FONTSIZE.EXTRASMALL,
       fontFamily: FONTS.FONT_FAMILY.MEDIUM,
       color: COLORS.TITLECOLOR,
       textAlign: 'center',
+    },
+    modalContainer1: {
+      flex: 1,
+      alignItems: 'flex-end',
+      overflow: 'hidden',
+    },
+    modalContent1: {
+      width: widthPercentageToDP(42),
+      backgroundColor: COLORS.TABLEROWCOLOR,
+      borderRadius: 8,
+      top: heightPercentageToDP(12),
+      right: widthPercentageToDP(3),
     },
     eventModalContainer: {
       flex: 1,
@@ -117,6 +137,7 @@ const ViewScreen = ({route}) => {
   const [isEventDataModal, setIsEventDataModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [tabValues, setTabValues] = useState([]);
+
   const [selectedTab, setSelectedTab] = useState(null);
 
   function onEventFilter() {
@@ -155,10 +176,12 @@ const ViewScreen = ({route}) => {
     });
   }
 
+  const isFocused = useIsFocused();
+
   useEffect(() => {
     const cancel = getViewData();
     return () => cancel && cancel();
-  }, [pageNumber, selectedEvent, selectedTab]);
+  }, [pageNumber, selectedEvent, selectedTab, isFocused]);
 
   const PAGE_SIZE = 20;
 
@@ -320,9 +343,9 @@ const ViewScreen = ({route}) => {
         leftIcon={
           <FontAwesome6
             name="angle-left"
-            iconStyle="solid"
             size={26}
             color={COLORS.LABELCOLOR}
+            iconStyle="solid"
           />
         }
         title={item?.name}
@@ -362,6 +385,31 @@ const ViewScreen = ({route}) => {
                 item?.constantName === 'FOOD TEAM' &&
                 renderTabs()}
             </View>
+            {item?.constantName === 'SAD DEMISES' && item?.write && (
+              <View
+                style={{
+                  alignItems: 'flex-end',
+                  marginRight: 10,
+                }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    let data = {
+                      item: item,
+                      isTabView: true,
+                      isFromEventAdmin: true,
+                    };
+                    navigation.navigate('Form', {data});
+                  }}
+                  style={styles.plusButton}
+                  activeOpacity={0.7}>
+                  <AntDesign
+                    name="plus"
+                    size={22}
+                    color={COLORS.PRIMARYWHITE}
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
             {data.length > 0 ? (
               item?.constantName === 'HOTELS' ? (
                 <Hotels data={data} />

@@ -48,6 +48,17 @@ import BroadcasterScreen from '../screens/BroadcasterScreen';
 import ViewerScreen from '../screens/ViewerScreen';
 import FullScreenVideoScreen from '../screens/FullScreenVideoScreen';
 import NotificationScreen from '../screens/root/NotificationScreen';
+import MembershipPrice from '../screens/MembershipPrice';
+import AddMembership from '../screens/AddMembership';
+import RoleManagement from '../screens/RoleManagement';
+import AddRole from '../screens/AddRole';
+import NotificationManagement from '../screens/NotificationManagement';
+import AddUpdateNotification from '../screens/AddUpdateNotification';
+import ReminderList from '../screens/ReminderList';
+import AddUpdateReminder from '../screens/AddUpdateReminder';
+import FamilyMemberList from '../screens/FamilyMemberList';
+import PaymentInfoScreen from '../screens/PaymentInfoScreen';
+import PaymentInfoFromAdmin from '../screens/PaymentInfoFromAdmin';
 
 const Stack = createStackNavigator();
 
@@ -140,7 +151,39 @@ function AppNavigation() {
               component={FullScreenVideoScreen}
             />
             <Stack.Screen name="DemisesDetails" component={DemisesDetails} />
-            <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
+            <Stack.Screen
+              name="NotificationScreen"
+              component={NotificationScreen}
+            />
+            <Stack.Screen name="MembershipPrice" component={MembershipPrice} />
+            <Stack.Screen name="AddMembership" component={AddMembership} />
+            <Stack.Screen name="RoleManagement" component={RoleManagement} />
+            <Stack.Screen name="AddRole" component={AddRole} />
+            <Stack.Screen
+              name="NotificationManagement"
+              component={NotificationManagement}
+            />
+            <Stack.Screen
+              name="AddUpdateNotification"
+              component={AddUpdateNotification}
+            />
+            <Stack.Screen name="ReminderList" component={ReminderList} />
+            <Stack.Screen
+              name="AddUpdateReminder"
+              component={AddUpdateReminder}
+            />
+            <Stack.Screen
+              name="FamilyMemberList"
+              component={FamilyMemberList}
+            />
+            <Stack.Screen
+              name="PaymentInfoScreen"
+              component={PaymentInfoScreen}
+            />
+            <Stack.Screen
+              name="PaymentInfoFromAdmin"
+              component={PaymentInfoFromAdmin}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaView>

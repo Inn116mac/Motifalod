@@ -64,7 +64,6 @@ export default function ZoomableView({children, simultaneousHandlers}) {
     onStart: (_, ctx) => {
       ctx.startScale = scale.value;
       // Debug log for pinch start
-      // console.log('Pinch start, startScale:', ctx.startScale);
     },
     onActive: (event, ctx) => {
       // Calculate new scale with clamp
@@ -76,7 +75,6 @@ export default function ZoomableView({children, simultaneousHandlers}) {
         scale.value = newScale;
         runOnJS(setIsZoomed)(newScale > MIN_SCALE);
         // Debug log for pinch active
-        // console.log('Pinch active, scale:', newScale);
       }
     },
     onEnd: () => {
@@ -91,7 +89,6 @@ export default function ZoomableView({children, simultaneousHandlers}) {
         runOnJS(setIsZoomed)(true);
       }
       // Debug log for pinch end
-      // console.log('Pinch end, final scale:', scale.value);
     },
   });
 

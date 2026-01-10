@@ -37,10 +37,14 @@ import {IMAGE_URL} from '../../connection/Config';
 import {getFileType} from '../../utils/fileType';
 import FastImage from 'react-native-fast-image';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import {
+  formatPhoneToUS,
+  unformatPhone,
+  isPhoneField,
+} from '../../constant/Module';
 
 const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
-  const {width} = useWindowDimensions();
-
+  const {width, height} = useWindowDimensions();
   const styles = StyleSheet.create({
     dropdown: {
       height: 38,
@@ -49,15 +53,6 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       backgroundColor: COLORS.PRIMARYWHITE,
       paddingHorizontal: 10,
       justifyContent: 'center',
-    },
-    itemContainer: {
-      paddingVertical: 2,
-      paddingHorizontal: 10,
-    },
-    itemText: {
-      color: COLORS.PRIMARYBLACK,
-      fontFamily: FONTS.FONT_FAMILY.REGULAR,
-      fontSize: FONTS.FONTSIZE.MEDIUM,
     },
     placeholderStyle: {
       fontSize: FONTS.FONTSIZE.MINI,
@@ -120,7 +115,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       width: 60,
       height: 60,
       borderRadius: 30,
-      backgroundColor: '#4369c3',
+      backgroundColor: '#007bff',
       justifyContent: 'center',
       alignItems: 'center',
       margin: 10,
@@ -136,11 +131,9 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       fontSize: FONTS.FONTSIZE.MEDIUM,
     },
   });
-
   const navigation = useNavigation();
   const [formData, setFormData] = useState({});
   const [datePickerVisible, setDatePickerVisible] = useState({});
-  const [passwordVisible, setPasswordVisible] = useState({});
   const [errors, setErrors] = useState({});
   const [modalVisible, setModalVisible] = useState({});
 
@@ -252,13 +245,6 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
         NOTIFY_MESSAGE('Please check your internet connectivity');
       }
     });
-  };
-
-  const togglePasswordVisibility = key => {
-    setPasswordVisible(prevState => ({
-      ...prevState,
-      [key]: !prevState[key],
-    }));
   };
 
   const ImageSelectModal = ({
@@ -386,98 +372,116 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
     );
   };
 
-  const handleNumberChange = (key, value, isRequired, name, label) => {
-    const numericValue = value.replace(/[^0-9]/g, '');
+  const handleNumberChange = (
+    key,
+    value,
+    isRequired,
+    name,
+    label,
+    className,
+  ) => {
+    const allowDecimal = className?.toLowerCase().includes('decimal');
+
+    let numericValue;
+
+    if (allowDecimal) {
+      // Allow numbers and ONE decimal point only - SAME AS SUBMIT
+      numericValue = value.replace(/[^0-9.]/g, '');
+
+      // Ensure only one decimal point
+      const parts = numericValue.split('.');
+      if (parts.length > 2) {
+        // Keep first part + decimal + second part, ignore rest
+        numericValue = parts[0] + '.' + parts.slice(1).join('');
+      }
+
+      if (parts.length === 2 && parts[1].length > 2) {
+        numericValue = parts[0] + '.' + parts[1].substring(0, 2);
+      }
+    } else {
+      // Only integers for other fields
+      numericValue = value.replace(/[^0-9]/g, '');
+    }
+
+    // Check if it's a phone field
+    const isPhone = isPhoneField(name);
 
     setFormData(prevState => ({
       ...prevState,
       [key]: {
         ...prevState[key],
-        value: numericValue,
+        value: numericValue, // ✅ Store unformatted (with decimal if allowed)
       },
     }));
 
+    // Check if the value is empty
     const isValueEmpty = numericValue.trim() === '';
     let isLengthInvalid = false;
-    let isAllZeros = /^0+$/.test(numericValue);
-    if (
-      name === 'contact' ||
-      name === 'phoneNumber' ||
-      name === 'coordinateNumber' ||
-      name === 'contactnumber' ||
-      name === 'eventcoordinatornumber'
-    ) {
-      isLengthInvalid = numericValue.length !== 10;
-    } else if (name === 'age') {
-      isLengthInvalid = numericValue.length < 1 || numericValue.length > 3;
-    } else if (name === 'zIP') {
-      isLengthInvalid = numericValue.length !== 5;
+    let isAllZeros = allowDecimal
+      ? /^0+(\.0+)?$/.test(numericValue) // Handle decimal zeros for decimal fields
+      : /^0+$/.test(numericValue); // Handle integer zeros for other fields
+
+    if (isPhone || className?.includes('phone')) {
+      isLengthInvalid = numericValue.replace('.', '').length !== 10; // Ignore decimal for phone
+    } else if (name === 'age' || className?.includes('age')) {
+      const ageDigits = numericValue.replace('.', '').length;
+      isLengthInvalid = ageDigits < 1 || ageDigits > 3;
+    } else if (name === 'zIP' || className?.includes('zip')) {
+      isLengthInvalid = numericValue.replace('.', '').length !== 5;
     }
 
+    // Update errors state
     setErrors(prevErrors => {
       const updatedErrors = {...prevErrors};
 
+      // Check for required field
       if (isRequired) {
         if (isValueEmpty) {
           updatedErrors[key] = `${label} is required.`;
         } else if (isLengthInvalid) {
-          if (
-            name === 'contact' ||
-            name === 'phoneNumber' ||
-            name === 'coordinateNumber' ||
-            name === 'contactnumber' ||
-            name === 'eventcoordinatornumber'
-          ) {
+          // Handle length validation errors for required fields
+          if (isPhone || className?.includes('phone')) {
             updatedErrors[key] = `${label} must be 10 digits.`;
-          } else if (name === 'age') {
+          } else if (name === 'age' || className?.includes('age')) {
             updatedErrors[key] = `${label} must be between 1 and 3 digits.`;
-          } else if (name === 'zIP') {
+          } else if (name === 'zIP' || className?.includes('zip')) {
             updatedErrors[key] = `${label} must be exactly 5 digits.`;
           }
         } else if (
           isAllZeros &&
-          (name === 'contact' ||
-            name === 'phoneNumber' ||
-            name === 'coordinateNumber' ||
-            name === 'contactnumber' ||
-            name === 'eventcoordinatornumber' ||
-            name === 'age')
+          (isPhone ||
+            className?.includes('phone') ||
+            name === 'age' ||
+            className?.includes('age'))
         ) {
           updatedErrors[key] = `${label} cannot be all zeros.`;
         } else {
           delete updatedErrors[key];
         }
       } else {
+        // If the field is not required
         if (
           !isValueEmpty &&
           (isLengthInvalid ||
             (isAllZeros &&
-              (name === 'contact' ||
-                name === 'phoneNumber' ||
-                name === 'coordinateNumber' ||
-                name === 'contactnumber' ||
-                name === 'eventcoordinatornumber' ||
-                name === 'age')))
+              (isPhone ||
+                className?.includes('phone') ||
+                name === 'age' ||
+                className?.includes('age'))))
         ) {
-          if (
-            name === 'contact' ||
-            name === 'phoneNumber' ||
-            name === 'coordinateNumber' ||
-            name === 'contactnumber' ||
-            name === 'eventcoordinatornumber'
-          ) {
+          if (isPhone || className?.includes('phone')) {
             if (isLengthInvalid) {
               updatedErrors[key] = `${label} must be 10 digits.`;
             } else {
               updatedErrors[key] = `${label} cannot be all zeros.`;
             }
-          } else if (name === 'age') {
+          } else if (name === 'age' || className?.includes('age')) {
             if (isLengthInvalid) {
               updatedErrors[key] = `${label} must be between 1 and 3 digits.`;
             } else {
               updatedErrors[key] = `${label} cannot be all zeros.`;
             }
-          } else if (name === 'zIP') {
+          } else if (name === 'zIP' || className?.includes('zip')) {
             updatedErrors[key] = `${label} must be exactly 5 digits.`;
           }
         } else {
@@ -493,14 +497,16 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
     const currentValue = Number(formData[key]?.value) || 0;
     const newValue = Math.max(0, currentValue + value);
 
+    // Update the formData object
     setFormData(prevFormData => ({
       ...prevFormData,
       [key]: {
         ...prevFormData[key],
-        value: newValue,
+        value: newValue, // Update the value for the specific key
       },
     }));
 
+    // Update the errors state based on the new value
     if (isRequired) {
       let isLengthInvalid = false;
 
@@ -509,9 +515,9 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
         name === 'numberofParticipants' ||
         name === 'numberofKids'
       ) {
-        isLengthInvalid = newValue < 1;
+        isLengthInvalid = newValue < 1; // Ensure at least 1 guest/participant/kid
       } else if (name === 'howManyMinutes') {
-        isLengthInvalid = newValue < 1 || newValue > 60;
+        isLengthInvalid = newValue < 1 || newValue > 60; // Ensure between 1 and 60 minutes
       }
 
       const hasError = newValue === 0 || isLengthInvalid;
@@ -563,6 +569,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
 
       const updatedValue = updatedSelections.join(',');
 
+      // Validation
       if (isRequired) {
         setErrors(prevErrors => {
           if (updatedSelections.length === 0) {
@@ -582,7 +589,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
         ...prevFormData,
         [key]: {
           ...prevFormData[key],
-          value: updatedValue,
+          value: updatedValue, // store as comma-separated string
         },
       };
     });
@@ -667,6 +674,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       }));
     }
 
+    // Check for required fields
     if (isRequired && !time) {
       setErrors(prevErrors => ({
         ...prevErrors,
@@ -686,6 +694,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
 
     let isValid = false;
 
+    // Validation logic
     if (Array.isArray(value)) {
       isValid = value.length > 0;
     } else if (typeof value === 'string') {
@@ -719,24 +728,33 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       },
     }));
 
+    // Validate the email format
     const isValidEmail = emailRegex.test(value);
     const isValueEmpty = !value.trim();
 
+    // Set errors based on the validation result
     setErrors(prevErrors => {
       const updatedErrors = {...prevErrors};
 
+      // Check for required field
       if (isRequired) {
         if (isValueEmpty) {
+          // If the field is required and empty, set the required error
           updatedErrors[key] = `${label} is required.`;
         } else if (!isValidEmail) {
+          // If the email is invalid, set the invalid email error
           updatedErrors[key] = `${label} is invalid.`;
         } else {
+          // If the email is valid, remove any existing error
           delete updatedErrors[key];
         }
       } else {
+        // If the field is not required
         if (!isValueEmpty && !isValidEmail) {
+          // If the value is not empty but invalid, set the invalid email error
           updatedErrors[key] = `${label} is invalid.`;
         } else {
+          // If the field is empty or valid, remove any existing error
           delete updatedErrors[key];
         }
       }
@@ -746,43 +764,18 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
   };
 
   const handleTextArea = (key, value, label, isRequired) => {
+    // Update the formData object directly
     setFormData(prevFormData => ({
       ...prevFormData,
       [key]: {
         ...prevFormData[key],
-        value,
+        value, // Update the value for the specific key
       },
     }));
 
     const isEmpty = !value || value.trim() === '';
 
-    if (isRequired) {
-      if (isEmpty) {
-        setErrors(prevErrors => ({
-          ...prevErrors,
-          [key]: `${label} is required.`,
-        }));
-      } else {
-        setErrors(prevErrors => {
-          const updatedErrors = {...prevErrors};
-          delete updatedErrors[key];
-          return updatedErrors;
-        });
-      }
-    }
-  };
-
-  const handlePassword = (key, value, label, isRequired) => {
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      [key]: {
-        ...prevFormData[key],
-        value,
-      },
-    }));
-
-    const isEmpty = !value || value?.trim() === '';
-
+    // Update the errors state based on the value
     if (isRequired) {
       if (isEmpty) {
         setErrors(prevErrors => ({
@@ -800,16 +793,18 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
   };
 
   const handleRadioSelect = (key, value, label, isRequired) => {
+    // Update the formData object
     setFormData(prevState => ({
       ...prevState,
       [key]: {
         ...prevState[key],
-        value,
+        value, // Update the value for the specific key
       },
     }));
 
     const isEmpty = !value || value.trim() === '';
 
+    // Update the errors state based on the selected value
     if (isRequired) {
       if (isEmpty) {
         setErrors(prevErrors => ({
@@ -831,6 +826,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       const selectedMembership = memberShipDetails.find(
         item => item?.name?.toLowerCase() === value?.toLowerCase(),
       );
+
       const newMembershipAmount = selectedMembership
         ? String(selectedMembership?.price)
         : '0';
@@ -907,26 +903,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
     isRequired,
     isMultiple,
   ) => {
-    // const unsupportedFormats = ['HEIC', 'heic', 'image/heic'];
-    // const validFiles = Array.isArray(files)
-    //   ? files.filter(file => {
-    //       const fileExtension = file?.path?.split('.')?.pop()?.toLowerCase();
-    //       if (
-    //         unsupportedFormats.includes(fileExtension) ||
-    //         file?.mime === 'image/heic'
-    //       ) {
-    //         setErrors(prevErrors => ({
-    //           ...prevErrors,
-    //           [key]: `${label} does not support HEIC files.`,
-    //         }));
-    //         Alert.alert('File not supported');
-    //         return false;
-    //       }
-    //       return true;
-    //     })
-    //   : [files];
     const validFiles = Array.isArray(files) ? files : [files];
-
     const isValidFiles = validFiles.length > 0;
 
     if (isRequired && !isValidFiles) {
@@ -1052,12 +1029,14 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
   const submitHandller = async () => {
     if (isSubmitting.current || isComplete) return;
 
+    // Parse the content from editItem
     const parsedContent = JSON.parse(editItem?.content);
     const requiredFields = Object.entries(parsedContent).filter(
       ([key, item]) => item.required,
     );
     const newErrors = {};
 
+    // Validate required fields
     requiredFields.forEach(([key, item]) => {
       const value = formData[key]?.value;
       if (
@@ -1260,6 +1239,8 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
             new Map(combinedValues.map(item => [item.value, item])).values(),
           );
 
+          originalMemberValues.current = uniqueValues;
+
           setFormData(prevFields => {
             const updatedFields = {...prevFields};
 
@@ -1306,7 +1287,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
         );
       }
     } catch (error) {
-      // console.error('Dropdown search API error:', error);
+      console.error('Dropdown search API error:', error);
     }
   }, []);
 
@@ -1454,7 +1435,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                         }}
                         value={item?.value || ''}
                         maxLength={item?.maxLength == 0 ? 250 : item?.maxLength}
-                        placeholder={`Enter ${item.label}`}
+                        placeholder={`${item.label}`}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                         onChangeText={value =>
                           handleInputChange(
@@ -1482,7 +1463,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
 
                 case 'map':
                   return (
-                    <View key={key} style={{marginBottom: 14, gap: 4}}>
+                    <View key={key} style={{marginBottom: 8, gap: 4}}>
                       <View
                         style={{flexDirection: 'row', alignItems: 'center'}}>
                         <Text
@@ -1535,7 +1516,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           maxLength={
                             item?.maxLength == 0 ? 250 : item?.maxLength
                           }
-                          placeholder={`Enter ${item.label}`}
+                          placeholder={`${item.label}`}
                           placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                           onChangeText={value =>
                             handleInputChange(item?.name, value)
@@ -1666,6 +1647,17 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                   );
 
                 case 'select':
+                  const hasMembershipValue =
+                    formData?.membership?.value &&
+                    formData?.membership?.value !== null &&
+                    formData?.membership?.value !== undefined &&
+                    formData?.membership?.value !== '';
+
+                  const isRelationshipField =
+                    item?.name?.toLowerCase() === 'relationship';
+                  const shouldDisableRelationship =
+                    isRelationshipField && hasMembershipValue;
+
                   return (
                     <View
                       key={key}
@@ -1689,6 +1681,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                         )}
                       </Text>
                       <Dropdown
+                        disable={shouldDisableRelationship}
                         onChangeText={txt => {
                           handleSearchChange(txt, item?.name);
                         }}
@@ -1894,15 +1887,12 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                                   ) : getFileType(uri) === 'image' ? (
                                     <View>
                                       <FastImage
-                                        defaultSource={require('../../assets/images/Image_placeholder.png')}
                                         source={{
                                           uri: uri ? IMAGE_URL + uri : null,
-                                          cache:
-                                            FastImage.cacheControl.immutable,
-                                          priority: FastImage.priority.normal,
                                         }}
-                                        resizeMode="cover"
                                         style={styles.image}
+                                        defaultSource={require('../../assets/images/Image_placeholder.png')}
+                                        resizeMode={FastImage.resizeMode.cover}
                                       />
                                       <TouchableOpacity
                                         style={{
@@ -2350,91 +2340,6 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                     </View>
                   );
 
-                // case 'password':
-                //   return (
-                //     <View key={key} style={{marginBottom: 8, gap: 4}}>
-                //       <Text
-                //         style={{
-                //           fontSize: FONTS.FONTSIZE.SMALL,
-                //           fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                //           color: COLORS.TITLECOLOR,
-                //         }}>
-                //         {item?.label}{' '}
-                //         {item?.required && (
-                //           <Text
-                //             style={{
-                //               color: errors[key]
-                //                 ? COLORS.PRIMARYRED
-                //                 : COLORS.TITLECOLOR,
-                //             }}>
-                //             *
-                //           </Text>
-                //         )}
-                //       </Text>
-                //       <View
-                //         style={{
-                //           flexDirection: 'row',
-                //           alignItems: 'center',
-                //           borderWidth: 1,
-                //           borderColor: errors[key]
-                //             ? COLORS.PRIMARYRED
-                //             : COLORS.INPUTBORDER,
-                //           borderRadius: 10,
-                //           justifyContent: 'space-between',
-                //           paddingHorizontal: 10,
-                //           backgroundColor: COLORS.PRIMARYWHITE,
-                //         }}>
-                //         <TextInput
-                //           editable={editItem ? false : true}
-                //           style={{
-                //             height: 38,
-                //             color: COLORS.PLACEHOLDERCOLOR,
-                //             borderRadius: 10,
-                //             borderColor: COLORS.INPUTBORDER,
-                //             fontSize: FONTS.FONTSIZE.MINI,
-                //             fontFamily: FONTS.FONT_FAMILY.REGULAR,
-                //             width: '93%',
-                //             paddingVertical: 0,
-                //           }}
-                //           maxLength={
-                //             item?.maxLength == 0 ? 250 : item?.maxLength
-                //           }
-                //           secureTextEntry={!passwordVisible[key]}
-                //           placeholder={`Enter ${item?.label}`}
-                //           placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
-                //           value={item?.value || ' '}
-                //           onChangeText={value =>
-                //             handlePassword(
-                //               item?.name,
-                //               value,
-                //               item?.label,
-                //               item?.required,
-                //             )
-                //           }
-                //         />
-                //         <TouchableOpacity
-                //           onPress={() => togglePasswordVisibility(key)}>
-                //           <Ionicons
-                //             name={passwordVisible[key] ? 'eye-off' : 'eye'}
-                //             size={24}
-                //             color={COLORS.TITLECOLOR}
-                //           />
-                //         </TouchableOpacity>
-                //       </View>
-                //       {errors[item?.name] && (
-                //         <Text
-                //           style={{
-                //             color: COLORS.PRIMARYRED,
-                //             fontSize: FONTS.FONTSIZE.SMALL,
-                //             fontFamily: FONTS.FONT_FAMILY.REGULAR,
-                //             marginTop: 4,
-                //           }}>
-                //           {errors[item?.name]}
-                //         </Text>
-                //       )}
-                //     </View>
-                //   );
-
                 case 'textarea':
                   return (
                     <View key={key} style={{marginBottom: 8, gap: 4}}>
@@ -2474,7 +2379,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                         multiline
                         numberOfLines={4}
                         maxLength={item?.maxLength == 0 ? 250 : item?.maxLength}
-                        placeholder={`Enter ${item.label}`}
+                        placeholder={`${item.label}`}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                         value={item?.value}
                         onChangeText={value =>
@@ -2573,7 +2478,6 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                               borderWidth: 1,
                               borderColor: COLORS.INPUTBORDER,
                               width: 32,
-                              // paddingVertical: 4,
                             }}>
                             <Text
                               style={{
@@ -2672,20 +2576,34 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           backgroundColor: COLORS.PRIMARYWHITE,
                           paddingVertical: 0,
                         }}
-                        maxLength={item?.maxLength == 0 ? 250 : item?.maxLength}
+                        value={
+                          isPhoneField(item?.name)
+                            ? formatPhoneToUS(item?.value || '')
+                            : item?.value
+                        }
+                        maxLength={
+                          isPhoneField(item?.name)
+                            ? 14
+                            : item?.maxLength == 0
+                            ? 250
+                            : item?.maxLength
+                        }
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                         keyboardType="numeric"
-                        placeholder={`Enter ${item.label}`}
-                        value={item?.value?.toString()}
-                        onChangeText={text =>
+                        placeholder={`${item.label}`}
+                        onChangeText={text => {
+                          const numericValue = isPhoneField(item?.name)
+                            ? unformatPhone(text)
+                            : text;
                           handleNumberChange(
                             item?.name,
-                            text,
+                            numericValue,
                             item?.required,
                             item?.name,
                             item?.label,
-                          )
-                        }
+                            item?.className,
+                          );
+                        }}
                       />
                       {errors[item?.name] && (
                         <Text
@@ -2739,19 +2657,34 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           paddingVertical: 0,
                         }}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
-                        keyboardType="number-pad"
+                        keyboardType="numeric"
                         placeholder={`${item.label}`}
-                        value={item?.value}
-                        maxLength={item?.maxLength == 0 ? 250 : item?.maxLength}
-                        onChangeText={text =>
+                        value={
+                          isPhoneField(item?.name)
+                            ? formatPhoneToUS(item?.value || '')
+                            : item?.value
+                        }
+                        maxLength={
+                          isPhoneField(item?.name)
+                            ? 14
+                            : item?.maxLength == 0
+                            ? 250
+                            : item?.maxLength
+                        }
+                        onChangeText={text => {
+                          const numericValue = isPhoneField(item?.name)
+                            ? unformatPhone(text)
+                            : text;
+
                           handleNumberChange(
                             item?.name,
-                            text,
+                            numericValue,
                             item?.required,
                             item?.name,
                             item?.label,
-                          )
-                        }
+                            item?.className,
+                          );
+                        }}
                       />
                       {errors[item?.name] && (
                         <Text
@@ -2811,7 +2744,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                         value={item?.value || ''}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                         maxLength={item?.maxLength || 256}
-                        placeholder={`Enter ${item.label}`}
+                        placeholder={`${item.label}`}
                         onChangeText={value =>
                           handleEmail(
                             item?.name,

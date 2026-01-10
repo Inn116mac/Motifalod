@@ -17,7 +17,11 @@ import FONTS from '../theme/Fonts';
 import {getData} from '../utils/Storage';
 import COLORS from '../theme/Color';
 import Loader from '../components/root/Loader';
-import {NOTIFY_MESSAGE} from '../constant/Module';
+import {
+  formatPhoneToUS,
+  isPhoneField,
+  NOTIFY_MESSAGE,
+} from '../constant/Module';
 import {useNavigation} from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
 import Offline from '../components/root/Offline';
@@ -189,24 +193,21 @@ const MemberScreen = () => {
                 return null;
               }
 
-              // if (
-              //   (!fieldData?.label ||
-              //     fieldData?.value === null ||
-              //     fieldData?.value === undefined ||
-              //     fieldData?.value === '') &&
-              //   (item?.relationship?.value?.toLowerCase() === 'self' ||
-              //     item?.relationship?.value?.toLowerCase() ===
-              //       'single parent' ||
-              //     item?.relationship?.value?.toLowerCase() === 'additional')
-              // ) {
-              //   return null;
-              // }
+              if (fieldData?.type == 'hidden') {
+                return null;
+              }
+
+              const isPhone = isPhoneField(fieldData?.name);
 
               return (
                 <View style={{flexDirection: 'row'}} key={fieldKey}>
                   <Text style={styles.titleText}>{fieldData.label} :</Text>
                   <Text style={styles.text}>
-                    {fieldData?.value ? fieldData?.value : '-'}
+                    {isPhone && fieldData?.value
+                      ? formatPhoneToUS(fieldData?.value)
+                      : fieldData?.value
+                      ? fieldData?.value
+                      : '-'}
                   </Text>
                 </View>
               );
@@ -242,10 +243,10 @@ const MemberScreen = () => {
         }}
         leftIcon={
           <FontAwesome6
-            iconStyle="solid"
             name="angle-left"
             size={26}
             color={COLORS.LABELCOLOR}
+            iconStyle="solid"
           />
         }
         title={'Members'}
@@ -256,7 +257,7 @@ const MemberScreen = () => {
           <Loader />
         ) : isConnected ? (
           <FlatList
-            contentContainerStyle={{paddingBottom: 10}}
+            contentContainerStyle={{paddingBottom: 10, flexGrow: 1}}
             showsVerticalScrollIndicator={false}
             data={sortedMembers}
             removeClippedSubviews={true}

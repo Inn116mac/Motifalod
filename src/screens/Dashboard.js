@@ -27,6 +27,9 @@ import {DrawerContext} from '../utils/DrawerContext';
 import FastImage from 'react-native-fast-image';
 import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
 import RNExitApp from 'react-native-exit-app';
+import Carousel from 'react-native-reanimated-carousel';
+import {Feather} from '@react-native-vector-icons/feather';
+import {FontAwesome5} from '@react-native-vector-icons/fontawesome5';
 
 const Dashboard = ({route}) => {
   const [userData, setUserData] = useState(null);
@@ -52,7 +55,6 @@ const Dashboard = ({route}) => {
           {
             text: 'YES',
             onPress: () => {
-              // BackHandler.exitApp();
               RNExitApp.exitApp();
             },
           },
@@ -114,7 +116,11 @@ const Dashboard = ({route}) => {
               item =>
                 item?.constantName !== 'SCAN QR' &&
                 item?.constantName !== 'SELF CHECK-IN' &&
-                item?.constantName !== 'EVENT ADMIN',
+                item?.constantName !== 'EVENT ADMIN' &&
+                item?.constantName !== 'ROLE MANAGEMENT' &&
+                item?.constantName !== 'MEMBERSHIP MANAGEMENT' &&
+                item?.constantName !== 'NOTIFICATION MANAGEMENT' &&
+                item?.constantName !== 'REMINDER MANAGEMENT',
             );
             if (newArray?.length > 0) {
               setData(newArray);
@@ -265,6 +271,36 @@ const Dashboard = ({route}) => {
     navigation.openDrawer();
   };
 
+  const sponsorBanners = [
+    {
+      id: '1',
+      title: 'Technology Sponsor - PSMTECH LLC',
+      name: ' Low Voltage & Inngenius Software Services',
+      phone: '(336) 805-6626',
+      url: 'https://www.psmtech.com',
+      bg: '#174880c9',
+      icon: 'zap',
+    },
+    {
+      id: '2',
+      title: 'PSMTECH LLC - Low Voltage Services',
+      name: 'Professional Installation & Support',
+      phone: '(336) 805-6626',
+      url: 'https://www.psmtech.com',
+      bg: '#059669',
+      icon: 'phone',
+    },
+    {
+      id: '3',
+      title: 'Inngenius Software Services',
+      name: 'Web Development & Review Management',
+      phone: '(336) 805-6626',
+      url: 'https://www.inngenius.com',
+      bg: '#d55b09be',
+      icon: 'globe',
+    },
+  ];
+
   return (
     <View
       style={{
@@ -399,6 +435,113 @@ const Dashboard = ({route}) => {
         )
       ) : (
         <Offline />
+      )}
+      {!networkLoading && !userDataLoading && !loading && (
+        <Carousel
+          width={width}
+          height={70}
+          data={sponsorBanners}
+          loop
+          autoPlay
+          autoPlayInterval={3000}
+          scrollAnimationDuration={600}
+          panGestureHandlerProps={{
+            activeOffsetX: [-10, 10],
+          }}
+          renderItem={({item}) => (
+            <TouchableOpacity
+              activeOpacity={0.35}
+              onPress={() => Linking.openURL(item.url)}
+              style={{
+                flex: 1,
+                backgroundColor: item.bg,
+                justifyContent: 'center',
+                paddingHorizontal: 18,
+              }}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <View
+                  style={{
+                    marginRight: 8,
+                  }}>
+                  <Feather
+                    name={item.icon}
+                    size={17}
+                    color={COLORS.PRIMARYWHITE}
+                  />
+                </View>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    color: COLORS.PRIMARYWHITE,
+                    fontSize: FONTS.FONTSIZE.MINI,
+                    fontFamily: FONTS.FONT_FAMILY.BOLD,
+                  }}>
+                  {item.title}
+                </Text>
+              </View>
+              <View
+                style={{
+                  marginLeft: 25,
+                }}>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    color: COLORS.PRIMARYWHITE,
+                    fontSize: FONTS.FONTSIZE.TOOSMALL,
+                    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                  }}>
+                  {item.name}
+                </Text>
+              </View>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (item?.phone) {
+                      const phoneUrl =
+                        Platform.OS === 'ios'
+                          ? `telprompt:${item.phone}`
+                          : `tel:${item.phone}`;
+                      Linking.openURL(phoneUrl);
+                    }
+                  }}
+                  hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                    marginLeft: 2,
+                  }}>
+                  <FontAwesome5
+                    name={'phone-alt'}
+                    size={14}
+                    color={'white'}
+                    style={{marginTop: -3, marginLeft: 2}}
+                    iconStyle="solid"
+                  />
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      color: COLORS.PRIMARYWHITE,
+                      fontSize: FONTS.FONTSIZE.EXTRAMINI,
+                      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                    }}>
+                    {item?.phone}
+                  </Text>
+                </TouchableOpacity>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    color: COLORS.PRIMARYWHITE,
+                    fontSize: FONTS.FONTSIZE.EXTRAMINI,
+                    fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                    marginLeft: 5,
+                  }}>
+                  • {item.url.replace('https://', '')}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
       )}
     </View>
   );

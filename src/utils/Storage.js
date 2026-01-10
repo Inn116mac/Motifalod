@@ -20,3 +20,21 @@ export const removeData = async key => {
     await AsyncStorage.removeItem(key);
   } catch (error) {}
 };
+
+export const setEventAdminVerified = async value => {
+  try {
+    await AsyncStorage.setItem('isEventAdminVerified', JSON.stringify(value));
+  } catch (error) {
+    console.log('Error setting event admin verification:', error);
+  }
+};
+
+export const getEventAdminVerified = async () => {
+  try {
+    const value = await AsyncStorage.getItem('isEventAdminVerified');
+    return value ? JSON.parse(value) : false;
+  } catch (error) {
+    console.log('Error getting event admin verification:', error);
+    return false;
+  }
+};

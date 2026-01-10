@@ -9,7 +9,6 @@ import DeviceInfo from 'react-native-device-info';
 import {DrawerProvider} from './src/utils/DrawerContext';
 import COLORS from './src/theme/Color';
 import ZoomableView from './src/components/root/ZoomableView';
-// import {NodeMediaClient} from 'react-native-nodemediaclient';
 let PushNotification;
 let PushNotificationIOS;
 if (Platform.OS === 'android') {
@@ -20,16 +19,8 @@ if (Platform.OS === 'android') {
     require('@react-native-community/push-notification-ios').default;
 }
 LogBox.ignoreAllLogs();
-messaging().setBackgroundMessageHandler(async remoteMessage => {
-  // Background handler - Firebase handles notifications automatically
-  // Only add custom logic if needed (e.g., data processing)
-});
+messaging().setBackgroundMessageHandler(async remoteMessage => {});
 const App = () => {
-  // if (Platform.OS === 'ios') {
-  //   NodeMediaClient.setLicense('');
-  // } else {
-  //   NodeMediaClient.setLicense('');
-  // }
   const getDeviceId = async () => {
     const deviceId = await DeviceInfo.getUniqueId();
     await storeData('deviceId', deviceId);
@@ -37,7 +28,6 @@ const App = () => {
   useEffect(() => {
     const checkDeviceId = async () => {
       const deviceId = await getData('deviceId');
-      // console.log('deviceId : ', deviceId);
       if (!deviceId) {
         await getDeviceId();
       }
@@ -69,12 +59,10 @@ const App = () => {
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
         );
         if (status !== 'granted') {
-          // console.log('Android notification permission denied');
           return;
         }
       }
     }
-    // Handle iOS permissions (and Android <13)
     const authStatus = await messaging().requestPermission();
     const enabled =
       authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
@@ -84,46 +72,6 @@ const App = () => {
       await storeData('deviceToken', token);
     }
   };
-
-  // const createNotification = () => {
-  //   PushNotification.configure({
-  //     onRegister: function (token) {},
-  //     onNotification: function (notification) {
-  //       PushNotification.createChannel({
-  //         channelId: 'default-channel-id',
-  //         channelName: `Default channel`,
-  //         channelDescription: 'A default channel',
-  //         vibrate: true,
-  //         playSound: true,
-  //         importance: 4,
-  //         soundName: 'default',
-  //       });
-  //     },
-  //     permissions: {
-  //       alert: false,
-  //       badge: false,
-  //       sound: false,
-  //     },
-  //     popInitialNotification: true,
-  //     requestPermissions: true,
-  //   });
-  //   messaging().onMessage(async remoteMessage => {
-  //     // console.log('remoteMessage : ', JSON.stringify(remoteMessage));
-  //     if (Platform.OS === 'android') {
-  //       PushNotification.localNotification({
-  //         title: remoteMessage.notification.title,
-  //         message: remoteMessage.notification.body,
-  //         channelId: 'default-channel-id',
-  //         playSound: true,
-  //         vibrate: true,
-  //       });
-  //     } else if (Platform.OS === 'ios') {
-  //     }
-  //   });
-  //   messaging().setBackgroundMessageHandler(async remoteMessage => {
-  //     // console.log('background : ', JSON.stringify(remoteMessage));
-  //   });
-  // };
 
   const createNotification = () => {
     if (Platform.OS === 'android') {
@@ -154,7 +102,6 @@ const App = () => {
       requestPermissions: Platform.OS === 'ios',
     });
 
-    // Handle foreground messages
     messaging().onMessage(async remoteMessage => {
       if (Platform.OS === 'android') {
         PushNotification.localNotification({

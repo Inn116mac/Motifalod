@@ -27,8 +27,6 @@ import KeepAwake from 'react-native-keep-awake';
 import InCallManager from 'react-native-incall-manager';
 
 const SERVER_URL = 'http://applivestream.inngenius.com:3000';
-// const SERVER_URL = 'http://192.168.1.107:8080';
-// const SERVER_URL = 'http://10.108.200.211:8080';
 
 export default function BroadcasterScreen({route}) {
   const {item} = route.params.data;
@@ -111,7 +109,6 @@ export default function BroadcasterScreen({route}) {
         const data = await response.json();
 
         if (data.global?.status === 'CRITICAL') {
-          console.warn('Server approaching critical capacity');
           // Could show a warning to broadcaster
         }
       } catch (error) {
@@ -122,13 +119,6 @@ export default function BroadcasterScreen({route}) {
     return () => clearInterval(monitorCapacity);
   }, [isStreaming]);
 
-  // const getMediaStream = async (isFront = true) => {
-  //   const facingMode = isFront ? 'user' : 'environment';
-  //   return await mediaDevices.getUserMedia({
-  //     audio: true,
-  //     video: {facingMode},
-  //   });
-  // };
 
   const getMediaStream = async (isFront = true) => {
     const facingMode = isFront ? 'user' : 'environment';
@@ -166,7 +156,6 @@ export default function BroadcasterScreen({route}) {
 
       return true;
     } catch (error) {
-      console.error('Error checking server capacity:', error);
       // In case of error, allow stream to continue
       return true;
     }
@@ -269,7 +258,6 @@ export default function BroadcasterScreen({route}) {
             setIsStarting(false);
           } catch (err) {
             setIsStarting(false);
-            console.error('Error producing tracks:', err);
             if (Platform.OS === 'ios') {
               InCallManager.stop();
             }
@@ -279,7 +267,6 @@ export default function BroadcasterScreen({route}) {
     );
 
     sock.once('connect_error', error => {
-      console.error('Connection failed:', error);
       setIsStarting(false);
       stopAll();
       Alert.alert(
@@ -291,7 +278,6 @@ export default function BroadcasterScreen({route}) {
     sock.once('error', error => {
       setIsStarting(false);
       stopAll();
-      console.error('Socket error:', error);
       Alert.alert(
         'Server Error',
         'An error occurred with the streaming server connection.',
@@ -403,7 +389,6 @@ export default function BroadcasterScreen({route}) {
       }
 
     } catch (error) {
-      console.error('[CAMERA] Switch error:', error);
       Alert.alert('Camera Error', 'Failed to switch camera. Please try again.');
     } finally {
       setIsSwitchingCamera(false);
@@ -477,10 +462,6 @@ export default function BroadcasterScreen({route}) {
       setIsPaused(false);
       setIsAudioMuted(false);
       setWantToRecord(false);
-      // setRoomId('');
-      // videoTrackRef.current = null;
-      // audioTrackRef.current = null;
-      // deviceRef.current = null;
     } catch (err) {
       console.error('Error in stopAll:', err);
     }

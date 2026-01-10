@@ -5,9 +5,10 @@ import {
   View,
   Alert,
   FlatList,
+  useWindowDimensions,
   TextInput,
-  Platform,
   KeyboardAvoidingView,
+  Platform,
   RefreshControl,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
@@ -29,13 +30,21 @@ import {AntDesign} from '@react-native-vector-icons/ant-design';
 import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import {Entypo} from '@react-native-vector-icons/entypo';
-import {capitalizeFirstLetter, NOTIFY_MESSAGE} from '../constant/Module';
+import {
+  capitalizeFirstLetter,
+  formatPhoneToUS,
+  isPhoneField,
+  NOTIFY_MESSAGE,
+} from '../constant/Module';
 import {getFileType} from '../utils/fileType';
 import Offline from '../components/root/Offline';
 import moment from 'moment';
 
 const TableScreen = ({route}) => {
   const {item, isDashboard} = route?.params?.data;
+
+  const {width} = useWindowDimensions();
+
   const styles = StyleSheet.create({
     headerContainer: {
       flexDirection: 'row',
@@ -100,6 +109,35 @@ const TableScreen = ({route}) => {
       fontSize: FONTS.FONTSIZE.MEDIUM,
       fontFamily: FONTS.FONT_FAMILY.MEDIUM,
     },
+    buttonText: {
+      color: COLORS.PRIMARYWHITE,
+      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+      fontFamily: FONTS.FONT_FAMILY.REGULAR,
+      textAlign: 'center',
+    },
+    paginationContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: 8,
+      backgroundColor: 'transparent',
+      marginHorizontal: 10,
+    },
+    paginationButton: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      marginHorizontal: 4,
+      backgroundColor: COLORS.grey500,
+    },
+    activeButton: {
+      backgroundColor: COLORS.LABELCOLOR,
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+    },
     loadMoreButton: {
       padding: 10,
       backgroundColor: COLORS.LABELCOLOR,
@@ -111,6 +149,13 @@ const TableScreen = ({route}) => {
       fontSize: FONTS.FONTSIZE.MEDIUM,
       fontFamily: FONTS.FONT_FAMILY.MEDIUM,
     },
+    tableContainer: {
+      borderRadius: 10,
+      overflow: 'hidden',
+      marginHorizontal: 10,
+      marginVertical: 10,
+      borderRadius: 5,
+    },
     header: {
       backgroundColor: COLORS.TABLEROWCOLOR,
       flexDirection: 'row',
@@ -118,6 +163,18 @@ const TableScreen = ({route}) => {
       alignItems: 'center',
       borderWidth: 1,
       borderColor: COLORS.LIGHTGREY,
+    },
+    headerText: {
+      fontSize: FONTS.FONTSIZE.SMALL,
+      fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+      color: COLORS.TABLELABELTEXTCOLOR,
+      flex: 1,
+      paddingTop: 15,
+      paddingVertical: 15,
+      textAlign: 'center',
+      alignSelf: 'stretch',
+      borderRightWidth: 1,
+      borderRightColor: COLORS.TABLEBORDER,
     },
     icon: {
       alignSelf: 'center',
@@ -132,25 +189,38 @@ const TableScreen = ({route}) => {
   const navigation = useNavigation();
 
   const [pageNumber, setPageNumber] = useState(1);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [hasMore, setHasMore] = useState(true);
   const [openIndex, setOpenIndex] = useState(null);
   const [searchKeyword, setSearchKeyword] = useState('');
 
+  const PAGE_SIZE = 20;
+
+  const useDebounce = (value, delay) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+      const handler = setTimeout(() => {
+        setDebouncedValue(value);
+      }, delay);
+      return () => {
+        clearTimeout(handler);
+      };
+    }, [value, delay]);
+    return debouncedValue;
+  };
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
+
   useEffect(() => {
     getViewData();
-  }, [pageNumber, searchKeyword]);
-
-  const PAGE_SIZE = 20;
+  }, [pageNumber, debouncedSearchKeyword, refreshTrigger]);
 
   useFocusEffect(
     React.useCallback(() => {
-      setPageNumber(1);
-      setAllUserData([]);
-      getViewData();
+      setRefreshTrigger(prev => prev + 1);
       setOpenIndex(null);
       return () => {};
-    }, [getViewData]),
+    }, []),
   );
 
   const getViewData = useCallback(() => {
@@ -162,7 +232,7 @@ const TableScreen = ({route}) => {
       orderBy: 'order',
       orderType: -1,
       type: item?.constantName,
-      searchKeyword: searchKeyword,
+      searchKeyword: debouncedSearchKeyword,
     };
 
     NetInfo.fetch().then(state => {
@@ -172,7 +242,6 @@ const TableScreen = ({route}) => {
           .then(response => {
             if (response.data.status) {
               const newData = response?.data?.result?.data;
-
               const totalRecords = response.data.result.totalRecord || 0;
 
               const calculatedTotalPages = Math.ceil(totalRecords / PAGE_SIZE);
@@ -203,7 +272,7 @@ const TableScreen = ({route}) => {
         NOTIFY_MESSAGE('Please check your internet connectivity');
       }
     });
-  }, [item, PAGE_SIZE, navigation, pageNumber, searchKeyword]);
+  }, [item, PAGE_SIZE, navigation, pageNumber, debouncedSearchKeyword]);
 
   const [isLoading1, setIsLoading1] = useState(false);
   const {isConnected, networkLoading} = useNetworkStatus();
@@ -263,8 +332,6 @@ const TableScreen = ({route}) => {
               .then(response => {
                 if (response.data.status === true) {
                   NOTIFY_MESSAGE(response.data.message);
-                  // navigation.goBack();
-                  // getViewData();
                   setAllUserData(prevList => {
                     const indexToDelete = prevList.findIndex(
                       item => item.configurationId === item1.configurationId,
@@ -325,16 +392,16 @@ const TableScreen = ({route}) => {
               editItem: item1,
               configurationId: memberId?.value,
             };
-            setSearchKeyword('');
-            navigation.navigate('Form', {data});
+            navigation.navigate('Form', {data}); // Navigate to the Form screen with data
           },
         },
       ],
-      {cancelable: false},
+      {cancelable: false}, // Prevent dismissing the alert by tapping outside
     );
   };
 
   const handleApprove = item1 => {
+    // Show confirmation dialog
     Alert.alert(
       'Confirm Approval',
       `Are you sure you want to 'Approve' this User?`,
@@ -357,7 +424,6 @@ const TableScreen = ({route}) => {
               .then(response => {
                 if (response.data.status === true) {
                   NOTIFY_MESSAGE(response.data.message);
-                  // getViewData();
                   setAllUserData(prevList =>
                     prevList.map(item =>
                       item.configurationId === item1.configurationId
@@ -382,16 +448,17 @@ const TableScreen = ({route}) => {
                 NOTIFY_MESSAGE(error?.message || 'Something Went Wrong');
               })
               .finally(() => {
-                setIsLoading1(false);
+                setIsLoading1(false); // Ensure loading state is reset
               });
           },
         },
       ],
-      {cancelable: false},
+      {cancelable: false}, // Prevent dismissing the alert by tapping outside
     );
   };
 
   const handleReject = item1 => {
+    // Show confirmation dialog
     Alert.alert(
       'Confirm Rejection',
       `Are you sure you want to 'Not Approve' this User?`,
@@ -420,10 +487,10 @@ const TableScreen = ({route}) => {
                         ? {
                             ...item,
                             content: JSON.stringify({
-                              ...JSON.parse(item.content),
+                              ...JSON.parse(item.content), // Parse the content
                               isApproved: {
-                                ...JSON.parse(item.content).isApproved,
-                                value: 'No',
+                                ...JSON.parse(item.content).isApproved, // Keep other isApproved properties
+                                value: 'No', // Update the value
                               },
                             }),
                           }
@@ -438,12 +505,12 @@ const TableScreen = ({route}) => {
                 NOTIFY_MESSAGE(error?.message || 'Something Went Wrong');
               })
               .finally(() => {
-                setIsLoading1(false);
+                setIsLoading1(false); // Ensure loading state is reset
               });
           },
         },
       ],
-      {cancelable: false},
+      {cancelable: false}, // Prevent dismissing the alert by tapping outside
     );
   };
 
@@ -458,25 +525,26 @@ const TableScreen = ({route}) => {
       if (!field || skipTypes.includes(field.type)) continue;
 
       let value = field.value;
+      // Try to parse as array if stringified
       if (typeof value === 'string') {
         try {
           const arr = JSON.parse(value);
           if (Array.isArray(arr)) value = arr;
         } catch {}
       }
+      // If array, use first value
       if (Array.isArray(value)) {
         return value.length > 0 ? value[0] : '-';
       }
-      return value !== undefined && value !== null && value !== ''
-        ? value
-        : '-';
+      // Otherwise, return value or '-'
+      return value !== undefined && value !== null && value !== '' ? value : '';
     }
     return '-';
   }
 
   function removeContentPrefix(value) {
     if (typeof value === 'string') {
-      return value.replace(/^content\//, '');
+      return value?.replace(/^content\//, '');
     }
     return value;
   }
@@ -489,8 +557,14 @@ const TableScreen = ({route}) => {
 
     const keys = JSON.parse(item1.keys);
 
-    const firstValue = getValidValue(keys.slice(0, 2), content);
+    const hasMembershipValue =
+      content?.membership?.value &&
+      content?.membership?.value !== null &&
+      content?.membership?.value !== undefined &&
+      content?.membership?.value !== '';
 
+    const firstValue = getValidValue(keys.slice(0, 2), content);
+    // For the second value, skip the key used for firstValue
     let firstUsedKeyIndex = -1;
     for (let i = 0; i < 2; i++) {
       const field = content[keys[i]];
@@ -594,6 +668,9 @@ const TableScreen = ({route}) => {
                   {item?.constantName !== 'SIGN UP' && secondValue
                     ? removeContentPrefix(secondValue)
                     : ''}
+                  {content?.membership?.value
+                    ? ` - ${capitalizeFirstLetter(content?.membership?.value)}`
+                    : ''}
                   {item?.constantName === 'SIGN UP' && isApproved == 'yes'
                     ? 'Approved'
                     : item?.constantName === 'SIGN UP' && isApproved == 'no'
@@ -643,9 +720,11 @@ const TableScreen = ({route}) => {
                     <Feather name="edit" size={18} color={'#007bff'} />
                   </TouchableOpacity>
 
-                  <TouchableOpacity onPress={() => handleDelete(item1)}>
-                    <AntDesign name="delete" size={18} color={'red'} />
-                  </TouchableOpacity>
+                  {!hasMembershipValue && (
+                    <TouchableOpacity onPress={() => handleDelete(item1)}>
+                      <AntDesign name="delete" size={18} color={'red'} />
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
               <AntDesign
@@ -676,7 +755,7 @@ const TableScreen = ({route}) => {
                     'section',
                     'password',
                   ].includes(field?.type) ||
-                  field?.subtype === 'password'
+                  field?.subtype == 'password'
                 ) {
                   return null;
                 }
@@ -698,11 +777,12 @@ const TableScreen = ({route}) => {
                   parsedArray = value;
                 }
 
-                // If the value is an object (but not null/array), show its key-value pairs
                 const isObject =
                   typeof value === 'object' &&
                   value !== null &&
                   !Array.isArray(value);
+
+                const isPhone = isPhoneField(field?.name);
 
                 return (
                   <View
@@ -829,6 +909,8 @@ const TableScreen = ({route}) => {
                             ? moment(formatDate(value)).format('DD MMMM YYYY')
                             : field.type == 'time'
                             ? formattedTime(value)
+                            : isPhone // ✅ Format phone numbers
+                            ? formatPhoneToUS(value)
                             : value
                           : '-'}
                       </Text>
@@ -849,7 +931,6 @@ const TableScreen = ({route}) => {
       setPageNumber(prevPage => prevPage + 1);
     }
   };
-
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setPageNumber(1);
@@ -903,6 +984,7 @@ const TableScreen = ({route}) => {
       }
     });
   }, [item, PAGE_SIZE]);
+
   return (
     <KeyboardAvoidingView
       style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}
@@ -915,9 +997,9 @@ const TableScreen = ({route}) => {
         leftIcon={
           <FontAwesome6
             name="angle-left"
-            iconStyle="solid"
             size={26}
             color={COLORS.LABELCOLOR}
+            iconStyle="solid"
           />
         }
         title={item?.name}
@@ -997,6 +1079,7 @@ const TableScreen = ({route}) => {
           ) : (
             <NoDataFound />
           )}
+
           <View
             style={{
               flexDirection: 'row',

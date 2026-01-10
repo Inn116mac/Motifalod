@@ -10,7 +10,7 @@ import {
 import FONTS from '../../theme/Fonts';
 import COLORS from '../../theme/Color';
 import NoDataFound from './NoDataFound';
-import {AntDesign} from "@react-native-vector-icons/ant-design";
+import {AntDesign} from '@react-native-vector-icons/ant-design';
 
 export default function InformationView({data, pageNumber, PAGE_SIZE}) {
   const {width} = useWindowDimensions();
@@ -43,7 +43,6 @@ export default function InformationView({data, pageNumber, PAGE_SIZE}) {
   const renderList = ({item, index}) => {
     const keys = JSON.parse(data[0]?.keys);
 
-    // const number = index >= 0 && index <= 9 ? `0${index + 1}` : `${index + 1}`;
     const number1 = (pageNumber - 1) * PAGE_SIZE + index + 1;
     const number = number1 <= 9 ? `0${number1}` : `${number1}`;
     const parsedContent = JSON.parse(item?.content);

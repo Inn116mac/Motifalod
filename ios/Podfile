@@ -60,23 +60,62 @@ target 'Motifalod' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  post_install do |installer|
-    # MapLibre post install (for @maplibre/maplibre-react-native)
-    $MLRN.post_install(installer) if defined?($MLRN)
+  # post_install do |installer|
+  #   # MapLibre post install (for @maplibre/maplibre-react-native)
+  #   $MLRN.post_install(installer) if defined?($MLRN)
   
-    # Ensure DEBUG_INFORMATION_FORMAT is set for all pods
-    installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config|
-        config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
+  #   # Ensure DEBUG_INFORMATION_FORMAT is set for all pods
+  #   installer.pods_project.targets.each do |target|
+  #     target.build_configurations.each do |config|
+  #       config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
+  #     end
+  #   end
+  
+  #   # React Native post install
+  #   react_native_post_install(
+  #     installer,
+  #     config[:reactNativePath],
+  #     :mac_catalyst_enabled => false,
+  #     # :ccache_enabled => true
+  #   )
+  # end
+
+post_install do |installer|
+  $MLRN.post_install(installer)
+
+  # Disable bitcode + Strip CardinalMobile (CRITICAL FIX)
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['ENABLE_BITCODE'] = 'NO'                    # ← ADD THIS
+      config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
+      
+      if target.name == 'Braintree' || target.name.start_with?('Braintree')
+        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
       end
     end
-  
-    # React Native post install
-    react_native_post_install(
-      installer,
-      config[:reactNativePath],
-      :mac_catalyst_enabled => false,
-      # :ccache_enabled => true
-    )
   end
+
+  # Strip CardinalMobile from ALL possible Braintree paths
+  bitcode_strip_path = `xcrun --find bitcode_strip`.chop!
+  framework_paths = [
+    "Pods/Braintree/Frameworks/XCFrameworks/CardinalMobile.xcframework/ios-arm64_armv7/CardinalMobile.framework/CardinalMobile",
+    "Pods/Braintree/Frameworks/XCFrameworks/CardinalMobile.xcframework/ios-arm64_i386_x86_64-simulator/CardinalMobile.framework/CardinalMobile",
+    "Pods/CardinalMobile/CardinalMobile.framework/CardinalMobile"     # ← Your existing path
+  ]
+
+  framework_paths.each do |framework_relative_path|
+    framework_path = File.join(Dir.pwd, framework_relative_path)
+    if File.exist?(framework_path)
+      system("#{bitcode_strip_path} #{framework_path} -r -o #{framework_path}")
+      puts "✅ Stripped bitcode from #{framework_relative_path}"
+    end
+  end
+
+  # React Native post install (keep at bottom)
+  react_native_post_install(
+    installer,
+    config[:reactNativePath],
+    :mac_catalyst_enabled => false
+  )
+end
 end

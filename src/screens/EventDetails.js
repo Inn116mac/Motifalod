@@ -24,7 +24,7 @@ import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import Loader from '../components/root/Loader';
 import httpClient from '../connection/httpClient';
 import NetInfo from '@react-native-community/netinfo';
-import {getImageUri, NOTIFY_MESSAGE} from '../constant/Module';
+import {formatPhoneToUS, getImageUri, NOTIFY_MESSAGE} from '../constant/Module';
 import {SimpleLineIcons} from '@react-native-vector-icons/simple-line-icons';
 import {AntDesign} from '@react-native-vector-icons/ant-design';
 import {Ionicons} from '@react-native-vector-icons/ionicons';
@@ -287,75 +287,18 @@ const EventDetails = ({route}) => {
                 height: isFolded ? height / 3 : height / 5,
                 width: '100%',
               }}>
-            <FastImage
+              <FastImage
                 defaultSource={require('../assets/images/Image_placeholder.png')}
                 onError={() => {
                   setHasError(true);
                 }}
                 style={{height: '100%', width: '100%'}}
-                resizeMode="cover"
+                resizeMode={hasError ? 'contain' : 'cover'}
                 source={
                   hasError
                     ? require('../assets/images/Logo.png')
                     : {uri: IMAGE_URL + imageUri}
-                }>
-                {/* <View
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    margin: 6,
-                    maxWidth: '65%',
-                  }}>
-                  <View
-                    style={{
-                      backgroundColor: COLORS.LABELCOLOR,
-                      paddingHorizontal: 6,
-                      paddingVertical: 4,
-                      borderRadius: 8,
-                    }}>
-                    <Text
-                      numberOfLines={2}
-                      style={{
-                        fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                        fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-                        color: COLORS.PRIMARYWHITE,
-                        textAlign: 'left',
-                      }}>
-                      {evnentObj?.name}
-                    </Text>
-                  </View>
-                </View>
-                <View
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 0,
-                    margin: 6,
-                    width: '30%',
-                  }}>
-                  <View
-                    style={{
-                      backgroundColor: COLORS.TITLECOLOR,
-                      paddingHorizontal: 6,
-                      paddingVertical: 4,
-                      borderRadius: 8,
-                    }}>
-                    <Text
-                      numberOfLines={2}
-                      style={{
-                        fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                        fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-                        color: COLORS.PRIMARYWHITE,
-                        textAlign: 'center',
-                      }}>
-                      {`${moment(formatDate(evnentObj?.date)).format(
-                        'MMMM DD',
-                      )}`}
-                    </Text>
-                  </View>
-                </View> */}
-           </FastImage>
+                }></FastImage>
             </View>
 
             <View
@@ -493,7 +436,7 @@ const EventDetails = ({route}) => {
                   <Text style={styles.boldLbl}>Coordinator Number</Text>
                   <Text style={[styles.txtLabel]}>
                     {evnentObj.eventcoordinatornumber
-                      ? evnentObj.eventcoordinatornumber
+                      ? formatPhoneToUS(evnentObj.eventcoordinatornumber)
                       : '-'}
                   </Text>
                 </View>

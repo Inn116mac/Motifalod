@@ -14,6 +14,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Keyboard,
+  Image,
 } from 'react-native';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {AntDesign} from '@react-native-vector-icons/ant-design';
@@ -25,10 +26,16 @@ import NetInfo from '@react-native-community/netinfo';
 import {getData} from '../utils/Storage';
 import {IMAGE_URL} from '../connection/Config';
 import ImagePicker from 'react-native-image-crop-picker';
-import {capitalizeFirstLetter, NOTIFY_MESSAGE} from '../constant/Module';
+import {
+  capitalizeFirstLetter,
+  formatPhoneToUS,
+  isPhoneField,
+  NOTIFY_MESSAGE,
+  unformatPhone,
+} from '../constant/Module';
 import COLORS from '../theme/Color';
 import Loader from '../components/root/Loader';
-import {useNavigation} from '@react-navigation/native';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import FONTS from '../theme/Fonts';
 import ButtonComponent from '../components/root/ButtonComponent';
@@ -42,9 +49,7 @@ import {Dropdown} from 'react-native-element-dropdown';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import CustomHeader from '../components/root/CustomHeader';
 import httpClient from '../connection/httpClient';
-import FastImage from 'react-native-fast-image';
 import {getFileType} from '../utils/fileType';
-import {Entypo} from '@react-native-vector-icons/entypo';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
 
@@ -52,6 +57,9 @@ const Registration1 = ({route}) => {
   const {item, isFromEventAdmin} = route.params.data;
 
   const {width} = useWindowDimensions();
+  const windowHeight = Dimensions.get('window').height;
+  const windowWidth = Dimensions.get('window').width;
+  const isFocused = useIsFocused();
 
   const styles = StyleSheet.create({
     dropdown: {
@@ -114,6 +122,10 @@ const Registration1 = ({route}) => {
       flexDirection: 'row',
       alignItems: 'center',
     },
+    modalTitle: {
+      fontSize: 18,
+      marginBottom: 20,
+    },
     button: {
       padding: 8,
       borderRadius: 5,
@@ -121,6 +133,9 @@ const Registration1 = ({route}) => {
       marginVertical: 6,
       width: '100%',
       alignItems: 'center',
+    },
+    buttonText: {
+      color: COLORS.PRIMARYWHITE,
     },
     image: {
       width: 100,
@@ -132,7 +147,7 @@ const Registration1 = ({route}) => {
       width: 60,
       height: 60,
       borderRadius: 30,
-      backgroundColor: '#4369c3',
+      backgroundColor: '#007bff',
       justifyContent: 'center',
       alignItems: 'center',
       margin: 10,
@@ -145,6 +160,23 @@ const Registration1 = ({route}) => {
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: heightPercentageToDP('2%'),
+    },
+    modalContainer1: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalClose: {
+      position: 'absolute',
+      top: 50,
+      right: 20,
+      zIndex: 1,
+    },
+    fullscreenImage: {
+      width: windowWidth * 0.9,
+      height: windowHeight * 0.7,
+      resizeMode: 'contain',
     },
   });
 
@@ -176,6 +208,7 @@ const Registration1 = ({route}) => {
 
   const [activeButton, setActiveButton] = useState(false);
   const [userData1, setUserData1] = useState(null);
+
   const [userValues, setUserValues] = useState([]);
   const [moduleDate1, setModuleData1] = useState(null);
 
@@ -183,9 +216,13 @@ const Registration1 = ({route}) => {
   const [isAddPerson, setIsAddPerson] = useState(false);
   const [currentLengths, setCurrentLengths] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
+  const [savePayLoading, setSavePayLoading] = useState(false);
   const [editedUserIndex, setEditedUserIndex] = useState(null);
   const originalMemberValues = useRef([]);
+  const isSelectingRef = useRef(false);
+  const isFetchingRef = useRef(false);
   const hasInitializedOriginal = useRef(false);
+  const [relationshipOptions, setRelationshipOptions] = useState([]);
 
   const {isConnected, networkLoading} = useNetworkStatus();
 
@@ -491,15 +528,33 @@ const Registration1 = ({route}) => {
   useEffect(() => {
     if (userValues?.length > 0 && moduleDate1.length > 0) {
       let selfMembershipAmount = null;
-      const selfUser = userValues.find(
-        user => user?.relationship?.value?.toLowerCase() === 'self',
+
+      const userWithMembership = userValues.find(
+        user =>
+          user?.membership?.value && user?.membership?.value.trim() !== '',
       );
-      if (selfUser) {
-        selfMembershipAmount = selfUser?.membershipamount?.value;
+
+      const userWithMembershipAmount = userValues.find(
+        user =>
+          user?.membershipamount?.value &&
+          user?.membershipamount?.value.trim() !== '',
+      );
+
+      if (userWithMembership) {
+        selfMembershipAmount = userWithMembership?.membershipamount?.value;
+      } else {
+        selfMembershipAmount =
+          userWithMembershipAmount?.membershipamount?.value;
       }
 
       const initializedData = moduleDate1.map(header => {
         if (header.isMultiple) {
+          const relationshipItem = header?.headerConfig?.find(
+            headerItem => headerItem?.name == 'relationship',
+          );
+
+          setRelationshipOptions(relationshipItem?.values || []);
+
           return {...header, headerConfig: userValues};
         }
 
@@ -508,7 +563,18 @@ const Registration1 = ({route}) => {
             let initialValue;
 
             if (item?.name === 'totalmembershipamount') {
-              initialValue = item?.value ? item?.value : selfMembershipAmount;
+              const hasMeaningfulValue =
+                item?.value &&
+                item.value !== null &&
+                item.value !== undefined &&
+                item.value.trim() !== '' &&
+                item.value !== '0' &&
+                item.value !== '0.00' &&
+                parseFloat(item.value) !== 0;
+
+              initialValue = hasMeaningfulValue
+                ? item?.value || 0
+                : selfMembershipAmount || 0;
             } else if (
               item.type === 'text' ||
               item.type === 'password' ||
@@ -516,7 +582,7 @@ const Registration1 = ({route}) => {
               item.type === 'number'
             ) {
               initialValue = item?.value;
-            } else if (item.type == 'radio-group') {
+            } else if (item.type === 'radio-group') {
               const selectedOption = item?.values?.find(
                 option => option.selected,
               );
@@ -594,6 +660,7 @@ const Registration1 = ({route}) => {
             const selectedOption = item?.values?.find(
               option => option.selected,
             );
+
             initialValue = selectedOption ? selectedOption.value : null;
           } else if (item.type === 'file') {
             initialValue = null;
@@ -651,12 +718,22 @@ const Registration1 = ({route}) => {
     }
   }, [moduleData, userData1, moduleDate1, userValues]);
 
+  const shouldRefreshAfterPayment = useRef(false);
+
   useEffect(() => {
-    if (userData1) {
-      getRegForm();
-      getMemberShipDetails();
+    if (userData1 && isFocused) {
+      if (shouldRefreshAfterPayment.current) {
+        getRegForm();
+        getMemberShipDetails();
+        shouldRefreshAfterPayment.current = false;
+      } else {
+        if (!moduleData || moduleData.length === 0) {
+          getRegForm();
+          getMemberShipDetails();
+        }
+      }
     }
-  }, [userData1]);
+  }, [userData1, isFocused]);
 
   const getMemberShipDetails = () => {
     NetInfo.fetch().then(state => {
@@ -766,7 +843,7 @@ const Registration1 = ({route}) => {
 
   const result = extractKeys(moduleData);
 
-  const submitHandller = async () => {
+  const submitHandller = async (navigateToPayment = false) => {
     const newErrors = {};
 
     formData.forEach(section => {
@@ -817,15 +894,24 @@ const Registration1 = ({route}) => {
 
     NetInfo.fetch().then(state => {
       if (state.isConnected) {
-        setSaveLoading(true);
+        navigateToPayment ? setSavePayLoading(true) : setSaveLoading(true);
         httpClient
           .post(`module/configuration/create?isMobile=true`, apiPayload)
           .then(response => {
-            setSaveLoading(false);
+            navigateToPayment
+              ? setSavePayLoading(false)
+              : setSaveLoading(false);
             if (response.data.status) {
               NOTIFY_MESSAGE(response?.data?.message);
               if (isFromEventAdmin) {
                 navigation.goBack();
+              } else if (navigateToPayment) {
+                shouldRefreshAfterPayment.current = true;
+                navigation.navigate('PaymentInfoScreen', {
+                  formData: formData,
+                  userData: userData1?.member?.configurationId,
+                  previousScreen: 'RegistrationScreen',
+                });
               } else {
                 navigation.navigate('Main');
               }
@@ -838,8 +924,15 @@ const Registration1 = ({route}) => {
             }
           })
           .catch(err => {
-            setSaveLoading(false);
+            navigateToPayment
+              ? setSavePayLoading(false)
+              : setSaveLoading(false);
             NOTIFY_MESSAGE(err ? 'something went wrong.' : null);
+          })
+          .finally(() => {
+            navigateToPayment
+              ? setSavePayLoading(false)
+              : setSaveLoading(false);
           });
       } else {
         NOTIFY_MESSAGE('Please check your internet connectivity');
@@ -1123,6 +1216,7 @@ const Registration1 = ({route}) => {
     label,
   ) => {
     const numericValue = value.replace(/[^0-9]/g, '');
+    const isPhone = isPhoneField(name);
 
     setFormData(prevData =>
       prevData.map(section => {
@@ -1133,10 +1227,11 @@ const Registration1 = ({route}) => {
                 ...item,
                 [key]: {
                   ...item[key],
-                  value: numericValue,
+                  value: numericValue, // ✅ Store unformatted
                 },
               })),
             );
+            return section; // ✅ Add this return
           } else {
             return {
               ...section,
@@ -1146,7 +1241,7 @@ const Registration1 = ({route}) => {
                   return {
                     [itemKey]: {
                       ...item[itemKey],
-                      value: numericValue,
+                      value: numericValue, // ✅ Store unformatted
                     },
                   };
                 }
@@ -1158,29 +1253,35 @@ const Registration1 = ({route}) => {
         return section;
       }),
     );
-    let isValid = true;
-    let errorMessage;
 
-    if (numericValue.trim() === '' && isRequired) {
+    // ✅ Fixed validation logic
+    let isValid = true;
+    let errorMessage = null;
+
+    if (!numericValue.trim() && isRequired) {
       isValid = false;
       errorMessage = `${label} is required.`;
-    } else if (numericValue === '0'.repeat(numericValue.length)) {
+    } else if (
+      numericValue &&
+      numericValue === '0'.repeat(numericValue.length)
+    ) {
       isValid = false;
       errorMessage = `${label} cannot be all zeros.`;
-    } else if (name === 'contact' || name === 'phoneNumber') {
-      if (numericValue.length !== length) {
+    } else if (isPhone) {
+      if (numericValue.length !== 10) {
         isValid = false;
-        errorMessage = `${label} must be ${length} digits.`;
+        errorMessage = `${label} must be 10 digits.`;
       }
-    } else if (name === 'age') {
-      if (numericValue?.length > length) {
+    } else {
+      // ✅ Apply length check to ALL non-phone fields (not just age)
+      if (numericValue.length > length) {
         isValid = false;
         errorMessage = `${label} must not exceed ${length} digits.`;
       }
     }
 
     if (moduleData[activeTab]?.headerKey === 'personalInfo') {
-      if (isRequired && errorMessage) {
+      if (!isValid && errorMessage) {
         setErrors1(prevErrors => ({
           ...prevErrors,
           [key]: errorMessage,
@@ -1191,7 +1292,7 @@ const Registration1 = ({route}) => {
         setErrors1(updatedErrors);
       }
     } else {
-      if (isRequired && errorMessage) {
+      if (!isValid && errorMessage) {
         setErrors(prevErrors => ({
           ...prevErrors,
           [key]: errorMessage,
@@ -1218,6 +1319,7 @@ const Registration1 = ({route}) => {
                 },
               })),
             );
+            return section; // ✅ Add this return
           } else {
             return {
               ...section,
@@ -1240,31 +1342,36 @@ const Registration1 = ({route}) => {
       }),
     );
 
-    let isValid = false;
-    let errorMessage;
+    // ✅ Fixed validation logic
+    let isValid = true;
+    let errorMessage = null;
 
     if (name === 'emailAddress' || name === 'email') {
-      if (
-        value &&
-        value.trim() !== '' &&
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-      ) {
-        isValid = true;
-      } else if (!value) {
-        errorMessage = `${label} is required.`;
+      const trimmedValue = value?.trim();
+      if (!trimmedValue) {
+        if (isRequired) {
+          errorMessage = `${label} is required.`;
+          isValid = false;
+        }
       } else {
-        errorMessage = `${label} must be valid.`;
+        // Email format check
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmedValue)) {
+          errorMessage = `${label} must be valid.`;
+          isValid = false;
+        }
       }
     } else {
-      if (value && value.trim() !== '') {
-        isValid = true;
-      } else if (!value && isRequired) {
+      // Non-email fields
+      const trimmedValue = value?.trim();
+      if (!trimmedValue && isRequired) {
         errorMessage = `${label} is required.`;
+        isValid = false;
       }
     }
 
     if (moduleData[activeTab]?.headerKey === 'personalInfo') {
-      if (isRequired && errorMessage) {
+      if (!isValid && errorMessage) {
         setErrors1(prevErrors => ({
           ...prevErrors,
           [key]: errorMessage,
@@ -1275,7 +1382,7 @@ const Registration1 = ({route}) => {
         setErrors1(updatedErrors);
       }
     } else {
-      if (isRequired && errorMessage) {
+      if (!isValid && errorMessage) {
         setErrors(prevErrors => ({
           ...prevErrors,
           [key]: errorMessage,
@@ -1370,6 +1477,7 @@ const Registration1 = ({route}) => {
                 },
               })),
             );
+            return section; // ✅ Add this line
           } else {
             return {
               ...section,
@@ -1425,36 +1533,53 @@ const Registration1 = ({route}) => {
   };
 
   const handleRadioSelect = (headerKey, key, value, isRequired, label) => {
-    setFormData(prevFormData =>
-      prevFormData.map(section => {
+    setFormData(prevData =>
+      prevData.map(section => {
         if (section.headerKey === headerKey) {
-          return {
-            ...section,
-            headerConfig: section?.headerConfig.map(item => {
-              const itemKey = Object.keys(item)[0];
-              if (itemKey === key) {
-                return {
-                  [itemKey]: {
-                    ...item[itemKey],
-                    value,
-                  },
-                };
-              }
-              return item;
-            }),
-          };
+          // ✅ Handle isMultiple case (like handleTextArea)
+          if (section.isMultiple) {
+            setuserData(prevUser =>
+              prevUser.map(item => ({
+                ...item,
+                [key]: {
+                  ...item[key],
+                  value,
+                },
+              })),
+            );
+            return section; // ✅ Return section unchanged for isMultiple
+          } else {
+            // Handle single form case
+            return {
+              ...section,
+              headerConfig: section?.headerConfig.map(item => {
+                const itemKey = Object.keys(item)[0];
+                if (itemKey === key) {
+                  return {
+                    [itemKey]: {
+                      ...item[itemKey],
+                      value,
+                    },
+                  };
+                }
+                return item;
+              }),
+            };
+          }
         }
         return section;
       }),
     );
 
-    let isValid = value !== undefined;
+    // Validation logic
+    let isValid = value !== undefined && value !== null && value !== '';
     let errorMessage;
 
     if (!isValid && isRequired) {
       errorMessage = `${label} is required.`;
     }
 
+    // Error handling
     if (moduleData[activeTab]?.headerKey === 'personalInfo') {
       if (isRequired && errorMessage) {
         setErrors1(prevErrors => ({
@@ -1483,39 +1608,11 @@ const Registration1 = ({route}) => {
   const handleFileChange = async (
     key,
     files,
-    label,
     isRequired,
+    label,
     isMultiple,
   ) => {
-    // const unsupportedFormats = ['heic', 'image/heic'];
-
-    // const fileArray = Array.isArray(files) ? files : [files];
-
     const validFiles = Array.isArray(files) ? files : [files];
-
-    // const validFiles = fileArray.filter(file => {
-    //   const fileExtension = file?.path?.split('.').pop()?.toLowerCase();
-    //   if (
-    //     unsupportedFormats.includes(fileExtension) ||
-    //     unsupportedFormats.includes(file?.mime?.toLowerCase())
-    //   ) {
-    //     if (moduleData[activeTab]?.headerKey === 'personalInfo') {
-    //       setErrors1(prevErrors => ({
-    //         ...prevErrors,
-    //         [key]: `${label} does not support HEIC files.`,
-    //       }));
-    //     } else {
-    //       setErrors(prevErrors => ({
-    //         ...prevErrors,
-    //         [key]: `${label} does not support HEIC files.`,
-    //       }));
-    //     }
-    //     Alert.alert('File not supported');
-    //     return false;
-    //   }
-    //   return true;
-    // });
-
     const isValidFiles = validFiles.length > 0;
 
     if (isRequired && !isValidFiles) {
@@ -1728,7 +1825,6 @@ const Registration1 = ({route}) => {
     setErrors1(newErrors);
     return isValid;
   };
-
   const addUser = () => {
     const isValid = validateUserData();
 
@@ -2041,21 +2137,44 @@ const Registration1 = ({route}) => {
   };
 
   const sortedTimes = formData[activeTab]?.headerConfig?.sort((a, b) => {
-    const aIsSelf = a?.relationship?.value?.toLowerCase() === 'self';
-    const bIsSelf = b?.relationship?.value?.toLowerCase() === 'self';
+    const aIsPrimary =
+      a?.membership?.value &&
+      a?.membership?.value !== null &&
+      a?.membership?.value !== undefined &&
+      a?.membership?.value !== '';
 
-    if (aIsSelf && !bIsSelf) return -1;
-    if (!aIsSelf && bIsSelf) return 1;
+    const bIsPrimary =
+      b?.membership?.value &&
+      b?.membership?.value !== null &&
+      b?.membership?.value !== undefined &&
+      b?.membership?.value !== '';
+
+    if (aIsPrimary && !bIsPrimary) return -1;
+    if (!aIsPrimary && bIsPrimary) return 1;
+
+    // If both are primary or both are family members, maintain order
     return 0;
   });
 
   const isFolded = width >= 600;
 
   const renderTime = ({item, index}) => {
-    const number = index >= 0 && index <= 9 ? `0${index + 1}` : `${index + 1}`;
+    const number = index + 1 < 10 ? `0${index + 1}` : `${index + 1}`;
+
     const handleToggle = index => {
       setOpenIndex(openIndex === index ? null : index);
     };
+
+    const hasIsApproved = item.hasOwnProperty('isApproved');
+
+    const isApprovedValue = item?.isApproved?.value;
+
+    const isApproved =
+      hasIsApproved &&
+      isApprovedValue &&
+      (isApprovedValue.toString()?.toLowerCase() === 'yes' ||
+        isApprovedValue.toString()?.toLowerCase() === 'true' ||
+        isApprovedValue === true);
 
     return (
       <View
@@ -2104,28 +2223,28 @@ const Registration1 = ({route}) => {
                 width: isFolded ? width / 1.2 : width / 1.3,
               }}>
               <Text
-                numberOfLines={1}
+                numberOfLines={2}
                 style={{
                   fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                   fontSize: FONTS.FONTSIZE.EXTRASMALL,
                   color: COLORS.PLACEHOLDERCOLOR,
-                  width: '60%',
+                  width: '55%',
                 }}>
                 {item.firstName?.value} {item.middleName?.value}{' '}
                 {item.lastName?.value}
               </Text>
-              {item.relationship?.value && (
+              {item?.relationship?.value && (
                 <Text
                   numberOfLines={1}
                   style={{
                     fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                     fontSize: FONTS.FONTSIZE.EXTRASMALL,
                     color: COLORS.PLACEHOLDERCOLOR,
-                    width: '40%',
+                    width: '45%',
                     textAlign: 'right',
                     paddingRight: 6,
                   }}>
-                  {item.relationship?.value}
+                  {item?.relationship?.value}
                 </Text>
               )}
             </View>
@@ -2162,22 +2281,14 @@ const Registration1 = ({route}) => {
                 ) {
                   return null;
                 }
+
                 if (fieldKey?.toLowerCase() === 'configurationid') {
                   return null;
                 }
 
-                // if (
-                //   (!fieldData?.label ||
-                //     fieldData?.value === null ||
-                //     fieldData?.value === undefined ||
-                //     fieldData?.value === '') &&
-                //   (item?.relationship?.value?.toLowerCase() === 'self' ||
-                //     item?.relationship?.value?.toLowerCase() ===
-                //       'single parent' ||
-                //     item?.relationship?.value?.toLowerCase() === 'additional')
-                // ) {
-                //   return null;
-                // }
+                if (fieldData?.type == 'hidden') {
+                  return null;
+                }
 
                 return (
                   <View style={{flexDirection: 'row'}} key={fieldKey}>
@@ -2185,17 +2296,16 @@ const Registration1 = ({route}) => {
                       {`${fieldData?.label} :`}{' '}
                     </Text>
                     <Text style={styles.pkgLbl1}>
-                      {fieldData?.value ? fieldData?.value : '-'}
+                      {isPhoneField(fieldData?.name) && fieldData?.value
+                        ? formatPhoneToUS(fieldData?.value)
+                        : fieldData?.value
+                        ? fieldData?.value
+                        : '-'}
                     </Text>
                   </View>
                 );
               })}
-              {item?.relationship && (
-                //   (item?.relationship?.value?.toLowerCase() === 'self' ||
-                //     item?.relationship?.value?.toLowerCase() ===
-                //       'single parent' ||
-                //     item?.relationship?.value?.toLowerCase() === 'additional')
-                // ) && (
+              {/* {item?.relationship && !isApproved && (
                 <View
                   style={{
                     flexDirection: 'row',
@@ -2212,12 +2322,10 @@ const Registration1 = ({route}) => {
                       size={22}
                     />
                   </TouchableOpacity>
-                  {!(
-                    item?.relationship?.value?.toLowerCase() === 'self' ||
-                    item?.relationship?.value?.toLowerCase() ===
-                      'single parent' ||
-                    item?.relationship?.value?.toLowerCase() === 'additional'
-                  ) && (
+                  {(!item?.membership?.value ||
+                    item?.membership?.value === null ||
+                    item?.membership?.value === undefined ||
+                    item?.membership?.value === '') && (
                     <TouchableOpacity
                       onPress={() =>
                         handleDelete(index, item?.configurationid?.value)
@@ -2230,6 +2338,47 @@ const Registration1 = ({route}) => {
                       />
                     </TouchableOpacity>
                   )}
+                </View>
+              )} */}
+              {item?.relationship && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignSelf: 'flex-end',
+                    gap: 20,
+                    marginRight: 4,
+                  }}>
+                  {!hasIsApproved || !isApproved ? (
+                    <>
+                      <TouchableOpacity
+                        onPress={() => handleEdit(index)}
+                        style={[styles.itemAction]}>
+                        <Feather
+                          name={'edit-2'}
+                          color={COLORS.PRIMARYBLACK}
+                          size={22}
+                        />
+                      </TouchableOpacity>
+
+                      {/* Show delete icon only if membership value is empty/null/undefined */}
+                      {(!item?.membership?.value ||
+                        item?.membership?.value === null ||
+                        item?.membership?.value === undefined ||
+                        item?.membership?.value === '') && (
+                        <TouchableOpacity
+                          onPress={() =>
+                            handleDelete(index, item?.configurationid?.value)
+                          }
+                          style={styles.itemAction}>
+                          <AntDesign
+                            name={'delete'}
+                            color={COLORS.PRIMARYBLACK}
+                            size={22}
+                          />
+                        </TouchableOpacity>
+                      )}
+                    </>
+                  ) : null}
                 </View>
               )}
             </View>
@@ -2283,6 +2432,50 @@ const Registration1 = ({route}) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const validateRelationships = () => {
+    // Get all family members from personalInfo tab
+    const personalInfoIndex = moduleData.findIndex(
+      tab => tab.headerKey === 'personalInfo',
+    );
+
+    if (personalInfoIndex === -1) {
+      return {isValid: true};
+    }
+
+    const familyMembers = formData[personalInfoIndex]?.headerConfig || [];
+
+    if (familyMembers.length === 0) {
+      return {isValid: true};
+    }
+
+    // Extract all relationships
+    const relationships = familyMembers
+      .map(member => member?.relationship?.value?.trim()?.toLowerCase())
+      .filter(Boolean);
+
+    // Check for conflicts
+    const hasFather = relationships.includes('father');
+    const hasMother = relationships.includes('mother');
+    const hasFatherInLaw = relationships.includes('father-in-law');
+    const hasMotherInLaw = relationships.includes('mother-in-law');
+
+    // Invalid combinations
+    if (
+      (hasFather && hasFatherInLaw) || // father + father-in-law
+      (hasMother && hasMotherInLaw) || // mother + mother-in-law
+      (hasFather && hasMotherInLaw) || // father + mother-in-law (cross)
+      (hasMother && hasFatherInLaw) // mother + father-in-law (cross)
+    ) {
+      return {
+        isValid: false,
+        message:
+          'You cannot include parents and in-laws together. Please choose either parents or in-laws, not both.',
+      };
+    }
+
+    return {isValid: true};
+  };
+
   const handlePrivious = () => {
     if (activeTab === 0) {
       Alert.alert('Info', 'You are already on the first tab.');
@@ -2301,20 +2494,11 @@ const Registration1 = ({route}) => {
   };
 
   const handleTabClick = index => {
-    // if (moduleData[activeTab]?.headerKey === 'personalInfo') {
-    //   const firstTabConfigLength = formData[activeTab]?.headerConfig?.length;
-
-    //   if (
-    //     firstTabConfigLength > 0 &&
-    //     firstTabConfigLength === 1 &&
-    //     userData1?.role == 'member'
-    //   ) {
     if (index < activeTab) {
       setActiveTab(index);
       return;
     }
 
-    // For forward navigation (jumping ahead)
     if (index > activeTab + 1) {
       // Check if all tabs between current and target are already filled
       let allPreviousTabsValid = true;
@@ -2328,6 +2512,13 @@ const Registration1 = ({route}) => {
           if (tabConfigLength === 0) {
             allPreviousTabsValid = false;
             break;
+          }
+
+          // Validate relationships
+          const relationshipValidation = validateRelationships();
+          if (!relationshipValidation.isValid) {
+            alert(relationshipValidation.message);
+            return;
           }
         }
 
@@ -2345,7 +2536,6 @@ const Registration1 = ({route}) => {
           'Please complete all previous tabs before jumping ahead.',
         );
         return;
-        // } else if (firstTabConfigLength == 0) {
       }
 
       // All previous tabs are valid, allow jump
@@ -2353,7 +2543,6 @@ const Registration1 = ({route}) => {
       return;
     }
 
-    // Validate current tab before moving to next tab (activeTab + 1)
     if (moduleData[activeTab]?.headerKey === 'personalInfo') {
       const firstTabConfigLength = formData[activeTab]?.headerConfig?.length;
 
@@ -2362,6 +2551,13 @@ const Registration1 = ({route}) => {
           'Info',
           'Please add at least one family member to register.',
         );
+      }
+
+      // Validate relationships before moving forward
+      const relationshipValidation = validateRelationships();
+      if (!relationshipValidation.isValid) {
+        alert(relationshipValidation.message);
+        return;
       }
 
       if (firstTabConfigLength > 0 && !validateCurrentTab()) {
@@ -2392,17 +2588,21 @@ const Registration1 = ({route}) => {
       return;
     }
 
-    // if (group?.headerConfig?.length === 1 && userData1?.role == 'member') {
-    //   Alert.alert('Info', 'Please add at least one family member to register.');
-    //   return;
-    // }
-
     const errors = validateFieldsInGroup(group, formData);
     setErrors(errors);
 
     if (Object.keys(errors).length > 0) {
       alert('Please correct the highlighted fields before proceeding.');
       return;
+    }
+
+    // Validate relationships if on personalInfo tab
+    if (moduleData[activeTab]?.headerKey === 'personalInfo') {
+      const relationshipValidation = validateRelationships();
+      if (!relationshipValidation.isValid) {
+        alert(relationshipValidation.message);
+        return;
+      }
     }
 
     if (activeTab < moduleData.length - 1) {
@@ -2439,6 +2639,15 @@ const Registration1 = ({route}) => {
     navigation.navigate('RegistrationPreview', {
       formData: formData,
       item: item,
+    });
+  };
+
+  const handlePay = () => {
+    shouldRefreshAfterPayment.current = true;
+    navigation.navigate('PaymentInfoScreen', {
+      formData: formData,
+      userData: userData1?.member?.configurationId,
+      previousScreen: 'RegistrationScreen',
     });
   };
 
@@ -2514,6 +2723,7 @@ const Registration1 = ({route}) => {
 
   const fetchData = useCallback(async searchQuery => {
     try {
+      isFetchingRef.current = true;
       const response = await httpClient.get(
         `module/configuration/dropdown/search?contentType=SIGN%20UP&keyword=${searchQuery}`,
       );
@@ -2525,16 +2735,26 @@ const Registration1 = ({route}) => {
             value: i.id,
           }));
 
-          setModuleData(prevFields =>
-            prevFields.map(field => {
+          const combinedValues = [
+            ...originalMemberValues.current,
+            ...checkboxValues,
+          ];
+          const uniqueValues = Array.from(
+            new Map(combinedValues.map(item => [item.value, item])).values(),
+          );
+
+          originalMemberValues.current = uniqueValues;
+
+          setModuleData(prevFields => {
+            const updated = prevFields.map(field => {
               if (field.headerKey === 'memberDetails') {
                 return {
                   ...field,
                   headerConfig: field.headerConfig.map(config => {
-                    if (config.type == 'select' && config.name === 'member') {
+                    if (config.type === 'select' && config.name === 'member') {
                       return {
                         ...config,
-                        values: checkboxValues,
+                        values: uniqueValues,
                       };
                     }
                     return config;
@@ -2542,8 +2762,10 @@ const Registration1 = ({route}) => {
                 };
               }
               return field;
-            }),
-          );
+            });
+
+            return updated;
+          });
         } else {
           setModuleData(prevFields =>
             prevFields.map(field => {
@@ -2551,7 +2773,7 @@ const Registration1 = ({route}) => {
                 return {
                   ...field,
                   headerConfig: field.headerConfig.map(config => {
-                    if (config.type == 'select' && config.name === 'member') {
+                    if (config.type === 'select' && config.name === 'member') {
                       return {
                         ...config,
                         values: originalMemberValues.current,
@@ -2566,27 +2788,32 @@ const Registration1 = ({route}) => {
           );
         }
       } else {
-        NOTIFY_MESSAGE(
-          response?.data?.message
-            ? response?.data?.message
-            : 'Something Went Wrong',
-        );
+        NOTIFY_MESSAGE(response?.data?.message || 'Something Went Wrong');
       }
     } catch (error) {
       console.error('Dropdown search API error:', error);
+    } finally {
+      isFetchingRef.current = false;
     }
   }, []);
 
   const handleSearchChange = async (text, name) => {
-    if (name == 'member' && text == '') {
+    if (isSelectingRef.current || isFetchingRef.current) {
+      return;
+    }
+
+    if (!text || text.trim() === '') {
       setModuleData(prevFields =>
         prevFields.map(field => {
           if (field.headerKey === 'memberDetails') {
             return {
               ...field,
               headerConfig: field.headerConfig.map(config => {
-                if (config.type == 'select' && config.name === 'member') {
-                  return {...config, values: originalMemberValues.current};
+                if (config.type === 'select' && config.name === 'member') {
+                  return {
+                    ...config,
+                    values: originalMemberValues.current,
+                  };
                 }
                 return config;
               }),
@@ -2597,34 +2824,7 @@ const Registration1 = ({route}) => {
       );
       return;
     }
-
-    const localMatches = originalMemberValues.current.filter(item =>
-      item.label.toLowerCase().includes(text.toLowerCase()),
-    );
-
-    if (localMatches.length > 0) {
-      setModuleData(prevFields =>
-        prevFields.map(field => {
-          if (field.headerKey == 'memberDetails') {
-            return {
-              ...field,
-              headerConfig: field.headerConfig.map(config => {
-                if (config.type == 'select' && config.name == 'member') {
-                  return {
-                    ...config,
-                    values: localMatches,
-                  };
-                }
-                return config;
-              }),
-            };
-          }
-          return field;
-        }),
-      );
-    } else {
-      fetchData(text);
-    }
+    await fetchData(text);
   };
 
   const [keyboardOpen, setKeyboardOpen] = useState(false);
@@ -2640,6 +2840,267 @@ const Registration1 = ({route}) => {
       hide.remove();
     };
   }, []);
+
+  const getFilteredRelationshipOptions = (currentItemIndex = null) => {
+    const personalInfoIndex = moduleData.findIndex(
+      tab => tab.headerKey === 'personalInfo',
+    );
+
+    if (personalInfoIndex === -1) {
+      return [];
+    }
+
+    const familyMembers = formData[personalInfoIndex]?.headerConfig || [];
+
+    // Get all selected relationships except the current item being edited
+    const selectedRelationships = familyMembers
+      .map((member, index) => {
+        // Skip the current item being edited
+        if (currentItemIndex !== null && index === currentItemIndex) {
+          return null;
+        }
+        return member?.relationship?.value?.trim()?.toLowerCase();
+      })
+      .filter(Boolean);
+
+    const hasFather = selectedRelationships.includes('father');
+    const hasMother = selectedRelationships.includes('mother');
+    const hasFatherInLaw = selectedRelationships.includes('father-in-law');
+    const hasMotherInLaw = selectedRelationships.includes('mother-in-law');
+    const hasHusband = selectedRelationships.includes('husband');
+    const hasWife = selectedRelationships.includes('wife');
+
+    // Determine which options to disable
+    const disabledOptions = [];
+
+    if (hasFather || hasMother) {
+      // If parent exists, disable in-laws
+      disabledOptions.push('father-in-law', 'mother-in-law');
+    }
+
+    if (hasFatherInLaw || hasMotherInLaw) {
+      // If in-law exists, disable parents
+      disabledOptions.push('father', 'mother');
+    }
+
+    // NEW: Disable unique relationships once selected
+    if (hasFather) {
+      disabledOptions.push('father');
+    }
+
+    if (hasMother) {
+      disabledOptions.push('mother');
+    }
+
+    if (hasFatherInLaw) {
+      disabledOptions.push('father-in-law');
+    }
+
+    if (hasMotherInLaw) {
+      disabledOptions.push('mother-in-law');
+    }
+
+    if (hasHusband) {
+      disabledOptions.push('husband');
+    }
+
+    if (hasWife) {
+      disabledOptions.push('wife');
+    }
+
+    // Remove duplicates from disabled options
+    return [...new Set(disabledOptions)];
+  };
+
+  // Add this function before your return statement
+  const checkConfigurationIds = () => {
+    const personalInfoSection = formData.find(
+      section => section.headerKey === 'personalInfo',
+    );
+
+    if (!personalInfoSection || !personalInfoSection.headerConfig) {
+      return true;
+    }
+
+    const hasInvalidConfig = personalInfoSection.headerConfig.some(member => {
+      const configId = member?.configurationid?.value;
+      return (
+        configId === 0 ||
+        configId === '0' ||
+        configId === null ||
+        configId === undefined ||
+        configId === ''
+      );
+    });
+
+    return hasInvalidConfig;
+  };
+
+  const getPaymentButtonState = () => {
+    const personalInfoSection = formData.find(
+      section => section.headerKey === 'personalInfo',
+    );
+    const paymentSection = formData.find(
+      section => section.headerKey === 'paymentInformation',
+    );
+
+    if (
+      !personalInfoSection ||
+      !personalInfoSection.headerConfig ||
+      !paymentSection
+    ) {
+      return {disabled: true, label: 'Pay Now', showMessage: false};
+    }
+
+    // ---- Check payment type ----
+    const paymentTypeItem = paymentSection.headerConfig.find(
+      item => item.paymentType,
+    );
+    const paymentTypeConfig = paymentTypeItem?.paymentType;
+    const availableValues = paymentTypeConfig?.values || [];
+
+    const isSupportedPayment = availableValues.some(
+      opt =>
+        opt?.value?.toLowerCase() === 'paypal' ||
+        opt?.value?.toLowerCase() === 'venmo',
+    );
+
+    if (!isSupportedPayment) {
+      return null;
+    }
+
+    // ---- Helper functions ----
+    const hasIsApprovedKey = member =>
+      !!member && Object.prototype.hasOwnProperty.call(member, 'isApproved');
+
+    const isMemberApproved = member => {
+      if (!hasIsApprovedKey(member)) return false;
+      const approvedValue = member?.isApproved?.value;
+      if (!approvedValue) return false;
+      const approvedStr = approvedValue.toString()?.toLowerCase().trim();
+      return (
+        approvedStr === 'yes' ||
+        approvedStr === 'true' ||
+        approvedValue === true
+      );
+    };
+
+    const isMemberPaid = member => {
+      const paidValue = member?.isPaid?.value;
+      if (
+        !paidValue ||
+        paidValue === '' ||
+        paidValue === null ||
+        paidValue === undefined
+      ) {
+        return false;
+      }
+      const paidStr = paidValue.toString()?.toLowerCase().trim();
+      return paidStr === 'yes' || paidStr === 'true';
+    };
+
+    // ---- Check if approval workflow exists ----
+    const noIsApprovedOnAnyMember = !personalInfoSection.headerConfig.some(
+      member => hasIsApprovedKey(member),
+    );
+
+    // ---- Scenario 1: NO isApproved key (no approval workflow) ----
+    if (noIsApprovedOnAnyMember) {
+      const hasNewMember = personalInfoSection.headerConfig.some(
+        member => parseInt(member?.configurationid?.value || '0', 10) === 0,
+      );
+
+      const unpaidTotalAmount = personalInfoSection.headerConfig.reduce(
+        (sum, member) => {
+          const amount = parseFloat(member?.membershipamount?.value || '0');
+          const paidValue = member?.isPaid?.value;
+          const isPaid =
+            paidValue && paidValue.toString()?.toLowerCase().trim() === 'yes';
+
+          // Only add if NOT paid
+          return !isPaid && amount > 0 ? sum + amount : sum;
+        },
+        0,
+      );
+
+      if (unpaidTotalAmount === 0) {
+        return null; // Hide button - nothing to pay
+      }
+
+      if (hasNewMember) {
+        // New member exists + amount > 0 → Save and Pay
+        return {
+          disabled: false,
+          label: 'Save and Pay',
+          showMessage: false,
+          requiresSave: true,
+        };
+      } else {
+        // Only existing members + amount > 0 → Pay Now
+        return {
+          disabled: false,
+          label: 'Pay Now',
+          showMessage: false,
+          requiresSave: false,
+        };
+      }
+    }
+
+    // ---- Scenario 2: isApproved key EXISTS (approval workflow active) ----
+    const hasNewMember = personalInfoSection.headerConfig.some(
+      member => parseInt(member?.configurationid?.value || '0', 10) === 0,
+    );
+
+    const hasApprovedUnpaid = personalInfoSection.headerConfig.some(
+      member => isMemberApproved(member) && !isMemberPaid(member),
+    );
+
+    const totalAmount = personalInfoSection.headerConfig.reduce(
+      (sum, member) => {
+        const amount = parseFloat(member?.membershipamount?.value || '0');
+        const approved = isMemberApproved(member);
+        const paid = isMemberPaid(member);
+        if (approved && !paid && amount > 0) return sum + amount;
+        return sum;
+      },
+      0,
+    );
+
+    // New member + approved unpaid existing members → Save and Pay
+    if (hasNewMember && hasApprovedUnpaid && totalAmount > 0) {
+      return {
+        disabled: false,
+        label: 'Save and Pay',
+        showMessage: false,
+        requiresSave: true,
+      };
+    }
+
+    if (totalAmount === 0) {
+      return null;
+    }
+
+    // Only approved unpaid existing members → Pay Now
+    const hasExistingApprovedUnpaid = personalInfoSection.headerConfig.some(
+      member => {
+        const configId = parseInt(member?.configurationid?.value || '0', 10);
+        return (
+          configId > 0 && isMemberApproved(member) && !isMemberPaid(member)
+        );
+      },
+    );
+
+    if (hasExistingApprovedUnpaid) {
+      return {
+        disabled: false,
+        label: 'Pay Now',
+        showMessage: false,
+        requiresSave: false,
+      };
+    }
+
+    return {disabled: true, label: 'Pay Now', showMessage: true};
+  };
 
   return (
     <KeyboardAvoidingView
@@ -2660,10 +3121,10 @@ const Registration1 = ({route}) => {
           }}
           leftIcon={
             <FontAwesome6
-              iconStyle="solid"
               name="angle-left"
               size={26}
               color={COLORS.LABELCOLOR}
+              iconStyle="solid"
             />
           }
           title={'Registration'}
@@ -2717,6 +3178,7 @@ const Registration1 = ({route}) => {
               <View style={{alignItems: 'flex-end', marginRight: 16}}>
                 {moduleData[activeTab]?.headerKey === 'personalInfo' &&
                   !isAddPerson &&
+                  relationshipOptions.length > 0 &&
                   formData[activeTab]?.headerConfig?.length !== 0 && (
                     <TouchableOpacity
                       onPress={() => {
@@ -2724,18 +3186,35 @@ const Registration1 = ({route}) => {
                         setIsAddPerson(!isAddPerson);
                       }}
                       style={{
-                        height: 40,
-                        width: 40,
+                        // height: 40,
+                        // width: 40,
                         borderRadius: 20,
                         backgroundColor: COLORS.LABELCOLOR,
                         justifyContent: 'center',
                         alignItems: 'center',
+                        padding: 6,
                       }}>
-                      <AntDesign
-                        name="plus"
-                        size={26}
-                        color={COLORS.PRIMARYWHITE}
-                      />
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}>
+                        <AntDesign
+                          name="plus"
+                          size={18}
+                          color={COLORS.PRIMARYWHITE}
+                        />
+                        <Text
+                          style={{
+                            color: COLORS.PRIMARYWHITE,
+                            includeFontPadding: false,
+                            fontSize: FONTS.FONTSIZE.SEMIMINI,
+                            fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                          }}>
+                          Add Member
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                   )}
               </View>
@@ -2772,7 +3251,12 @@ const Registration1 = ({route}) => {
                 <View
                   style={{
                     flex: 1,
-                    marginHorizontal: 14,
+                    marginHorizontal:
+                      (moduleData[activeTab]?.headerKey === 'personalInfo' &&
+                        isAddPerson) ||
+                      formData[activeTab]?.headerConfig?.length == 0
+                        ? 10
+                        : 0,
                     borderRadius: 10,
                     overflow: 'hidden',
                     padding: 10,
@@ -2808,20 +3292,38 @@ const Registration1 = ({route}) => {
                         ? item?.type
                         : 'text';
 
+                    const hasMembershipValue = userData[0]?.membership?.value;
+
+                    const hasIsApprovedKey = item.name == 'isApproved';
+
+                    const hasEmailField =
+                      moduleData[activeTab]?.headerKey === 'personalInfo' &&
+                      item?.name == 'emailAddress' &&
+                      moduleData[activeTab].isMultiple;
+
+                    const hasPhoneField =
+                      moduleData[activeTab]?.headerKey === 'personalInfo' &&
+                      item?.name == 'contact' &&
+                      moduleData[activeTab].isMultiple;
+
+                    const isEmailDisable = hasMembershipValue && hasEmailField;
+                    const isPhoneDisable = hasMembershipValue && hasPhoneField;
+
                     if (
                       moduleData[activeTab]?.headerKey === 'personalInfo' &&
                       item?.name == 'relationship' &&
                       moduleData[activeTab].isMultiple &&
-                      (userData[0]?.[item.key]?.value?.toLowerCase() ==
-                        'self' ||
-                        userData[0]?.[item.key]?.value?.toLowerCase() ==
-                          'additional' ||
-                        userData[0]?.[item.key]?.value?.toLowerCase() ==
-                          'single parent')
+                      hasMembershipValue
                     ) {
                       return null;
                     }
 
+                    if (hasIsApprovedKey) {
+                      return null;
+                    }
+                    if (item?.className == 'row Disabled') {
+                      return null;
+                    }
                     switch (itemType) {
                       case 'text':
                         if (shouldComponent || iEmptyUser) {
@@ -2944,21 +3446,15 @@ const Registration1 = ({route}) => {
                         break;
 
                       case 'radio-group':
-                        const selectedValue = formData
-                          .find(
-                            header => header.headerKey === 'paymentInformation',
-                          )
-                          ?.headerConfig.find(
-                            config => Object.keys(config)[0] === item.key,
-                          )?.[item.key]?.value;
-                        // if (
-                        //   item.className ===
-                        //     'form-control mobile-hide memberid' ||
-                        //   item.className === 'mobile-hide' ||
-                        //   item.className === 'form-control mobile-hide'
-                        // ) {
-                        //   return null;
-                        // }
+                        if (item.className === 'row hidden') {
+                          return null;
+                        }
+                        const selectedValue = moduleData[activeTab]?.isMultiple
+                          ? userData[0]?.[item.key]?.value || null
+                          : formData[activeTab]?.headerConfig?.find(
+                              field => field?.[item?.key],
+                            )?.[item?.key]?.value || null;
+
                         if (shouldComponent || iEmptyUser) {
                           return (
                             <View
@@ -3013,6 +3509,8 @@ const Registration1 = ({route}) => {
                                         formData[activeTab].headerKey,
                                         item?.key,
                                         radioItem.value,
+                                        item?.required,
+                                        item?.label,
                                       )
                                     }>
                                     {selectedValue === radioItem.value ? (
@@ -3068,15 +3566,34 @@ const Registration1 = ({route}) => {
                         break;
 
                       case 'select':
-                        // if (
-                        //   item.className ===
-                        //     'form-control mobile-hide memberid' ||
-                        //   item.className === 'mobile-hide' ||
-                        //   item.className === 'form-control mobile-hide'
-                        // ) {
-                        //   return null;
-                        // }
                         if (shouldComponent || iEmptyUser) {
+                          const disabledRelationships =
+                            moduleData[activeTab]?.headerKey ===
+                              'personalInfo' && item?.name === 'relationship'
+                              ? getFilteredRelationshipOptions(editedUserIndex)
+                              : [];
+
+                          // Filter out disabled relationships from dropdown data
+                          const filteredData =
+                            moduleData[activeTab]?.headerKey ===
+                              'personalInfo' &&
+                            item?.name === 'relationship' &&
+                            item?.values?.length > 0
+                              ? item.values.filter(
+                                  option =>
+                                    !disabledRelationships.includes(
+                                      option.value?.toLowerCase(),
+                                    ),
+                                )
+                              : item?.values?.length > 0
+                              ? item.values
+                              : [
+                                  {
+                                    label: 'No Data Available',
+                                    value: null,
+                                  },
+                                ];
+
                           return (
                             <View
                               key={item?.key}
@@ -3107,8 +3624,8 @@ const Registration1 = ({route}) => {
                               <Dropdown
                                 autoScroll={false}
                                 data={
-                                  item?.values?.length > 0
-                                    ? item.values
+                                  filteredData?.length > 0
+                                    ? filteredData
                                     : [
                                         {
                                           label: 'No Data Available',
@@ -3132,6 +3649,7 @@ const Registration1 = ({route}) => {
                                       )?.[item?.key]?.value || null
                                 }
                                 onChange={item1 => {
+                                  isSelectingRef.current = true;
                                   handleSelectDropdown(
                                     formData[activeTab].headerKey,
                                     item.key,
@@ -3141,6 +3659,12 @@ const Registration1 = ({route}) => {
                                     item?.required,
                                     item?.label,
                                   );
+                                  setTimeout(() => {
+                                    isSelectingRef.current = false;
+                                  }, 100);
+                                }}
+                                onChangeText={txt => {
+                                  handleSearchChange(txt, item?.name);
                                 }}
                                 itemTextStyle={{color: COLORS.PRIMARYBLACK}}
                                 placeholder={`Select ${capitalizeFirstLetter(
@@ -3194,14 +3718,10 @@ const Registration1 = ({route}) => {
                         break;
 
                       case 'file':
-                        const paymentInfo = formData.find(
-                          section => section.headerKey === 'paymentInformation',
-                        );
-                        const receiptField = paymentInfo?.headerConfig.find(
-                          field => field?.receipt,
-                        );
+                        const isDisabled = item.className
+                          ?.toLowerCase()
+                          ?.includes('form-control disabled');
 
-                        const receiptImagePath = receiptField?.receipt?.value;
                         if (shouldComponent) {
                           return (
                             <View
@@ -3219,7 +3739,7 @@ const Registration1 = ({route}) => {
                                     color: COLORS.TITLECOLOR,
                                   }}>
                                   {capitalizeFirstLetter(item?.label)}{' '}
-                                  {item?.required && (
+                                  {item?.required && !isDisabled && (
                                     <Text
                                       style={{
                                         color:
@@ -3234,90 +3754,61 @@ const Registration1 = ({route}) => {
                                 </Text>
                               </View>
 
-                              <View
-                                style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  gap: 4,
-                                }}>
-                                <ButtonComponent
-                                  disabled={uploadProgress[item?.key] > 0}
-                                  title={'Upload Image'}
-                                  width={'50%'}
-                                  onPress={() => {
-                                    setModalVisible(prev => ({
-                                      ...prev,
-                                      [item?.key]: true,
-                                    }));
-                                  }}
-                                />
-                              </View>
+                              {isDisabled ? (
+                                (() => {
+                                  let rawValue = moduleData[activeTab]
+                                    .isMultiple
+                                    ? userData[0]?.[item.key]?.value
+                                    : formData[activeTab]?.headerConfig?.find(
+                                        field => field?.[item?.key],
+                                      )?.[item?.key]?.value;
 
-                              {uploadProgress[item?.key] > 0 && (
-                                <View style={{marginTop: 10}}>
-                                  <Text
-                                    style={{
-                                      color: COLORS.TITLECOLOR,
-                                      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                                      fontSize: FONTS.FONTSIZE.MEDIUM,
-                                    }}>
-                                    Uploading: {uploadProgress[item?.key]}%
-                                  </Text>
-                                  <ProgressBar
-                                    progress={uploadProgress[item?.key]}
-                                  />
-                                </View>
-                              )}
-
-                              {(moduleData[activeTab].isMultiple
-                                ? userData[0]?.[item.key]?.value || null
-                                : formData[activeTab]?.headerConfig?.find(
-                                    field => field?.[item?.key],
-                                  )?.[item?.key]?.value ||
-                                  null ||
-                                  receiptImagePath) && (
-                                <View
-                                  style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    paddingHorizontal: 8,
-                                  }}>
-                                  <ScrollView
-                                    horizontal
-                                    showsHorizontalScrollIndicator={false}>
-                                    {(() => {
-                                      let rawValue = moduleData[activeTab]
-                                        .isMultiple
-                                        ? userData[0]?.[item.key]?.value || null
-                                        : formData[
-                                            activeTab
-                                          ]?.headerConfig?.find(
-                                            field => field?.[item?.key],
-                                          )?.[item?.key]?.value ||
-                                          null ||
-                                          receiptImagePath;
-
-                                      let mediaUris = [];
-
-                                      try {
-                                        const parsedValue =
-                                          JSON.parse(rawValue);
-                                        mediaUris = Array.isArray(parsedValue)
-                                          ? parsedValue
-                                          : [parsedValue];
-                                      } catch (error) {
-                                        mediaUris = rawValue ? [rawValue] : [];
+                                  let mediaUris = [];
+                                  if (rawValue) {
+                                    try {
+                                      const parsedValue = JSON.parse(rawValue);
+                                      const rawArray = Array.isArray(
+                                        parsedValue,
+                                      )
+                                        ? parsedValue
+                                        : [parsedValue];
+                                      mediaUris = rawArray.filter(
+                                        uri =>
+                                          uri &&
+                                          typeof uri === 'string' &&
+                                          uri.trim() !== '',
+                                      );
+                                    } catch (error) {
+                                      if (
+                                        typeof rawValue === 'string' &&
+                                        rawValue.trim() !== ''
+                                      ) {
+                                        mediaUris = [rawValue];
                                       }
+                                    }
+                                  }
 
-                                      return mediaUris.map((uri, index) => {
-                                        const fullUri = uri
-                                          ? `${IMAGE_URL}${uri}`
-                                          : null;
+                                  if (mediaUris.length === 0) {
+                                    return (
+                                      <Text
+                                        style={{
+                                          fontSize: FONTS.FONTSIZE.SEMIMINI,
+                                          fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                                          color: COLORS.PLACEHOLDERCOLOR,
+                                        }}>
+                                        No files to display
+                                      </Text>
+                                    );
+                                  }
+
+                                  return (
+                                    <View style={{gap: 4}}>
+                                      {mediaUris.map((uri, index) => {
                                         const fileType = getFileType(uri);
-
                                         return (
-                                          <View key={index} style={{margin: 5}}>
+                                          <View
+                                            key={`${item.key}-${uri}-${index}`}
+                                            style={{margin: 5}}>
                                             {fileType === 'image' ? (
                                               <TouchableOpacity
                                                 onPress={() => {
@@ -3328,47 +3819,182 @@ const Registration1 = ({route}) => {
                                                     },
                                                   );
                                                 }}>
-                                                <FastImage
+                                                <Text
+                                                  style={{
+                                                    fontSize:
+                                                      FONTS.FONTSIZE.SEMIMINI,
+                                                    fontFamily:
+                                                      FONTS.FONT_FAMILY.MEDIUM,
+                                                    color:
+                                                      COLORS.PLACEHOLDERCOLOR,
+                                                    textDecorationLine:
+                                                      'underline',
+                                                  }}>
+                                                  {index + 1}. {uri}
+                                                </Text>
+                                              </TouchableOpacity>
+                                            ) : (
+                                              <Text
+                                                style={{
+                                                  fontSize:
+                                                    FONTS.FONTSIZE.SEMIMINI,
+                                                  fontFamily:
+                                                    FONTS.FONT_FAMILY.MEDIUM,
+                                                  color:
+                                                    COLORS.PLACEHOLDERCOLOR,
+                                                }}>
+                                                {index + 1}. {uri}
+                                              </Text>
+                                            )}
+                                          </View>
+                                        );
+                                      })}
+                                    </View>
+                                  );
+                                })()
+                              ) : (
+                                <>
+                                  <ButtonComponent
+                                    disabled={uploadProgress[item?.key] > 0}
+                                    title={'Upload Image'}
+                                    width={'50%'}
+                                    onPress={() => {
+                                      setModalVisible(prev => ({
+                                        ...prev,
+                                        [item?.key]: true,
+                                      }));
+                                    }}
+                                  />
+
+                                  {(() => {
+                                    let rawValue = moduleData[activeTab]
+                                      .isMultiple
+                                      ? userData[0]?.[item.key]?.value
+                                      : formData[activeTab]?.headerConfig?.find(
+                                          field => field?.[item?.key],
+                                        )?.[item?.key]?.value;
+
+                                    let mediaUris = [];
+                                    if (rawValue) {
+                                      try {
+                                        const parsedValue =
+                                          JSON.parse(rawValue);
+                                        const rawArray = Array.isArray(
+                                          parsedValue,
+                                        )
+                                          ? parsedValue
+                                          : [parsedValue];
+                                        mediaUris = rawArray.filter(
+                                          uri =>
+                                            uri &&
+                                            typeof uri === 'string' &&
+                                            uri.trim() !== '',
+                                        );
+                                      } catch (error) {
+                                        if (
+                                          typeof rawValue === 'string' &&
+                                          rawValue.trim() !== ''
+                                        ) {
+                                          mediaUris = [rawValue];
+                                        }
+                                      }
+                                    }
+
+                                    if (mediaUris.length > 0) {
+                                      return (
+                                        <View
+                                          style={{
+                                            marginTop: 12,
+                                          }}>
+                                          <ScrollView
+                                            horizontal
+                                            showsHorizontalScrollIndicator={
+                                              false
+                                            }
+                                            contentContainerStyle={{
+                                              gap: 12,
+                                              paddingHorizontal: 8,
+                                            }}>
+                                            {mediaUris.map((uri, index) => (
+                                              <View
+                                                key={`${item.key}-${uri}-${index}`}
+                                                style={{
+                                                  width: 100,
+                                                  height: 100,
+                                                  borderRadius: 8,
+                                                  overflow: 'hidden',
+                                                  position: 'relative',
+                                                }}>
+                                                <Image
                                                   source={{
-                                                    uri: fullUri,
-                                                    cache:
-                                                      FastImage.cacheControl
-                                                        .immutable,
-                                                    priority:
-                                                      FastImage.priority.normal,
+                                                    uri: uri
+                                                      ? IMAGE_URL + uri
+                                                      : null,
                                                   }}
-                                                  style={styles.image}
+                                                  style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    resizeMode: 'cover',
+                                                  }}
                                                 />
                                                 <TouchableOpacity
-                                                  style={{
-                                                    position: 'absolute',
-                                                    top: 0,
-                                                    right: -4,
-                                                    backgroundColor: 'white',
-                                                    borderRadius: 15,
-                                                  }}
-                                                  onPress={() =>
+                                                  onPress={() => {
                                                     handleDeleteImage(
                                                       item?.key,
                                                       uri,
                                                       formData[activeTab]
                                                         .headerKey,
-                                                    )
-                                                  }>
-                                                  <Entypo
-                                                    name="circle-with-minus"
-                                                    size={26}
-                                                    color={COLORS.PRIMARYRED}
-                                                  />
+                                                    );
+                                                  }}
+                                                  style={{
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    right: 0,
+                                                    width: 24,
+                                                    height: 24,
+                                                    borderRadius: 12,
+                                                    backgroundColor:
+                                                      'rgba(255,0,0,0.8)',
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                    zIndex: 10,
+                                                  }}>
+                                                  <Text
+                                                    style={{
+                                                      color: 'white',
+                                                      fontSize: 18,
+                                                      fontWeight: 'bold',
+                                                      textAlign: 'center',
+                                                      lineHeight: 20,
+                                                    }}>
+                                                    ×
+                                                  </Text>
                                                 </TouchableOpacity>
-                                              </TouchableOpacity>
-                                            ) : null}
-                                          </View>
-                                        );
-                                      });
-                                    })()}
-                                  </ScrollView>
-                                </View>
+                                              </View>
+                                            ))}
+                                          </ScrollView>
+                                        </View>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
+
+                                  {uploadProgress[item?.key] > 0 && (
+                                    <View style={{marginTop: 10}}>
+                                      <Text
+                                        style={{
+                                          color: COLORS.TITLECOLOR,
+                                          fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                                          fontSize: FONTS.FONTSIZE.MEDIUM,
+                                        }}>
+                                        Uploading: {uploadProgress[item?.key]}%
+                                      </Text>
+                                      <ProgressBar
+                                        progress={uploadProgress[item?.key]}
+                                      />
+                                    </View>
+                                  )}
+                                </>
                               )}
 
                               {modalVisible[item?.key] && (
@@ -3392,28 +4018,19 @@ const Registration1 = ({route}) => {
                                   item={item}
                                 />
                               )}
-                              {errors[item?.key] && (
-                                <Text
-                                  style={{
-                                    color: COLORS.PRIMARYRED,
-                                    fontSize: FONTS.FONTSIZE.SMALL,
-                                    fontFamily: FONTS.FONT_FAMILY.REGULAR,
-                                    marginTop: 4,
-                                  }}>
-                                  {errors[item?.key]}
-                                </Text>
-                              )}
-                              {errors1[item?.key] && (
-                                <Text
-                                  style={{
-                                    color: COLORS.PRIMARYRED,
-                                    fontSize: FONTS.FONTSIZE.SMALL,
-                                    fontFamily: FONTS.FONT_FAMILY.REGULAR,
-                                    marginTop: 4,
-                                  }}>
-                                  {errors1[item?.key]}
-                                </Text>
-                              )}
+
+                              {(errors[item?.key] || errors1[item?.key]) &&
+                                !isDisabled && (
+                                  <Text
+                                    style={{
+                                      color: COLORS.PRIMARYRED,
+                                      fontSize: FONTS.FONTSIZE.SMALL,
+                                      fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                                      marginTop: 4,
+                                    }}>
+                                    {errors[item?.key] || errors1[item?.key]}
+                                  </Text>
+                                )}
                             </View>
                           );
                         }
@@ -3973,29 +4590,279 @@ const Registration1 = ({route}) => {
 
                       case 'number':
                         if (shouldComponent || iEmptyUser) {
-                          return item?.name == 'membershipamount' ||
-                            item?.name == 'totalmembershipamount' ? (
-                            <View
-                              key={item?.key}
-                              style={{marginBottom: 8, gap: 4}}>
-                              <Text
-                                style={{
-                                  fontSize: FONTS.FONTSIZE.MEDIUM,
-                                  fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-                                  color: COLORS.LABELCOLOR,
-                                }}>
-                                {item?.name == 'membershipamount'
-                                  ? 'Membership Amount'
-                                  : 'Total Membership Amount'}
-                                : $
-                                {moduleData[activeTab].isMultiple
-                                  ? userData[0]?.[item.key]?.value || 0
-                                  : formData[activeTab]?.headerConfig?.find(
-                                      field => field?.[item?.key],
-                                    )?.[item?.key]?.value || 0}
-                              </Text>
-                            </View>
-                          ) : (
+                          const currentValue = moduleData[activeTab].isMultiple
+                            ? userData[0]?.[item.key]?.value || ''
+                            : formData[activeTab]?.headerConfig?.find(
+                                field => field?.[item?.key],
+                              )?.[item?.key]?.value || '';
+
+                          // Check if this is for membership amounts in a multiple entry section
+                          if (item?.name == 'membershipamount') {
+                            return (
+                              <View
+                                key={item?.key}
+                                style={{marginBottom: 8, gap: 4}}>
+                                <Text
+                                  style={{
+                                    fontSize: FONTS.FONTSIZE.MEDIUM,
+                                    fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                                    color: COLORS.LABELCOLOR,
+                                  }}>
+                                  {item?.name == 'membershipamount'
+                                    ? 'Membership Amount'
+                                    : 'Total Membership Amount'}
+                                  : $
+                                  {moduleData[activeTab].isMultiple
+                                    ? userData[0]?.[item.key]?.value || 0
+                                    : formData[activeTab]?.headerConfig?.find(
+                                        field => field?.[item?.key],
+                                      )?.[item?.key]?.value || 0}
+                                </Text>
+                              </View>
+                            );
+                          }
+
+                          if (item?.name == 'totalmembershipamount') {
+                            const personalInfoSection = formData.find(
+                              section =>
+                                section.headerKey === 'personalInfo' &&
+                                section.isMultiple === true,
+                            );
+
+                            const allFamilyMembers =
+                              personalInfoSection?.headerConfig || [];
+
+                            const hasIsApprovedKey = allFamilyMembers.some(
+                              member => member?.hasOwnProperty('isApproved'),
+                            );
+
+                            const familyMembers = hasIsApprovedKey
+                              ? allFamilyMembers.filter(member => {
+                                  // Check if isApproved exists and is 'yes'
+                                  const hasIsApproved =
+                                    member?.isApproved?.value !== undefined;
+                                  if (hasIsApproved) {
+                                    const isApproved =
+                                      member?.isApproved?.value?.toLowerCase() ===
+                                      'yes';
+                                    const isNotPaid =
+                                      member?.isPaid?.value?.toLowerCase() !==
+                                      'yes';
+                                    return isApproved && isNotPaid;
+                                  }
+                                  // If isApproved doesn't exist, just check isNotPaid
+                                  return (
+                                    member?.isPaid?.value?.toLowerCase() !==
+                                    'yes'
+                                  );
+                                })
+                              : allFamilyMembers.filter(member => {
+                                  // When no isApproved keys exist, filter only unpaid members
+                                  return (
+                                    member?.isPaid?.value?.toLowerCase() !==
+                                    'yes'
+                                  );
+                                });
+
+                            // ✅ Calculate total only for approved members
+                            const totalAmount = familyMembers.reduce(
+                              (sum, member) => {
+                                const amount = parseFloat(
+                                  member?.membershipamount?.value || 0,
+                                );
+                                return sum + amount;
+                              },
+                              0,
+                            );
+
+                            return (
+                              <View key={item?.key} style={{marginBottom: 16}}>
+                                <View
+                                  style={{
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    paddingBottom: 5,
+                                  }}>
+                                  <Text
+                                    style={{
+                                      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                      fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                                      color: COLORS.LABELCOLOR,
+                                    }}>
+                                    Total Membership Amount
+                                  </Text>
+                                  <Text
+                                    style={{
+                                      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                      fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                                      color: COLORS.LABELCOLOR,
+                                    }}>
+                                    $
+                                    {moduleData[activeTab].isMultiple
+                                      ? userData[0]?.[item.key]?.value || 0
+                                      : formData[activeTab]?.headerConfig?.find(
+                                          field => field?.[item?.key],
+                                        )?.[item?.key]?.value || 0}
+                                  </Text>
+                                </View>
+                                <View
+                                  style={{
+                                    backgroundColor: COLORS.PRIMARYWHITE,
+                                    borderRadius: 8,
+                                    padding: 8,
+                                    borderWidth: 1,
+                                    borderColor: COLORS.TABLEBORDER,
+                                  }}>
+                                  {/* ✅ Show message if no approved members */}
+                                  {familyMembers.length > 0 && (
+                                    <>
+                                      <View
+                                        style={{
+                                          flexDirection: 'row',
+                                          alignItems: 'center',
+                                          gap: 8,
+                                        }}>
+                                        <View
+                                          style={{
+                                            width: 32,
+                                            height: 32,
+                                            borderRadius: 16,
+                                            backgroundColor: '#E8F4FD',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                          }}>
+                                          <Ionicons
+                                            name="people-outline"
+                                            size={20}
+                                            color="#007AFF"
+                                          />
+                                        </View>
+                                        <Text
+                                          style={{
+                                            fontSize: FONTS.FONTSIZE.SMALL,
+                                            fontFamily:
+                                              FONTS.FONT_FAMILY.SEMI_BOLD,
+                                            color: COLORS.PRIMARYBLACK,
+                                          }}>
+                                          Family Members
+                                        </Text>
+                                      </View>
+
+                                      <>
+                                        {familyMembers.map((member, index) => {
+                                          const firstName =
+                                            member?.firstName?.value || '';
+                                          const lastName =
+                                            member?.lastName?.value || '';
+                                          const relationship =
+                                            member?.relationship?.value || '';
+                                          const amount =
+                                            member?.membershipamount?.value ||
+                                            '0';
+
+                                          return (
+                                            <View key={index}>
+                                              <View
+                                                style={{
+                                                  flexDirection: 'row',
+                                                  justifyContent:
+                                                    'space-between',
+                                                  alignItems: 'center',
+                                                  paddingVertical: 6,
+                                                }}>
+                                                <View style={{flex: 1}}>
+                                                  <Text
+                                                    style={{
+                                                      fontSize:
+                                                        FONTS.FONTSIZE.SEMIMINI,
+                                                      fontFamily:
+                                                        FONTS.FONT_FAMILY
+                                                          .MEDIUM,
+                                                      color:
+                                                        COLORS.PRIMARYBLACK,
+                                                    }}>
+                                                    {firstName} {lastName}
+                                                  </Text>
+                                                  <Text
+                                                    style={{
+                                                      fontSize:
+                                                        FONTS.FONTSIZE.MINI,
+                                                      fontFamily:
+                                                        FONTS.FONT_FAMILY
+                                                          .REGULAR,
+                                                      color: COLORS.TITLECOLOR,
+                                                    }}>
+                                                    {relationship}
+                                                  </Text>
+                                                </View>
+                                                <Text
+                                                  style={{
+                                                    fontSize:
+                                                      FONTS.FONTSIZE.SEMIMINI,
+                                                    fontFamily:
+                                                      FONTS.FONT_FAMILY.MEDIUM,
+                                                    color: COLORS.LABELCOLOR,
+                                                  }}>
+                                                  $
+                                                  {parseFloat(amount).toFixed(
+                                                    0,
+                                                  )}
+                                                </Text>
+                                              </View>
+                                              {index <
+                                                familyMembers.length - 1 && (
+                                                <View
+                                                  style={{
+                                                    height: 0.5,
+                                                    backgroundColor:
+                                                      COLORS.TABLEBORDER,
+                                                  }}
+                                                />
+                                              )}
+                                            </View>
+                                          );
+                                        })}
+
+                                        <View
+                                          style={{
+                                            height: 0.5,
+                                            backgroundColor: COLORS.TABLEBORDER,
+                                          }}
+                                        />
+                                      </>
+                                    </>
+                                  )}
+                                  <View
+                                    style={{
+                                      flexDirection: 'row',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      paddingTop: 6,
+                                    }}>
+                                    <Text
+                                      style={{
+                                        fontSize: FONTS.FONTSIZE.SEMIMINI,
+                                        fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                                        color: COLORS.PRIMARYBLACK,
+                                      }}>
+                                      Total Payable Amount
+                                    </Text>
+                                    <Text
+                                      style={{
+                                        fontSize: FONTS.FONTSIZE.SMALL,
+                                        fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                                        color: COLORS.LABELCOLOR,
+                                      }}>
+                                      ${totalAmount.toFixed(0)}
+                                    </Text>
+                                  </View>
+                                </View>
+                              </View>
+                            );
+                          }
+
+                          return (
                             <View
                               key={item?.key}
                               style={{marginBottom: 8, gap: 4}}>
@@ -4041,26 +4908,31 @@ const Registration1 = ({route}) => {
                                 }}
                                 placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                                 maxLength={
-                                  item?.maxLength == 0 ? 250 : item?.maxLength
+                                  isPhoneField(item?.name)
+                                    ? 14
+                                    : item?.maxLength == 0
+                                    ? 250
+                                    : item?.maxLength
                                 }
                                 keyboardType="number-pad"
                                 placeholder={`${item.label}`}
                                 value={
-                                  moduleData[activeTab].isMultiple
-                                    ? userData[0]?.[item.key]?.value || null
-                                    : formData[activeTab]?.headerConfig?.find(
-                                        field => field?.[item?.key],
-                                      )?.[item?.key]?.value || null
+                                  isPhoneField(item?.name)
+                                    ? formatPhoneToUS(currentValue)
+                                    : currentValue
                                 }
                                 onChangeText={value => {
+                                  const numericValue = isPhoneField(item?.name)
+                                    ? unformatPhone(value)
+                                    : value;
                                   setCurrentLengths(prev => ({
                                     ...prev,
-                                    [item?.key]: value.length,
+                                    [item?.key]: numericValue?.length,
                                   }));
                                   handleNumberChange(
                                     formData[activeTab].headerKey,
                                     item.key,
-                                    value,
+                                    numericValue,
                                     item?.name,
                                     item?.maxLength,
                                     item?.required,
@@ -4094,9 +4966,13 @@ const Registration1 = ({route}) => {
                           );
                         }
                         break;
-
                       case 'tel':
                         if (shouldComponent || iEmptyUser) {
+                          const currentValue = moduleData[activeTab].isMultiple
+                            ? userData[0]?.[item.key]?.value || ''
+                            : formData[activeTab]?.headerConfig?.find(
+                                field => field?.[item?.key],
+                              )?.[item?.key]?.value || '';
                           return (
                             <View
                               key={item?.key}
@@ -4121,6 +4997,7 @@ const Registration1 = ({route}) => {
                                 )}
                               </Text>
                               <TextInput
+                                editable={!isPhoneDisable}
                                 style={{
                                   borderColor:
                                     errors[item?.key] || errors1[item?.key]
@@ -4134,30 +5011,37 @@ const Registration1 = ({route}) => {
                                   paddingVertical: 0,
                                   borderRadius: 10,
                                   paddingHorizontal: 8,
-                                  backgroundColor: COLORS.PRIMARYWHITE,
+                                  backgroundColor: isPhoneDisable
+                                    ? COLORS.TABLEROWCOLOR
+                                    : COLORS.PRIMARYWHITE,
                                 }}
                                 placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                                 maxLength={
-                                  item?.maxLength == 0 ? 250 : item?.maxLength
+                                  isPhoneField(item?.name)
+                                    ? 14
+                                    : item?.maxLength == 0
+                                    ? 250
+                                    : item?.maxLength
                                 }
                                 keyboardType="number-pad"
                                 placeholder={`${item.label}`}
                                 value={
-                                  moduleData[activeTab].isMultiple
-                                    ? userData[0]?.[item.key]?.value || null
-                                    : formData[activeTab]?.headerConfig?.find(
-                                        field => field?.[item?.key],
-                                      )?.[item?.key]?.value || null
+                                  isPhoneField(item?.name)
+                                    ? formatPhoneToUS(currentValue)
+                                    : currentValue
                                 }
                                 onChangeText={value => {
+                                  const numericValue = isPhoneField(item?.name)
+                                    ? unformatPhone(value)
+                                    : value;
                                   setCurrentLengths(prev => ({
                                     ...prev,
-                                    [item?.key]: value.length,
+                                    [item?.key]: numericValue?.length,
                                   }));
                                   handleNumberChange(
                                     formData[activeTab].headerKey,
                                     item.key,
-                                    value,
+                                    numericValue,
                                     item?.name,
                                     item?.maxLength,
                                     item?.required,
@@ -4226,6 +5110,7 @@ const Registration1 = ({route}) => {
                                 ) : null}
                               </View>
                               <TextInput
+                                editable={!isEmailDisable}
                                 style={{
                                   borderWidth: 1,
                                   height: 38,
@@ -4240,7 +5125,9 @@ const Registration1 = ({route}) => {
                                   fontSize: FONTS.FONTSIZE.MINI,
                                   fontFamily: FONTS.FONT_FAMILY.REGULAR,
                                   color: COLORS.PRIMARYBLACK,
-                                  backgroundColor: COLORS.PRIMARYWHITE,
+                                  backgroundColor: isEmailDisable
+                                    ? COLORS.TABLEROWCOLOR
+                                    : COLORS.PRIMARYWHITE,
                                 }}
                                 value={
                                   moduleData[activeTab].isMultiple
@@ -4376,11 +5263,65 @@ const Registration1 = ({route}) => {
                     </View>
                   ) : null}
                 </View>
-                <View
-                  style={{
-                    alignItems: 'center',
-                    marginHorizontal: 20,
-                  }}>
+                {activeTab === moduleData.length - 1 && (
+                  <View style={{alignItems: 'center', marginHorizontal: 10}}>
+                    {(() => {
+                      const buttonState = getPaymentButtonState();
+
+                      if (!buttonState) {
+                        return null;
+                      }
+                      return (
+                        <>
+                          <TouchableOpacity
+                            activeOpacity={0.35}
+                            onPress={() => {
+                              if (buttonState.requiresSave) {
+                                submitHandller(true);
+                              } else {
+                                handlePay();
+                              }
+                            }}
+                            disabled={buttonState.disabled || savePayLoading}
+                            style={{
+                              backgroundColor: buttonState.disabled
+                                ? COLORS.INPUTBORDER
+                                : COLORS.TITLECOLOR,
+                              paddingVertical: 8,
+                              borderRadius: 10,
+                              width: '96%',
+                              alignItems: 'center',
+                              opacity: buttonState.disabled ? 0.5 : 1,
+                            }}>
+                            <Text
+                              style={{
+                                fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                                textAlign: 'center',
+                                color: COLORS.PRIMARYWHITE,
+                              }}>
+                              {savePayLoading ? 'Saving...' : buttonState.label}
+                            </Text>
+                          </TouchableOpacity>
+
+                          {/* Show message when button is disabled */}
+                          {buttonState.showMessage && (
+                            <Text
+                              style={{
+                                fontSize: FONTS.FONTSIZE.SEMIMINI,
+                                fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                                color: COLORS.PLACEHOLDERCOLOR,
+                              }}>
+                              After Approval you will be able to pay.
+                            </Text>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </View>
+                )}
+
+                <View style={{alignItems: 'center', marginHorizontal: 10}}>
                   {moduleData[activeTab]?.headerKey === 'personalInfo' &&
                   isAddPerson ? null : (
                     <>
@@ -4390,31 +5331,31 @@ const Registration1 = ({route}) => {
                         <View
                           style={{
                             flexDirection: 'row',
-                            gap: 20,
+                            gap: 10,
                             alignItems: 'center',
                           }}>
                           <ButtonComponent
                             title="Previous"
                             onPress={handlePrivious}
-                            width={'45%'}
+                            width={'47%'}
                           />
                           <ButtonComponent
                             title="Next"
                             onPress={handleNext}
-                            width={'45%'}
+                            width={'47%'}
                           />
                         </View>
                       ) : activeTab === moduleData.length - 1 ? (
                         <View
                           style={{
                             flexDirection: 'row',
-                            gap: 20,
+                            gap: 10,
                             alignItems: 'center',
                           }}>
                           <ButtonComponent
                             title="Preview"
                             onPress={handlePriview}
-                            width={'45%'}
+                            width={'47%'}
                             backgroundColor={'transparent'}
                             textColor={COLORS.LABELCOLOR}
                           />
@@ -4422,8 +5363,8 @@ const Registration1 = ({route}) => {
                             title={
                               saveLoading ? 'Saving...' : 'Save Registration'
                             }
-                            onPress={submitHandller}
-                            width={'45%'}
+                            onPress={() => submitHandller(false)}
+                            width={'47%'}
                             disabled={saveLoading || activeButton}
                           />
                         </View>

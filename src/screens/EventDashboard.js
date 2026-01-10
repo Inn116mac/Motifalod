@@ -18,11 +18,11 @@ import {NOTIFY_MESSAGE} from '../constant/Module';
 import Loader from '../components/root/Loader';
 import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import httpClient from '../connection/httpClient';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import NoDataFound from '../components/root/NoDataFound';
-import {AntDesign} from "@react-native-vector-icons/ant-design";
+import {AntDesign} from '@react-native-vector-icons/ant-design';
 import {
   heightPercentageToDP,
   widthPercentageToDP,
@@ -147,7 +147,6 @@ const EventDashboard = ({route}) => {
       alignItems: 'center',
       justifyContent: 'center',
       width: '100%',
-      
     },
     divider: {
       height: 1,
@@ -227,12 +226,6 @@ const EventDashboard = ({route}) => {
 
             if (status || (status == true && result)) {
               setFilterLoading(false);
-              // setSelectedEvent(result[0]);
-              // const newEvent = {
-              //   id: 0,
-              //   name: 'All',
-              // };
-              // result.unshift(newEvent);
               setEventData(result);
             } else {
               NOTIFY_MESSAGE(message);
@@ -337,7 +330,12 @@ const EventDashboard = ({route}) => {
       }}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={item?.name}
         leftOnPress={() => navigation.goBack()}
@@ -659,56 +657,6 @@ const EventDashboard = ({route}) => {
           </View>
         </View>
       </Modal>
-      {/* <Modal
-        animationType="none"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => setIsModalVisible(false)}
-        style={{flex: 1}}>
-        <View style={styles.modalContainer}>
-          <TouchableWithoutFeedback onPress={() => setIsModalVisible(false)}>
-            <View style={styles.backdrop} />
-          </TouchableWithoutFeedback>
-          <View style={styles.modalContent}>
-            <FlatList
-              removeClippedSubviews={true}
-              maxToRenderPerBatch={30}
-              updateCellsBatchingPeriod={200}
-              windowSize={40}
-              initialNumToRender={10}
-              data={data}
-              keyExtractor={item => item.id.toString()}
-              contentContainerStyle={{flexGrow: 1}}
-              renderItem={({item: item1}) => (
-                <TouchableOpacity
-                  style={{
-                    borderBottomWidth: 0.5,
-                    borderBottomColor: COLORS.LIGHTGREY,
-                    padding: 10,
-                  }}
-                  onPress={() => {
-                    if (item1?.name === 'Event') {
-                                            setIsEventDataModal(true);
-                      setIsModalVisible(false);
-                    } else if (item1?.name === 'All') {
-                      setSelectedEvent(null);
-                      setIsModalVisible(false);
-                    }
-                  }}>
-                  <Text
-                    style={{
-                      color: COLORS.TABLEROW,
-                      fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                      fontFamily: FONTS.FONT_FAMILY.REGULAR,
-                    }}>
-                    {item1?.name}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal> */}
     </View>
   );
 };

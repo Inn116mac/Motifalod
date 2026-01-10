@@ -14,7 +14,7 @@ import Offline from '../components/root/Offline';
 import FONTS from '../theme/Fonts';
 import {useNavigation} from '@react-navigation/native';
 import {getFileType} from '../utils/fileType';
-import {getImageUri} from '../constant/Module';
+import {formatPhoneToUS, getImageUri, isPhoneField} from '../constant/Module';
 import FastImage from 'react-native-fast-image';
 import moment from 'moment';
 import {IMAGE_URL} from '../connection/Config';
@@ -122,6 +122,7 @@ const DemisesDetails = ({route}) => {
               </Text>
               {section.items.map((infoItem, idx) => {
                 if (!infoItem.value) return null;
+                const isPhone = isPhoneField(infoItem?.name);
 
                 return (
                   <View key={idx} style={styles.infoRow}>
@@ -192,7 +193,11 @@ const DemisesDetails = ({route}) => {
                       </Text>
                     ) : (
                       <Text style={styles.infoValue}>
-                        {infoItem.value ? infoItem.value : '-'}
+                        {isPhone && infoItem.value
+                          ? formatPhoneToUS(infoItem.value)
+                          : infoItem.value
+                          ? infoItem.value
+                          : '-'}
                       </Text>
                     )}
                   </View>

@@ -48,3 +48,44 @@ export const getImageUri = imageData => {
     return imageData;
   }
 };
+
+export const formatPhoneToUS = value => {
+  if (!value) return '';
+
+  // Remove all non-numeric characters
+  const numericValue = value.replace(/[^0-9]/g, '');
+
+  // Only format if we have digits
+  if (numericValue.length === 0) return '';
+
+  // Format as (XXX) XXX-XXXX
+  if (numericValue.length <= 3) {
+    return numericValue;
+  } else if (numericValue.length <= 6) {
+    return `(${numericValue.slice(0, 3)}) ${numericValue.slice(3)}`;
+  } else {
+    return `(${numericValue.slice(0, 3)}) ${numericValue.slice(
+      3,
+      6,
+    )}-${numericValue.slice(6, 10)}`;
+  }
+};
+
+export const unformatPhone = value => {
+  if (!value) return '';
+  return value.replace(/[^0-9]/g, '');
+};
+
+export const isPhoneField = name => {
+  const phoneFieldNames = [
+    'contact',
+    'phoneNumber',
+    'coordinateNumber',
+    'contactnumber',
+    'eventcoordinatornumber',
+    'phone',
+    'Phone Number',
+    'phone Number',
+  ];
+  return phoneFieldNames.includes(name);
+};

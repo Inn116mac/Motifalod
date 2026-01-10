@@ -108,11 +108,8 @@ const FormRecords = ({route}) => {
                     item?.constantName !== 'FB LIVE STREAM' &&
                     item?.constantName !== 'JOIN FB LIVE',
                 );
-                if (newArray?.length > 0) {
-                  setData(newArray);
-                } else {
-                  setData([]);
-                }
+
+                setData(newArray);
               } else {
                 setData([]);
               }
@@ -158,6 +155,7 @@ const FormRecords = ({route}) => {
     'FOOD TEAM': 'Menu planning & Catering management',
     'MEMBERSHIP FEES': 'Member dues & payment tracking',
     'SAD DEMISES': 'Maintain funeral & memorial ceremony details',
+    'ROLE MANAGEMENT': 'User roles & permission control',
   };
 
   const renderItem = ({item, index}) => {
@@ -170,7 +168,19 @@ const FormRecords = ({route}) => {
         activeOpacity={0.8}
         onPress={() => {
           let data = {item, isTabView: false, isTable: true};
-          navigation.navigate('TableScreen', (item = {data}));
+          if (item?.constantName === 'MEMBERSHIP MANAGEMENT') {
+            navigation.navigate('MembershipPrice', (item = {data}));
+          } else if (item?.constantName == 'ROLE MANAGEMENT') {
+            navigation.navigate('RoleManagement', (item = {data}));
+          } else if (item?.constantName === 'NOTIFICATION MANAGEMENT') {
+            navigation.navigate('NotificationManagement', (item = {data}));
+          } else if (item?.constantName === 'REMINDER MANAGEMENT') {
+            navigation.navigate('ReminderList', (item = {data}));
+          } else if (item?.constantName == 'FAMILY MEMBER') {
+            navigation.navigate('FamilyMemberList', (item = {data}));
+          } else {
+            navigation.navigate('TableScreen', (item = {data}));
+          }
         }}>
         <View
           style={[
@@ -193,7 +203,7 @@ const FormRecords = ({route}) => {
           />
         </View>
         <View style={styles.itemTexts}>
-          <Text style={[styles.mainText]}>{item.constantName}</Text>
+          <Text style={[styles.mainText]}>{item?.name}</Text>
           {description && <Text style={styles.descText}>{description}</Text>}
         </View>
         <View style={styles.arrowBox}>
@@ -229,9 +239,9 @@ const FormRecords = ({route}) => {
         leftIcon={
           <FontAwesome6
             name="angle-left"
-            iconStyle="solid"
             size={26}
             color={COLORS.LABELCOLOR}
+            iconStyle="solid"
           />
         }
         title={item?.name}

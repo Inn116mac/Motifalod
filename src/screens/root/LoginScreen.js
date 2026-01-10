@@ -21,7 +21,7 @@ import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from 'react-native-responsive-screen';
-import {NOTIFY_MESSAGE} from '../../constant/Module';
+import {formatPhoneToUS, NOTIFY_MESSAGE} from '../../constant/Module';
 import FONTS from '../../theme/Fonts';
 import {CommonActions, useNavigation} from '@react-navigation/native';
 import ButtonComponent from '../../components/root/ButtonComponent';
@@ -34,9 +34,21 @@ import Loader from '../../components/root/Loader';
 import messaging from '@react-native-firebase/messaging';
 import DeviceInfo from 'react-native-device-info';
 import {Fontisto} from '@react-native-vector-icons/fontisto';
+import Carousel from 'react-native-reanimated-carousel';
+import {Feather} from '@react-native-vector-icons/feather';
+import {FontAwesome5} from '@react-native-vector-icons/fontawesome5';
 
 const LoginScreen = ({route}) => {
-  const {width} = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
+
+  const getLogoSize = () => {
+    if (height <= 800) return 130; // Your 797px fold phone + small devices
+    if (height <= 900) return 150; // Regular phones
+    if (width >= 800) return 160; // Tablets
+    return 140;
+  };
+  const logoSize = getLogoSize();
+
   const isFromNewPassword = route?.params?.isFromNewPassword || false;
 
   const styles = StyleSheet.create({
@@ -48,8 +60,8 @@ const LoginScreen = ({route}) => {
     },
     imageView: {
       alignSelf: 'center',
-      width: 150,
-      height: 150,
+      width: logoSize,
+      height: logoSize,
     },
     txtLabel: {
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
@@ -134,6 +146,7 @@ const LoginScreen = ({route}) => {
   const navigation = useNavigation();
   const [rememberMe, setRememberMe] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [inputType, setInputType] = useState('');
 
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () =>
@@ -153,7 +166,17 @@ const LoginScreen = ({route}) => {
       const cred = await getData('cred');
 
       if (cred && cred.userName) {
-        setUserName(cred.userName);
+        const storedUserName = cred.userName;
+
+        const numericOnly = storedUserName.replace(/[^0-9]/g, '');
+        if (numericOnly.length === 10) {
+          setUserName(formatPhoneToUS(numericOnly));
+          setInputType('phone');
+        } else {
+          setUserName(storedUserName);
+          setInputType('email');
+        }
+
         setPassword(cred.password);
         setRememberMe(cred.rememberMe);
       }
@@ -198,6 +221,27 @@ const LoginScreen = ({route}) => {
     checkDeviceId();
   }, []);
 
+  const handleUserNameChange = value => {
+    if (value.includes('@')) {
+      setUserName(value);
+      setInputType('email');
+      return;
+    }
+
+    const isPhoneLike = /^[\d\s()-]*$/.test(value);
+
+    if (isPhoneLike) {
+      // Format as phone number
+      const formatted = formatPhoneToUS(value);
+      setUserName(formatted);
+      setInputType('phone');
+    } else {
+      // Treat as email
+      setUserName(value);
+      setInputType('email');
+    }
+  };
+
   const handlePrivacyPolicyClick = () => {
     Linking.openURL(
       'https://www.psmtech.com/privacy-policy-for-motifalod-app/',
@@ -215,8 +259,13 @@ const LoginScreen = ({route}) => {
   };
 
   const handleLog = async () => {
+    let loginUserName = userName;
+    if (inputType === 'phone') {
+      loginUserName = unformatPhone(userName);
+    }
+
     let data = JSON.stringify({
-      userName: userName,
+      userName: loginUserName,
       password: password,
       device: {
         deviceId: deviceId,
@@ -233,7 +282,11 @@ const LoginScreen = ({route}) => {
           .then(async response => {
             if (response.data.status && response?.data?.result) {
               if (rememberMe) {
-                await storeData('cred', {userName, password, rememberMe});
+                await storeData('cred', {
+                  userName: loginUserName,
+                  password,
+                  rememberMe,
+                });
               } else {
                 await removeData('cred');
               }
@@ -272,6 +325,36 @@ const LoginScreen = ({route}) => {
     });
   };
 
+  const sponsorBanners = [
+    {
+      id: '1',
+      title: 'Technology Sponsor - PSMTECH LLC',
+      name: ' Low Voltage & Inngenius Software Services',
+      phone: '(336) 805-6626',
+      url: 'https://www.psmtech.com',
+      bg: '#174880c9',
+      icon: 'zap',
+    },
+    {
+      id: '2',
+      title: 'PSMTECH LLC - Low Voltage Services',
+      name: 'Professional Installation & Support',
+      phone: '(336) 805-6626',
+      url: 'https://www.psmtech.com',
+      bg: '#059669',
+      icon: 'phone',
+    },
+    {
+      id: '3',
+      title: 'Inngenius Software Services',
+      name: 'Web Development & Review Management',
+      phone: '(336) 805-6626',
+      url: 'https://www.inngenius.com',
+      bg: '#d55b09be',
+      icon: 'globe',
+    },
+  ];
+
   const {isConnected, networkLoading} = useNetworkStatus();
 
   return (
@@ -288,8 +371,6 @@ const LoginScreen = ({route}) => {
         ) : isConnected ? (
           <View
             style={{
-              paddingHorizontal: 10,
-              paddingTop: 10,
               flex: 1,
             }}>
             <ScrollView
@@ -299,6 +380,8 @@ const LoginScreen = ({route}) => {
                 flexGrow: 1,
                 paddingBottom:
                   keyboardOpen && Platform.OS == 'android' ? 40 : 0,
+                paddingHorizontal: 10,
+                justifyContent: 'center',
               }}>
               <View style={{marginTop: 50}}>
                 <Image
@@ -323,8 +406,9 @@ const LoginScreen = ({route}) => {
                     title={'Email/Phone'}
                     placeholder={'Email/Phone'}
                     text={userName}
-                    setText={setUserName}
+                    setText={handleUserNameChange}
                     keyboardType={'email-address'}
+                    maxLength={inputType === 'phone' ? 14 : undefined}
                   />
                   <InputComponent
                     title={'Password'}
@@ -461,6 +545,114 @@ const LoginScreen = ({route}) => {
                 />
               </View>
             </ScrollView>
+            <View>
+              <Carousel
+                width={width}
+                height={70}
+                data={sponsorBanners}
+                loop
+                autoPlay
+                autoPlayInterval={3000}
+                scrollAnimationDuration={600}
+                panGestureHandlerProps={{
+                  activeOffsetX: [-10, 10],
+                }}
+                renderItem={({item}) => (
+                  <TouchableOpacity
+                    activeOpacity={0.35}
+                    disabled={isLoading}
+                    onPress={() => Linking.openURL(item.url)}
+                    style={{
+                      flex: 1,
+                      backgroundColor: item.bg,
+                      justifyContent: 'center',
+                      paddingHorizontal: 18,
+                    }}>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                      <View
+                        style={{
+                          marginRight: 8,
+                        }}>
+                        <Feather
+                          name={item.icon}
+                          size={17}
+                          color={COLORS.PRIMARYWHITE}
+                        />
+                      </View>
+                      <Text
+                        numberOfLines={1}
+                        style={{
+                          color: COLORS.PRIMARYWHITE,
+                          fontSize: FONTS.FONTSIZE.MINI,
+                          fontFamily: FONTS.FONT_FAMILY.BOLD,
+                        }}>
+                        {item.title}
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        marginLeft: 25,
+                      }}>
+                      <Text
+                        numberOfLines={1}
+                        style={{
+                          color: COLORS.PRIMARYWHITE,
+                          fontSize: FONTS.FONTSIZE.TOOSMALL,
+                          fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                        }}>
+                        {item.name}
+                      </Text>
+                    </View>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          if (item?.phone) {
+                            const phoneUrl =
+                              Platform.OS === 'ios'
+                                ? `telprompt:${item.phone}`
+                                : `tel:${item.phone}`;
+                            Linking.openURL(phoneUrl);
+                          }
+                        }}
+                        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 8,
+                          marginLeft: 2,
+                        }}>
+                        <FontAwesome5
+                          name={'phone-alt'}
+                          size={14}
+                          color={'white'}
+                          style={{marginTop: -3, marginLeft: 2}}
+                          iconStyle="solid"
+                        />
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            color: COLORS.PRIMARYWHITE,
+                            fontSize: FONTS.FONTSIZE.EXTRAMINI,
+                            fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                          }}>
+                          {item?.phone}
+                        </Text>
+                      </TouchableOpacity>
+                      <Text
+                        numberOfLines={1}
+                        style={{
+                          color: COLORS.PRIMARYWHITE,
+                          fontSize: FONTS.FONTSIZE.EXTRAMINI,
+                          fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                          marginLeft: 5,
+                        }}>
+                        • {item.url.replace('https://', '')}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
           </View>
         ) : (
           <Offline />

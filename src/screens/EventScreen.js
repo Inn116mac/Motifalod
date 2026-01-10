@@ -299,7 +299,6 @@ const EventScreen = ({route}) => {
     try {
       if (hasPermission) {
         const eventId = await Calendar.createEventInCalendarAsync(eventDetails);
-        // console.log('Event created with ID:', eventId);
       } else {
         Alert.alert('Calendar permission denied');
       }

@@ -230,7 +230,6 @@ export default function RsvpList({}) {
   const [openIndex, setOpenIndex] = useState(null);
 
   const renderrsvpList = ({item, index}) => {
-    // const number = index >= 0 && index <= 9 ? `0${index + 1}` : `${index + 1}`;
     const number1 = (pageNumber - 1) * PAGE_SIZE + index + 1;
     const number = number1 <= 9 ? `0${number1}` : `${number1}`;
 
@@ -294,7 +293,7 @@ export default function RsvpList({}) {
                   fontSize: FONTS.FONTSIZE.EXTRASMALL,
                   color: COLORS.PLACEHOLDERCOLOR,
                   width:
-                    res?.toLowerCase() == 'may be' ? width / 1.8 : width / 1.7,
+                    res?.toLowerCase() == 'may be' ? width / 1.6 : width / 1.45,
                 }}>
                 {member ? member : '-'}
               </Text>

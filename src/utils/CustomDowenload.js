@@ -133,12 +133,6 @@ const startDownload = async (
     const result = await downloadFileWithNoTimeout(options);
 
     if (result.statusCode === 200) {
-      // const fileName = downloadDest.split('/').pop();
-      // showDownloadNotification(downloadDest, fileName);
-      // if (Platform.OS === 'ios') {
-      //   await Share.open({url: 'file://' + downloadDest});
-      // } else {
-      // Alert.alert('Success', `File downloaded successfully.`);
       Alert.alert(
         'Success',
         'File downloaded successfully. Do you want to open it?',
