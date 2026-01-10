@@ -52,49 +52,10 @@ const LoginScreen = ({route}) => {
   const isFromNewPassword = route?.params?.isFromNewPassword || false;
 
   const styles = StyleSheet.create({
-    formContainer: {
-      backgroundColor: COLORS.PRIMARYWHITE,
-      marginHorizontal: 10,
-      borderRadius: 16,
-      marginVertical: hp('4%'),
-    },
     imageView: {
       alignSelf: 'center',
       width: logoSize,
       height: logoSize,
-    },
-    txtLabel: {
-      fontFamily: FONTS.FONT_FAMILY.REGULAR,
-      fontSize: fonts.FONTSIZE.SEMI,
-      color: 'gray',
-      textAlign: 'center',
-      fontWeight: '600',
-    },
-    inputWrapper: {},
-    label: {
-      color: COLORS.TITLECOLOR,
-      fontFamily: FONTS.FONT_FAMILY.REGULAR,
-      fontSize: fonts.FONTSIZE.SMALL,
-    },
-    inputCont: {
-      borderColor: textInputBorderColor,
-      borderWidth: 1,
-      borderRadius: 10,
-
-      fontSize: fonts.FONTSIZE.SMALL,
-      color: COLORS.PRIMARYBLACK,
-    },
-    forgotCont: {
-      alignSelf: 'flex-end',
-    },
-    forogtLbl: {
-      fontFamily: FONTS.FONT_FAMILY.REGULAR,
-      fontSize: fonts.FONTSIZE.SMALL,
-    },
-    textContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexGrow: 1,
     },
     privacyContainer: {
       flexDirection: 'row',
@@ -117,16 +78,6 @@ const LoginScreen = ({route}) => {
       fontFamily: FONTS.FONT_FAMILY.MEDIUM,
       fontSize: fonts.FONTSIZE.SMALL,
       paddingVertical: 0,
-    },
-    loginButton: {
-      backgroundColor: COLORS.TITLECOLOR,
-    },
-    signupContainer: {
-      alignItems: 'center',
-    },
-    signupText: {
-      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-      fontSize: fonts.FONTSIZE.MEDIUM,
     },
   });
 

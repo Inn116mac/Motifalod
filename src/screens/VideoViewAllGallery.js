@@ -29,12 +29,6 @@ const VideoViewAllGallery = ({route}) => {
   const {width} = useWindowDimensions();
 
   const styles = StyleSheet.create({
-    headingText: {
-      fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-      fontSize: FONTS.FONTSIZE.LARGE,
-      color: COLORS.PRIMARYWHITE,
-      textAlign: 'center',
-    },
     imageContainer: {
       marginHorizontal: 6,
       marginVertical: 10,

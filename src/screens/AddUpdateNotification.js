@@ -816,12 +816,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     marginTop: 10,
   },
-  commonText: {
-    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-    fontSize: FONTS.FONTSIZE.SEMIMINI,
-    color: COLORS.TITLECOLOR,
-    marginBottom: 4,
-  },
   commonInput: {
     borderWidth: 1,
     borderRadius: 6,

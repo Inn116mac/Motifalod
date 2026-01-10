@@ -70,25 +70,6 @@ const MembershipPrice = ({route}) => {
       width: '48%',
       marginRight: 4,
     },
-    text: {
-      width: '50%',
-      textAlign: 'left',
-      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-      fontSize: FONTS.FONTSIZE.MINI,
-      color: '#101827',
-    },
-    header: {
-      backgroundColor: COLORS.TABLEROWCOLOR,
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: COLORS.LIGHTGREY,
-    },
-    icon: {
-      alignSelf: 'center',
-      padding: 8,
-    },
   });
 
   const [allUserData, setAllUserData] = useState([]);

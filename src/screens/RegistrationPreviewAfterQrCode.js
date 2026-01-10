@@ -618,13 +618,6 @@ const styles = StyleSheet.create({
     fontSize: FONTS.FONTSIZE.EXTRASMALL,
     color: COLORS.PLACEHOLDERCOLOR,
   },
-  img: {
-    width: '100%',
-    height: 150,
-    borderRadius: 5,
-    borderColor: COLORS.LIGHTGREY,
-    marginVertical: 10,
-  },
   txtlstvalue: {
     width: '50%',
     fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,

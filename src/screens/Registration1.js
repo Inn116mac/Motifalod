@@ -57,8 +57,6 @@ const Registration1 = ({route}) => {
   const {item, isFromEventAdmin} = route.params.data;
 
   const {width} = useWindowDimensions();
-  const windowHeight = Dimensions.get('window').height;
-  const windowWidth = Dimensions.get('window').width;
   const isFocused = useIsFocused();
 
   const styles = StyleSheet.create({
@@ -122,21 +120,6 @@ const Registration1 = ({route}) => {
       flexDirection: 'row',
       alignItems: 'center',
     },
-    modalTitle: {
-      fontSize: 18,
-      marginBottom: 20,
-    },
-    button: {
-      padding: 8,
-      borderRadius: 5,
-      backgroundColor: COLORS.TITLECOLOR,
-      marginVertical: 6,
-      width: '100%',
-      alignItems: 'center',
-    },
-    buttonText: {
-      color: COLORS.PRIMARYWHITE,
-    },
     image: {
       width: 100,
       height: 100,
@@ -160,23 +143,6 @@ const Registration1 = ({route}) => {
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: heightPercentageToDP('2%'),
-    },
-    modalContainer1: {
-      flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.9)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    modalClose: {
-      position: 'absolute',
-      top: 50,
-      right: 20,
-      zIndex: 1,
-    },
-    fullscreenImage: {
-      width: windowWidth * 0.9,
-      height: windowHeight * 0.7,
-      resizeMode: 'contain',
     },
   });
 

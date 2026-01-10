@@ -344,7 +344,6 @@ const styles = StyleSheet.create({
   lstFileContainer: {
     paddingVertical: 5,
     flexDirection: 'column',
-    // marginBottom: 8,
   },
   fileLinksContainer: {
     marginTop: 4,
@@ -399,13 +398,6 @@ const styles = StyleSheet.create({
   },
   lstrow: {
     paddingVertical: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  lstImgrow: {
-    paddingVertical: 2,
-    flex: 1,
-    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
   },

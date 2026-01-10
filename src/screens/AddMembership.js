@@ -1,7 +1,6 @@
 import {
   Text,
   StyleSheet,
-  TouchableOpacity,
   View,
   TextInput,
   KeyboardAvoidingView,
@@ -144,10 +143,6 @@ const AddMembership = ({route}) => {
     });
   };
 
-  const handleCancel = () => {
-    navigation.goBack();
-  };
-
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -166,9 +161,6 @@ const AddMembership = ({route}) => {
       fontFamily: FONTS.FONT_FAMILY.MEDIUM,
       color: COLORS.TITLECOLOR,
       marginBottom: 6,
-    },
-    requiredStar: {
-      color: COLORS.PRIMARYRED,
     },
     input: {
       backgroundColor: COLORS.PRIMARYWHITE,
@@ -190,10 +182,6 @@ const AddMembership = ({route}) => {
       fontSize: FONTS.FONTSIZE.SEMIMINI,
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
       marginTop: 4,
-    },
-    textArea: {
-      minHeight: 100,
-      textAlignVertical: 'top',
     },
   });
 

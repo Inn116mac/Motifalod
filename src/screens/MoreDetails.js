@@ -25,12 +25,6 @@ const MoreDetails = ({route}) => {
   const {width} = useWindowDimensions();
 
   const styles = StyleSheet.create({
-    title: {
-      fontSize: FONTS.FONTSIZE.EXTRASMALL,
-      fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-      color: COLORS.TITLECOLOR,
-      width: width / 1.2,
-    },
     subtitle: {
       fontSize: FONTS.FONTSIZE.EXTRASMALL,
       color: COLORS.PLACEHOLDERCOLOR,
@@ -42,11 +36,6 @@ const MoreDetails = ({route}) => {
       color: COLORS.TITLECOLOR,
       fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
       width: width / 1.1,
-    },
-    dateContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 5,
     },
   });
 

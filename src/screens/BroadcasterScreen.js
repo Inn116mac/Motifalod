@@ -619,18 +619,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 16,
   },
-  warningContainer: {
-    backgroundColor: '#ffc107',
-    padding: 10,
-    borderRadius: 6,
-    marginBottom: 12,
-  },
-  warningText: {
-    color: '#333',
-    fontSize: FONTS.FONTSIZE.SEMIMINI,
-    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-    textAlign: 'center',
-  },
   continueButton: {
     backgroundColor: COLORS.LABELCOLOR,
     borderRadius: 6,

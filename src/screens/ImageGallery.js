@@ -35,12 +35,6 @@ export default function ImageGallery({route}) {
   const {height, width} = useWindowDimensions();
 
   const styles = StyleSheet.create({
-    headingText: {
-      fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-      fontSize: FONTS.FONTSIZE.LARGE,
-      color: COLORS.PRIMARYWHITE,
-      textAlign: 'center',
-    },
     backdrop: {
       position: 'absolute',
       top: 0,
@@ -151,13 +145,6 @@ export default function ImageGallery({route}) {
       alignItems: 'center',
       backgroundColor: 'rgba(255, 255, 255, 0.7)',
       borderRadius: 10,
-    },
-    retryText: {
-      position: 'absolute',
-      bottom: 2,
-      fontSize: 8,
-      color: COLORS.LABELCOLOR,
-      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
     },
   });
 

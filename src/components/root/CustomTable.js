@@ -9,47 +9,23 @@ import React, {useEffect, useState} from 'react';
 import {ScrollView} from 'react-native';
 import COLORS from '../../theme/Color';
 import FONTS from '../../theme/Fonts';
-import {
-  widthPercentageToDP,
-} from 'react-native-responsive-screen';
+import {widthPercentageToDP} from 'react-native-responsive-screen';
 import {useNetworkStatus} from '../../connection/UseNetworkStatus';
 import NoDataFound from './NoDataFound';
 import Loader from './Loader';
 import Offline from './Offline';
 import {getFileType} from '../../utils/fileType';
 import moment from 'moment';
-import {Entypo} from "@react-native-vector-icons/entypo";
-import { useNavigation } from '@react-navigation/native';
+import {Entypo} from '@react-native-vector-icons/entypo';
+import {useNavigation} from '@react-navigation/native';
 
-export default function CustomTable({
-  data,
-  isTabbing,
-}) {
+export default function CustomTable({data, isTabbing}) {
   const {isConnected, networkLoading} = useNetworkStatus();
   const {width} = useWindowDimensions();
 
   const navigation = useNavigation();
 
   const styles = StyleSheet.create({
-    tabContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    tab: {
-      paddingVertical: 4,
-      marginHorizontal: 10,
-      alignItems: 'center',
-      width: width / 3.5,
-    },
-    activeTab: {
-      borderBottomWidth: 2,
-      borderColor: COLORS.TITLECOLOR,
-    },
-    tabText: {
-      fontSize: FONTS.FONTSIZE.MEDIUM,
-      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-      color: COLORS.TITLECOLOR,
-    },
     tableContainer: {
       borderRadius: 10,
       overflow: 'hidden',
@@ -287,20 +263,22 @@ export default function CustomTable({
             } else if (contentItem?.type === 'file' && contentItem.value) {
               let fileUrls = [];
 
-                            if (typeof contentItem.value === 'string') {
+              if (typeof contentItem.value === 'string') {
                 try {
-                                    const parsedValue = JSON.parse(contentItem.value);
+                  const parsedValue = JSON.parse(contentItem.value);
                   if (Array.isArray(parsedValue)) {
                     fileUrls = parsedValue;
                   } else {
-                    fileUrls = [parsedValue];                   }
+                    fileUrls = [parsedValue];
+                  }
                 } catch (error) {
-                                    fileUrls = [contentItem.value];
+                  fileUrls = [contentItem.value];
                 }
               } else if (Array.isArray(contentItem.value)) {
-                fileUrls = contentItem.value;               }
+                fileUrls = contentItem.value;
+              }
 
-                            cellContent = (
+              cellContent = (
                 <TouchableOpacity
                   onPress={() => {}}
                   style={{

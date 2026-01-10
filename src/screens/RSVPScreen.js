@@ -50,18 +50,6 @@ export default function RsvpList({}) {
       right: 10,
       marginBottom: 8,
     },
-    modalContainer: {
-      flex: 1,
-      alignItems: 'flex-end',
-      overflow: 'hidden',
-    },
-    modalContent: {
-      width: widthPercentageToDP(42),
-      backgroundColor: COLORS.PRIMARYWHITE,
-      borderRadius: 8,
-      top: heightPercentageToDP(12),
-      right: widthPercentageToDP(3),
-    },
     backdrop: {
       position: 'absolute',
       top: 0,

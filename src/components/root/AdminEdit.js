@@ -77,29 +77,6 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
     buttonRow: {
       flexDirection: 'row',
     },
-    modalTitle: {
-      fontSize: 18,
-      marginBottom: 8,
-    },
-    button: {
-      padding: 10,
-      borderRadius: 5,
-      backgroundColor: COLORS.TITLECOLOR,
-      marginVertical: 5,
-      width: '100%',
-      alignItems: 'center',
-    },
-    buttonText: {
-      color: COLORS.PRIMARYWHITE,
-    },
-    select_Button: {
-      padding: 10,
-      borderRadius: 5,
-      backgroundColor: COLORS.TITLECOLOR,
-      marginVertical: 5,
-      width: '100%',
-      alignItems: 'center',
-    },
     image: {
       width: 100,
       height: 100,
@@ -120,7 +97,6 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       alignItems: 'center',
       margin: 10,
     },
-
     itemContainer: {
       paddingVertical: 2,
       paddingHorizontal: 10,

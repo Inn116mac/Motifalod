@@ -49,7 +49,6 @@ export default function ImageViewAllGallery({route}) {
       height: heightPercentageToDP(13),
       width: width / 3 - 15,
       borderRadius: 10,
-      // backgroundColor: '#f0f0f0',
       backgroundColor: '#f0f0f0',
     },
     container: {

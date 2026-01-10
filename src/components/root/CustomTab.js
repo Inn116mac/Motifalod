@@ -140,14 +140,6 @@ export default function CustomTab({
     buttonRow: {
       flexDirection: 'row',
     },
-    select_Button: {
-      padding: 10,
-      borderRadius: 5,
-      backgroundColor: COLORS.TITLECOLOR,
-      marginVertical: 5,
-      width: '100%',
-      alignItems: 'center',
-    },
     image: {
       width: 100,
       height: 100,

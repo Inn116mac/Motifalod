@@ -38,14 +38,12 @@ export default function NewsView({data}) {
     },
     title: {
       fontSize: FONTS.FONTSIZE.EXTRASMALL,
-      // marginBottom: 4,
       fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
       color: COLORS.TITLECOLOR,
       width: width / 1.8,
     },
     date: {
       fontSize: FONTS.FONTSIZE.EXTRASMALL,
-      // marginBottom: 4,
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
       color: COLORS.PLACEHOLDERCOLOR,
       width: width / 1.8,

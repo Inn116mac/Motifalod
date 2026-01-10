@@ -66,7 +66,6 @@ const ViewScreen = ({route}) => {
       paddingVertical: 4,
       marginHorizontal: 10,
       alignItems: 'center',
-      // width: width / 3.5,
     },
     activeTab: {
       borderBottomWidth: 2,
@@ -77,18 +76,6 @@ const ViewScreen = ({route}) => {
       fontFamily: FONTS.FONT_FAMILY.MEDIUM,
       color: COLORS.TITLECOLOR,
       textAlign: 'center',
-    },
-    modalContainer1: {
-      flex: 1,
-      alignItems: 'flex-end',
-      overflow: 'hidden',
-    },
-    modalContent1: {
-      width: widthPercentageToDP(42),
-      backgroundColor: COLORS.TABLEROWCOLOR,
-      borderRadius: 8,
-      top: heightPercentageToDP(12),
-      right: widthPercentageToDP(3),
     },
     eventModalContainer: {
       flex: 1,

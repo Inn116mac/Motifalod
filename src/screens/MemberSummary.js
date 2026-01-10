@@ -15,7 +15,7 @@ import {NOTIFY_MESSAGE} from '../constant/Module';
 import Loader from '../components/root/Loader';
 import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import httpClient from '../connection/httpClient';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import NoDataFound from '../components/root/NoDataFound';
@@ -50,46 +50,6 @@ const MemberSummary = ({route}) => {
       elevation: 3,
       backgroundColor: COLORS.PRIMARYWHITE,
       marginTop: 4,
-    },
-    fullWidthCard: {
-      width: '100%',
-      borderWidth: 1,
-      borderColor: COLORS.LABELCOLOR,
-      borderRadius: 8,
-      alignItems: 'center',
-      backgroundColor: COLORS.PRIMARYWHITE,
-      shadowColor: COLORS.PRIMARYBLACK,
-      shadowOffset: {width: 0, height: 2},
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-      elevation: 3,
-      marginVertical: 4,
-    },
-    topHalf: {
-      paddingVertical: 4,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    divider: {
-      height: 1,
-      backgroundColor: COLORS.LABELCOLOR,
-      width: '100%',
-      alignSelf: 'center',
-    },
-    verticalDivider: {
-      width: 1,
-      backgroundColor: COLORS.LABELCOLOR,
-      height: '100%',
-    },
-    bottomHalf: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      alignItems: 'stretch',
-    },
-    rsvpColumn: {
-      alignItems: 'center',
-      flex: 1,
-      paddingVertical: 4,
     },
     value: {
       fontSize: FONTS.FONTSIZE.SEMI,
@@ -188,7 +148,12 @@ const MemberSummary = ({route}) => {
       }}>
       <CustomHeader
         leftIcon={
-          <FontAwesome6 iconStyle='solid' name="angle-left" size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            iconStyle="solid"
+            name="angle-left"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={item?.name}
         leftOnPress={() => navigation.goBack()}

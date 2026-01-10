@@ -175,13 +175,13 @@ const CustomDrawerContent = props => {
       navigateToEventAdmin();
     } else {
       const verified = await getEventAdminVerified();
-      navigateToEventAdmin();
+      // navigateToEventAdmin();
 
-      // if (verified) {
-      //   navigateToEventAdmin();
-      // } else {
-      //   sendOtpEmail();
-      // }
+      if (verified) {
+        navigateToEventAdmin();
+      } else {
+        sendOtpEmail();
+      }
     }
   };
 

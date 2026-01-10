@@ -33,7 +33,6 @@ const AddRole = ({route}) => {
       flexDirection: 'row',
       alignItems: 'center',
       marginHorizontal: 10,
-      //   marginVertical: 10,
       gap: 10,
       marginBottom: 10,
     },
@@ -77,7 +76,6 @@ const AddRole = ({route}) => {
       borderBottomWidth: 1,
       borderBottomColor: '#e5e7eb',
       paddingVertical: 8,
-      //   paddingHorizontal: 10,
       alignItems: 'center',
     },
     headerText: {
@@ -100,7 +98,6 @@ const AddRole = ({route}) => {
     tableRow: {
       flexDirection: 'row',
       paddingVertical: 10,
-      //   paddingHorizontal: 10,
       borderBottomWidth: 1,
       borderBottomColor: '#f3f4f6',
       alignItems: 'center',
