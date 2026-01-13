@@ -55,7 +55,7 @@ const PaymentInfoScreen = ({route}) => {
 
     // Check if isApproved exists first
     if (member?.isApproved?.value !== undefined) {
-      const isApproved = member.isApproved.value.toLowerCase() === 'yes';
+      const isApproved = member?.isApproved?.value?.toLowerCase() === 'yes';
       return isApproved && isNotPaid;
     }
 

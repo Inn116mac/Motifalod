@@ -4588,6 +4588,246 @@ const Registration1 = ({route}) => {
                             );
                           }
 
+                          // if (item?.name == 'totalmembershipamount') {
+                          //   const personalInfoSection = formData.find(
+                          //     section =>
+                          //       section.headerKey === 'personalInfo' &&
+                          //       section.isMultiple === true,
+                          //   );
+
+                          //   const allFamilyMembers =
+                          //     personalInfoSection?.headerConfig || [];
+
+                          //   const hasIsApprovedKey = allFamilyMembers.some(
+                          //     member => member?.hasOwnProperty('isApproved'),
+                          //   );
+
+                          //   const familyMembers = hasIsApprovedKey
+                          //     ? allFamilyMembers.filter(member => {
+                          //         // Check if isApproved exists and is 'yes'
+                          //         const hasIsApproved =
+                          //           member?.isApproved?.value !== undefined;
+                          //         if (hasIsApproved) {
+                          //           const isApproved =
+                          //             member?.isApproved?.value?.toLowerCase() ===
+                          //             'yes';
+                          //           const isNotPaid =
+                          //             member?.isPaid?.value?.toLowerCase() !==
+                          //             'yes';
+                          //           return isApproved && isNotPaid;
+                          //         }
+                          //         // If isApproved doesn't exist, just check isNotPaid
+                          //         return (
+                          //           member?.isPaid?.value?.toLowerCase() !==
+                          //           'yes'
+                          //         );
+                          //       })
+                          //     : allFamilyMembers.filter(member => {
+                          //         // When no isApproved keys exist, filter only unpaid members
+                          //         return (
+                          //           member?.isPaid?.value?.toLowerCase() !==
+                          //           'yes'
+                          //         );
+                          //       });
+
+                          //   // ✅ Calculate total only for approved members
+                          //   const totalAmount = familyMembers.reduce(
+                          //     (sum, member) => {
+                          //       const amount = parseFloat(
+                          //         member?.membershipamount?.value || 0,
+                          //       );
+                          //       return sum + amount;
+                          //     },
+                          //     0,
+                          //   );
+
+                          //   return (
+                          //     <View key={item?.key} style={{marginBottom: 16}}>
+                          //       <View
+                          //         style={{
+                          //           flexDirection: 'row',
+                          //           justifyContent: 'space-between',
+                          //           alignItems: 'center',
+                          //           paddingBottom: 5,
+                          //         }}>
+                          //         <Text
+                          //           style={{
+                          //             fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                          //             fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                          //             color: COLORS.LABELCOLOR,
+                          //           }}>
+                          //           Total Membership Amount
+                          //         </Text>
+                          //         <Text
+                          //           style={{
+                          //             fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                          //             fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                          //             color: COLORS.LABELCOLOR,
+                          //           }}>
+                          //           $
+                          //           {moduleData[activeTab].isMultiple
+                          //             ? userData[0]?.[item.key]?.value || 0
+                          //             : formData[activeTab]?.headerConfig?.find(
+                          //                 field => field?.[item?.key],
+                          //               )?.[item?.key]?.value || 0}
+                          //         </Text>
+                          //       </View>
+                          //       <View
+                          //         style={{
+                          //           backgroundColor: COLORS.PRIMARYWHITE,
+                          //           borderRadius: 8,
+                          //           padding: 8,
+                          //           borderWidth: 1,
+                          //           borderColor: COLORS.TABLEBORDER,
+                          //         }}>
+                          //         {/* ✅ Show message if no approved members */}
+                          //         {familyMembers.length > 0 && (
+                          //           <>
+                          //             <View
+                          //               style={{
+                          //                 flexDirection: 'row',
+                          //                 alignItems: 'center',
+                          //                 gap: 8,
+                          //               }}>
+                          //               <View
+                          //                 style={{
+                          //                   width: 32,
+                          //                   height: 32,
+                          //                   borderRadius: 16,
+                          //                   backgroundColor: '#E8F4FD',
+                          //                   alignItems: 'center',
+                          //                   justifyContent: 'center',
+                          //                 }}>
+                          //                 <Ionicons
+                          //                   name="people-outline"
+                          //                   size={20}
+                          //                   color="#007AFF"
+                          //                 />
+                          //               </View>
+                          //               <Text
+                          //                 style={{
+                          //                   fontSize: FONTS.FONTSIZE.SMALL,
+                          //                   fontFamily:
+                          //                     FONTS.FONT_FAMILY.SEMI_BOLD,
+                          //                   color: COLORS.PRIMARYBLACK,
+                          //                 }}>
+                          //                 Family Members
+                          //               </Text>
+                          //             </View>
+
+                          //             <>
+                          //               {familyMembers.map((member, index) => {
+                          //                 const firstName =
+                          //                   member?.firstName?.value || '';
+                          //                 const lastName =
+                          //                   member?.lastName?.value || '';
+                          //                 const relationship =
+                          //                   member?.relationship?.value || '';
+                          //                 const amount =
+                          //                   member?.membershipamount?.value ||
+                          //                   '0';
+
+                          //                 return (
+                          //                   <View key={index}>
+                          //                     <View
+                          //                       style={{
+                          //                         flexDirection: 'row',
+                          //                         justifyContent:
+                          //                           'space-between',
+                          //                         alignItems: 'center',
+                          //                         paddingVertical: 6,
+                          //                       }}>
+                          //                       <View style={{flex: 1}}>
+                          //                         <Text
+                          //                           style={{
+                          //                             fontSize:
+                          //                               FONTS.FONTSIZE.SEMIMINI,
+                          //                             fontFamily:
+                          //                               FONTS.FONT_FAMILY
+                          //                                 .MEDIUM,
+                          //                             color:
+                          //                               COLORS.PRIMARYBLACK,
+                          //                           }}>
+                          //                           {firstName} {lastName}
+                          //                         </Text>
+                          //                         <Text
+                          //                           style={{
+                          //                             fontSize:
+                          //                               FONTS.FONTSIZE.MINI,
+                          //                             fontFamily:
+                          //                               FONTS.FONT_FAMILY
+                          //                                 .REGULAR,
+                          //                             color: COLORS.TITLECOLOR,
+                          //                           }}>
+                          //                           {relationship}
+                          //                         </Text>
+                          //                       </View>
+                          //                       <Text
+                          //                         style={{
+                          //                           fontSize:
+                          //                             FONTS.FONTSIZE.SEMIMINI,
+                          //                           fontFamily:
+                          //                             FONTS.FONT_FAMILY.MEDIUM,
+                          //                           color: COLORS.LABELCOLOR,
+                          //                         }}>
+                          //                         $
+                          //                         {parseFloat(amount).toFixed(
+                          //                           0,
+                          //                         )}
+                          //                       </Text>
+                          //                     </View>
+                          //                     {index <
+                          //                       familyMembers.length - 1 && (
+                          //                       <View
+                          //                         style={{
+                          //                           height: 0.5,
+                          //                           backgroundColor:
+                          //                             COLORS.TABLEBORDER,
+                          //                         }}
+                          //                       />
+                          //                     )}
+                          //                   </View>
+                          //                 );
+                          //               })}
+
+                          //               <View
+                          //                 style={{
+                          //                   height: 0.5,
+                          //                   backgroundColor: COLORS.TABLEBORDER,
+                          //                 }}
+                          //               />
+                          //             </>
+                          //           </>
+                          //         )}
+                          //         <View
+                          //           style={{
+                          //             flexDirection: 'row',
+                          //             justifyContent: 'space-between',
+                          //             alignItems: 'center',
+                          //             paddingTop: 6,
+                          //           }}>
+                          //           <Text
+                          //             style={{
+                          //               fontSize: FONTS.FONTSIZE.SEMIMINI,
+                          //               fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                          //               color: COLORS.PRIMARYBLACK,
+                          //             }}>
+                          //             Total Payable Amount
+                          //           </Text>
+                          //           <Text
+                          //             style={{
+                          //               fontSize: FONTS.FONTSIZE.SMALL,
+                          //               fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                          //               color: COLORS.LABELCOLOR,
+                          //             }}>
+                          //             ${totalAmount.toFixed(0)}
+                          //           </Text>
+                          //         </View>
+                          //       </View>
+                          //     </View>
+                          //   );
+                          // }
+
                           if (item?.name == 'totalmembershipamount') {
                             const personalInfoSection = formData.find(
                               section =>
@@ -4602,9 +4842,9 @@ const Registration1 = ({route}) => {
                               member => member?.hasOwnProperty('isApproved'),
                             );
 
-                            const familyMembers = hasIsApprovedKey
+                            // ✅ FILTER 1: Approved & Not Paid (for total calculation)
+                            const approvedNotPaidMembers = hasIsApprovedKey
                               ? allFamilyMembers.filter(member => {
-                                  // Check if isApproved exists and is 'yes'
                                   const hasIsApproved =
                                     member?.isApproved?.value !== undefined;
                                   if (hasIsApproved) {
@@ -4616,22 +4856,30 @@ const Registration1 = ({route}) => {
                                       'yes';
                                     return isApproved && isNotPaid;
                                   }
-                                  // If isApproved doesn't exist, just check isNotPaid
                                   return (
                                     member?.isPaid?.value?.toLowerCase() !==
                                     'yes'
                                   );
                                 })
                               : allFamilyMembers.filter(member => {
-                                  // When no isApproved keys exist, filter only unpaid members
                                   return (
                                     member?.isPaid?.value?.toLowerCase() !==
                                     'yes'
                                   );
                                 });
 
-                            // ✅ Calculate total only for approved members
-                            const totalAmount = familyMembers.reduce(
+                            // ✅ NEW: FILTER 2: Not Approved Members (show with special label)
+                            const notApprovedMembers = hasIsApprovedKey
+                              ? allFamilyMembers.filter(member => {
+                                  const isNotApproved =
+                                    member?.isApproved?.value?.toLowerCase() !==
+                                    'yes';
+                                  return isNotApproved;
+                                })
+                              : [];
+
+                            // ✅ Total calculation (only approved unpaid)
+                            const totalAmount = approvedNotPaidMembers.reduce(
                               (sum, member) => {
                                 const amount = parseFloat(
                                   member?.membershipamount?.value || 0,
@@ -4640,6 +4888,12 @@ const Registration1 = ({route}) => {
                               },
                               0,
                             );
+
+                            // ✅ COMBINED: All members to display
+                            const allMembersToShow = [
+                              ...approvedNotPaidMembers, // Approved & unpaid first
+                              ...notApprovedMembers, // Not approved last
+                            ];
 
                             return (
                               <View key={item?.key} style={{marginBottom: 16}}>
@@ -4664,14 +4918,10 @@ const Registration1 = ({route}) => {
                                       fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
                                       color: COLORS.LABELCOLOR,
                                     }}>
-                                    $
-                                    {moduleData[activeTab].isMultiple
-                                      ? userData[0]?.[item.key]?.value || 0
-                                      : formData[activeTab]?.headerConfig?.find(
-                                          field => field?.[item?.key],
-                                        )?.[item?.key]?.value || 0}
+                                    ${totalAmount.toFixed(0)}
                                   </Text>
                                 </View>
+
                                 <View
                                   style={{
                                     backgroundColor: COLORS.PRIMARYWHITE,
@@ -4680,14 +4930,15 @@ const Registration1 = ({route}) => {
                                     borderWidth: 1,
                                     borderColor: COLORS.TABLEBORDER,
                                   }}>
-                                  {/* ✅ Show message if no approved members */}
-                                  {familyMembers.length > 0 && (
+                                  {allMembersToShow.length > 0 && (
                                     <>
+                                      {/* ✅ Family Members Header */}
                                       <View
                                         style={{
                                           flexDirection: 'row',
                                           alignItems: 'center',
                                           gap: 8,
+                                          marginBottom: 8,
                                         }}>
                                         <View
                                           style={{
@@ -4715,42 +4966,57 @@ const Registration1 = ({route}) => {
                                         </Text>
                                       </View>
 
-                                      <>
-                                        {familyMembers.map((member, index) => {
-                                          const firstName =
-                                            member?.firstName?.value || '';
-                                          const lastName =
-                                            member?.lastName?.value || '';
-                                          const relationship =
-                                            member?.relationship?.value || '';
-                                          const amount =
-                                            member?.membershipamount?.value ||
-                                            '0';
+                                      {/* ✅ Render ALL Members */}
+                                      {allMembersToShow.map((member, index) => {
+                                        const firstName =
+                                          member?.firstName?.value || '';
+                                        const lastName =
+                                          member?.lastName?.value || '';
+                                        const relationship =
+                                          member?.relationship?.value || '';
+                                        const amount =
+                                          member?.membershipamount?.value ||
+                                          '0';
 
-                                          return (
-                                            <View key={index}>
+                                        // ✅ Check if Not Approved
+                                        const isNotApproved =
+                                          hasIsApprovedKey &&
+                                          member?.isApproved?.value?.toLowerCase() !==
+                                            'yes';
+
+                                        return (
+                                          <View key={index}>
+                                            <View
+                                              style={{
+                                                flexDirection: 'row',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                paddingVertical: 6,
+                                              }}>
                                               <View
                                                 style={{
-                                                  flexDirection: 'row',
-                                                  justifyContent:
-                                                    'space-between',
-                                                  alignItems: 'center',
-                                                  paddingVertical: 6,
+                                                  flex: 1,
                                                 }}>
-                                                <View style={{flex: 1}}>
+                                                <Text
+                                                  numberOfLines={1}
+                                                  style={{
+                                                    fontSize:
+                                                      FONTS.FONTSIZE.SEMIMINI,
+                                                    fontFamily:
+                                                      FONTS.FONT_FAMILY.MEDIUM,
+                                                    color: COLORS.PRIMARYBLACK,
+                                                  }}>
+                                                  {firstName} {lastName}
+                                                </Text>
+
+                                                <View
+                                                  style={{
+                                                    flexDirection: 'row',
+                                                    alignItems: 'center',
+                                                    gap: 6,
+                                                  }}>
                                                   <Text
-                                                    style={{
-                                                      fontSize:
-                                                        FONTS.FONTSIZE.SEMIMINI,
-                                                      fontFamily:
-                                                        FONTS.FONT_FAMILY
-                                                          .MEDIUM,
-                                                      color:
-                                                        COLORS.PRIMARYBLACK,
-                                                    }}>
-                                                    {firstName} {lastName}
-                                                  </Text>
-                                                  <Text
+                                                    numberOfLines={1}
                                                     style={{
                                                       fontSize:
                                                         FONTS.FONTSIZE.MINI,
@@ -4758,53 +5024,80 @@ const Registration1 = ({route}) => {
                                                         FONTS.FONT_FAMILY
                                                           .REGULAR,
                                                       color: COLORS.TITLECOLOR,
+                                                      maxWidth: '65%',
                                                     }}>
                                                     {relationship}
                                                   </Text>
-                                                </View>
-                                                <Text
-                                                  style={{
-                                                    fontSize:
-                                                      FONTS.FONTSIZE.SEMIMINI,
-                                                    fontFamily:
-                                                      FONTS.FONT_FAMILY.MEDIUM,
-                                                    color: COLORS.LABELCOLOR,
-                                                  }}>
-                                                  $
-                                                  {parseFloat(amount).toFixed(
-                                                    0,
+                                                  {isNotApproved && (
+                                                    <View
+                                                      style={{
+                                                        backgroundColor:
+                                                          '#FEE2E2',
+                                                        paddingHorizontal: 6,
+                                                        paddingVertical: 2,
+                                                        borderRadius: 4,
+                                                      }}>
+                                                      <Text
+                                                        style={{
+                                                          fontSize:
+                                                            FONTS.FONTSIZE
+                                                              .MINI - 2.5,
+                                                          fontFamily:
+                                                            FONTS.FONT_FAMILY
+                                                              .MEDIUM,
+                                                          color: '#EF4444',
+                                                        }}>
+                                                        Not Approved
+                                                      </Text>
+                                                    </View>
                                                   )}
-                                                </Text>
+                                                </View>
                                               </View>
-                                              {index <
-                                                familyMembers.length - 1 && (
-                                                <View
-                                                  style={{
-                                                    height: 0.5,
-                                                    backgroundColor:
-                                                      COLORS.TABLEBORDER,
-                                                  }}
-                                                />
-                                              )}
+                                              <Text
+                                                style={{
+                                                  fontSize:
+                                                    FONTS.FONTSIZE.SEMIMINI,
+                                                  fontFamily:
+                                                    FONTS.FONT_FAMILY.MEDIUM,
+                                                  color: COLORS.LABELCOLOR,
+                                                  marginLeft: 4,
+                                                }}>
+                                                ${parseFloat(amount).toFixed(0)}
+                                              </Text>
                                             </View>
-                                          );
-                                        })}
 
-                                        <View
-                                          style={{
-                                            height: 0.5,
-                                            backgroundColor: COLORS.TABLEBORDER,
-                                          }}
-                                        />
-                                      </>
+                                            {index <
+                                              allMembersToShow.length - 1 && (
+                                              <View
+                                                style={{
+                                                  height: 0.5,
+                                                  backgroundColor:
+                                                    COLORS.TABLEBORDER,
+                                                }}
+                                              />
+                                            )}
+                                          </View>
+                                        );
+                                      })}
                                     </>
+                                  )}
+
+                                  {/* ✅ Total Payable (only approved unpaid) */}
+                                  {allMembersToShow.length > 0 && (
+                                    <View
+                                      style={{
+                                        height: 1,
+                                        backgroundColor: COLORS.TABLEBORDER,
+                                        marginVertical: 6,
+                                      }}
+                                    />
                                   )}
                                   <View
                                     style={{
                                       flexDirection: 'row',
                                       justifyContent: 'space-between',
                                       alignItems: 'center',
-                                      paddingTop: 6,
+                                      paddingVertical: 8,
                                     }}>
                                     <Text
                                       style={{
@@ -4818,7 +5111,7 @@ const Registration1 = ({route}) => {
                                       style={{
                                         fontSize: FONTS.FONTSIZE.SMALL,
                                         fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-                                        color: COLORS.LABELCOLOR,
+                                        color: COLORS.PRIMARYBLACK,
                                       }}>
                                       ${totalAmount.toFixed(0)}
                                     </Text>
