@@ -216,7 +216,7 @@ const HotelDetails = ({route}) => {
               {hotelName && (
                 <Text
                   style={{
-                    fontSize: FONTS.FONTSIZE.MEDIUMLARGE,
+                    fontSize: FONTS.FONTSIZE.LARGE,
                     fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                     color: COLORS.TITLECOLOR,
                     textTransform: 'capitalize',

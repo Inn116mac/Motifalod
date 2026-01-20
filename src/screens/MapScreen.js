@@ -26,7 +26,11 @@ import ButtonComponent from '../components/root/ButtonComponent';
 const windowWidth = Dimensions.get('window').width;
 
 const MapScreen = ({route}) => {
-  const {onLocationSelect, onLabelSelect, currentLocation} = route.params;
+  const {onLabelSelect, currentLocation} = route.params;
+
+  const [currentLocation1, setCurrentLocation1] = useState(
+    currentLocation || '',
+  );
 
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,12 +123,13 @@ const MapScreen = ({route}) => {
     const newLocation = {
       latitude,
       longitude,
-      coordinates: [longitude, latitude], // [lng, lat] for MapLibre
+      coordinates: [longitude, latitude],
+      location: formatted,
     };
 
     setSelectedLocation(newLocation);
     setLabel(formatted);
-    onLabelSelect(formatted);
+    setCurrentLocation1('');
     setResults([]);
     setSearchQuery('');
 
@@ -174,10 +179,10 @@ const MapScreen = ({route}) => {
   }, []);
 
   useEffect(() => {
-    if (currentLocation) {
+    if (currentLocation1) {
       const fetchInitialLocationCoordinates = async () => {
         const url = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
-          currentLocation,
+          currentLocation1,
         )}&format=json&apiKey=${apiKeys[currentApiKeyIndex]}`;
 
         try {
@@ -194,7 +199,7 @@ const MapScreen = ({route}) => {
               coordinates: [firstResult.lon, firstResult.lat],
             };
             setSelectedLocation(newLocation);
-            setLabel(firstResult.formatted || currentLocation);
+            setLabel(firstResult.formatted || currentLocation1);
 
             if (Platform.OS === 'ios') {
               setMapKey(prev => prev + 1);
@@ -207,7 +212,7 @@ const MapScreen = ({route}) => {
 
       fetchInitialLocationCoordinates();
     }
-  }, [currentLocation, currentApiKeyIndex]);
+  }, [currentLocation1, currentApiKeyIndex]);
 
   return (
     <View
@@ -241,14 +246,14 @@ const MapScreen = ({route}) => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 borderColor: '#D2F4FA',
-                paddingHorizontal: 4,
+                paddingHorizontal: 2,
                 height: 36,
               }}>
               <View
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 2,
+                  gap: 4,
                 }}>
                 {searchLoading ? (
                   <ActivityIndicator size="small" color={COLORS.TITLECOLOR} />
@@ -368,17 +373,14 @@ const MapScreen = ({route}) => {
             </View>
           </View>
 
-          {selectedLocation && (
+          {selectedLocation && !currentLocation1 && (
             <View style={{alignItems: 'center', paddingBottom: 10}}>
               <ButtonComponent
                 title={'Save'}
                 width={'80%'}
                 onPress={() => {
                   if (selectedLocation) {
-                    onLocationSelect([
-                      selectedLocation.latitude,
-                      selectedLocation.longitude,
-                    ]);
+                    onLabelSelect(selectedLocation?.location);
                     navigation.goBack();
                   }
                 }}

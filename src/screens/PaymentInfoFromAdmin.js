@@ -58,8 +58,22 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
   };
 
   // Filter out members who have already paid
+  // const unpaidMembers =
+  //   item?.familyMembers?.filter(member => !isMemberPaid(member)) || [];
+
   const unpaidMembers =
-    item?.familyMembers?.filter(member => !isMemberPaid(member)) || [];
+    item?.familyMembers?.filter(member => {
+      if (member?.hasOwnProperty('isApproved')) {
+        if (
+          member?.isApproved?.toLowerCase() == 'yes' ||
+          member.isApproved === true
+        ) {
+          return !isMemberPaid(member);
+        }
+        return false;
+      }
+      return !isMemberPaid(member);
+    }) || [];
 
   // Calculate total amount from unpaid family members only
   const calculateTotalAmount = () => {
@@ -514,7 +528,6 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
     try {
       setIsSubmitting(true);
 
-
       // Use Braintree's official fake nonce for testing
       const fakeNonce = 'fake-venmo-account-nonce';
 
@@ -566,7 +579,6 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
         return;
       }
 
-
       // // Show Drop-In with ONLY Venmo enabled
       const result = await BraintreeDropIn.show({
         clientToken: clientToken,
@@ -587,7 +599,6 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
         setIsSubmitting(false);
       }
     } catch (error) {
-
       if (
         error.message === 'USER_CANCELLATION' ||
         error.code === 'USER_CANCELLATION'
@@ -618,7 +629,6 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
         'payment/createorder',
         paymentData,
       );
-
 
       if (response.data.status) {
         const result = response.data.result;
@@ -791,7 +801,13 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
                 <TouchableOpacity
                   style={styles.uploadButton}
                   disabled={isUploading}
-                  onPress={() => setReceiptModalVisible(true)}>
+                  onPress={() => {
+                    if (totalAmount <= 0) {
+                      NOTIFY_MESSAGE('Invalid payment amount');
+                      return;
+                    }
+                    setReceiptModalVisible(true);
+                  }}>
                   <MaterialDesignIcons
                     name="upload"
                     size={20}

@@ -78,13 +78,13 @@ export default function RsvpList({}) {
     },
     titleText: {
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
-      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+      fontSize: FONTS.FONTSIZE.SMALL,
       color: COLORS.PRIMARYBLACK,
       width: '50%',
     },
     text: {
       fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+      fontSize: FONTS.FONTSIZE.SMALL,
       color: COLORS.PRIMARYBLACK,
       width: '50%',
       textAlign: 'left',
@@ -278,7 +278,7 @@ export default function RsvpList({}) {
                 numberOfLines={1}
                 style={{
                   fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                  fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                  fontSize: FONTS.FONTSIZE.SMALL,
                   color: COLORS.PLACEHOLDERCOLOR,
                   width:
                     res?.toLowerCase() == 'may be' ? width / 1.6 : width / 1.45,
@@ -290,7 +290,7 @@ export default function RsvpList({}) {
                   numberOfLines={1}
                   style={{
                     fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                    fontSize: FONTS.FONTSIZE.SMALL,
+                    fontSize: FONTS.FONTSIZE.SEMIMINI,
                     color: COLORS.PLACEHOLDERCOLOR,
                     width:
                     res?.toLowerCase() == 'may be' ? width / 1.6 : width / 1.45,
@@ -446,7 +446,7 @@ export default function RsvpList({}) {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingVertical: heightPercentageToDP('1.5%'),
+              paddingVertical: heightPercentageToDP('1%'),
               paddingHorizontal: widthPercentageToDP('5%'),
               gap: 30,
             }}>

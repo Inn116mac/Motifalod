@@ -411,9 +411,13 @@ export default function RegistrationPreviewAfterQrCode({route}) {
                     configItem.type === 'file'
                       ? JSON.parse(configItem.value)
                       : [];
-                  mediaUris = Array.isArray(parsedValue)
-                    ? parsedValue
-                    : [parsedValue];
+                  if (Array.isArray(parsedValue)) {
+                    mediaUris = parsedValue.filter(
+                      uri => uri !== null && uri !== undefined && uri !== '',
+                    );
+                  } else {
+                    mediaUris = [parsedValue];
+                  }
                 } catch (error) {
                   mediaUris = configItem.value ? [configItem.value] : [];
                 }
@@ -422,44 +426,39 @@ export default function RegistrationPreviewAfterQrCode({route}) {
                   <View key={index} style={styles.lstImgrow}>
                     <Text
                       style={styles.txtlstLbl}>{`${configItem.label} :`}</Text>
-                    {mediaUris ? (
-                      <ScrollView
-                        contentContainerStyle={{gap: 10}}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}>
-                        {mediaUris?.map((uri, uriIndex) => (
-                          <TouchableOpacity
-                            disabled={imageErrors[uri]}
-                            key={uriIndex}
-                            onPress={() => {
-                              navigation.navigate('FullImageScreen', {
-                                image: uri,
-                              });
-                            }}>
-                            <FastImage
-                              onError={() => handleImageError(uri)}
-                              style={{
-                                height: 100,
-                                width: 100,
-                                borderRadius: 10,
-                                marginRight: 5,
+                    <View style={styles.fileLinksContainer}>
+                      {mediaUris?.length > 0 ? (
+                        mediaUris?.map((uri, uriIndex) => {
+                          const pathParts = uri?.split('/');
+                          const fileName =
+                            pathParts[pathParts?.length - 1] || uri;
+
+                          return (
+                            <TouchableOpacity
+                              key={uriIndex}
+                              onPress={() => {
+                                navigation.navigate('FullImageScreen', {
+                                  image: uri,
+                                });
                               }}
-                              source={
-                                imageErrors[uri]
-                                  ? require('../assets/images/noimage.png')
-                                  : {
-                                      uri: IMAGE_URL + uri,
-                                      cache: FastImage.cacheControl.immutable,
-                                      priority: FastImage.priority.normal,
-                                    }
-                              }
-                            />
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    ) : (
-                      <Text>-</Text>
-                    )}
+                              style={styles.fileLinkItem}>
+                              <Text style={styles.fileLinkText}>
+                                {uriIndex + 1}. {fileName}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })
+                      ) : (
+                        <Text
+                          style={{
+                            fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                            fontSize: FONTS.FONTSIZE.SMALL,
+                            color: COLORS.TITLECOLOR,
+                          }}>
+                          No files to Display!
+                        </Text>
+                      )}
+                    </View>
                   </View>
                 ) : (
                   <View key={index} style={styles.lstrow}>
@@ -632,9 +631,22 @@ const styles = StyleSheet.create({
   },
   lstImgrow: {
     paddingVertical: 2,
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    // flex: 1,
+    flexDirection: 'column',
+    // alignItems: 'center',
+  },
+  fileLinkItem: {
+    paddingVertical: 3,
+  },
+  fileLinkText: {
+    fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+    fontSize: FONTS.FONTSIZE.SMALL,
+    color: COLORS.TITLECOLOR,
+    textDecorationLine: 'underline',
+  },
+  fileLinksContainer: {
+    marginTop: 4,
+    paddingLeft: 10,
   },
   boldLbl: {
     fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,

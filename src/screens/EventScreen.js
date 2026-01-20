@@ -641,25 +641,6 @@ const EventScreen = ({route}) => {
                   keyExtractor={(item, index) => index.toString()}
                   renderItem={renderEvenetItem}
                 />
-                {/* {hasMore && !isLoading && !isLoading1 && (
-                  <TouchableOpacity
-                    onPress={loadMore}
-                    style={{
-                      alignSelf: 'center',
-                      paddingVertical: heightPercentageToDP('1.5%'),
-                      paddingHorizontal: widthPercentageToDP('5%'),
-                    }}>
-                    <Text
-                      style={{
-                        fontSize: FONTS.FONTSIZE.SMALL,
-                        color: 'blue',
-                        textAlign: 'center',
-                        fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                      }}>
-                      Load More...
-                    </Text>
-                  </TouchableOpacity>
-                )} */}
               </View>
             ) : (
               <NoDataFound />
@@ -669,7 +650,7 @@ const EventScreen = ({route}) => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                paddingVertical: heightPercentageToDP('1.5%'),
+                paddingVertical: heightPercentageToDP('1%'),
                 paddingHorizontal: widthPercentageToDP('5%'),
                 gap: 30,
               }}>

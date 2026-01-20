@@ -346,7 +346,7 @@ const QrCodeScanScreen = ({route}) => {
               <Text
                 style={{
                   position: 'absolute',
-                  fontSize: FONTS.FONTSIZE.EXTRALARGE,
+                  fontSize: FONTS.FONTSIZE.MEDIUMLARGE,
                   color: COLORS.PRIMARYRED,
                   fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                   textAlign: 'center',
@@ -380,7 +380,7 @@ const QrCodeScanScreen = ({route}) => {
                 <Text
                   style={{
                     position: 'absolute',
-                    fontSize: FONTS.FONTSIZE.EXTRALARGE,
+                    fontSize: FONTS.FONTSIZE.MEDIUMLARGE,
                     color: COLORS.PRIMARYRED,
                     fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                     textAlign: 'center',

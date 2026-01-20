@@ -925,16 +925,15 @@ const TableScreen = ({route}) => {
         <View style={{flex: 1}}>
           <View
             style={{
-              flex: 1,
               borderRadius: 20,
               backgroundColor: COLORS.PRIMARYWHITE,
               paddingHorizontal: 10,
               marginRight: 10,
-              flex: 1,
               flexDirection: 'row',
               alignItems: 'center',
               borderWidth: 1,
               borderColor: '#ebedf0',
+              height: 38,
             }}>
             <TextInput
               placeholder="Search..."

@@ -16,7 +16,7 @@ import {
   Keyboard,
   Image,
 } from 'react-native';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {AntDesign} from '@react-native-vector-icons/ant-design';
 import {Fontisto} from '@react-native-vector-icons/fontisto';
 import {Feather} from '@react-native-vector-icons/feather';
@@ -52,6 +52,7 @@ import httpClient from '../connection/httpClient';
 import {getFileType} from '../utils/fileType';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const Registration1 = ({route}) => {
   const {item, isFromEventAdmin} = route.params.data;
@@ -3068,6 +3069,42 @@ const Registration1 = ({route}) => {
     return {disabled: true, label: 'Pay Now', showMessage: true};
   };
 
+  const insets = useSafeAreaInsets();
+  const {height: screenHeight} = Dimensions.get('window');
+
+  const [inputY, setInputY] = useState(0);
+  const inputRef = useRef(null);
+
+  // Measure input position relative to SCREEN (not ScrollView)
+  const measureInput = useCallback(() => {
+    if (inputRef.current) {
+      inputRef.current.measureInWindow((x, y, width, height) => {
+        setInputY(y);
+      });
+    }
+  }, []);
+
+  const isNearBottom = useCallback(() => {
+    const gestureArea =
+      Platform.OS === 'android' ? Math.max(insets.bottom, 40) : 0;
+    const dropdownHeight = 200;
+    const safePadding = 20;
+    const spaceNeeded = dropdownHeight + gestureArea + safePadding;
+
+    // Calculate space from BOTTOM of input to bottom of screen
+    const inputHeight = 60; // Approximate input height
+    const spaceBelowInput = screenHeight - (inputY + inputHeight);
+
+    // Use TOP if there's not enough space below
+    const result = spaceBelowInput < spaceNeeded;
+
+    return result;
+  }, [inputY, screenHeight, insets.bottom]);
+
+  const dropdownPosition = useMemo(() => {
+    return isNearBottom() ? 'top' : 'auto';
+  }, [inputY, screenHeight, insets.bottom]);
+
   return (
     <KeyboardAvoidingView
       style={{flex: 1}}
@@ -3587,75 +3624,90 @@ const Registration1 = ({route}) => {
                                   </Text>
                                 )}
                               </Text>
-                              <Dropdown
-                                autoScroll={false}
-                                data={
-                                  filteredData?.length > 0
-                                    ? filteredData
-                                    : [
-                                        {
-                                          label: 'No Data Available',
-                                          value: null,
-                                        },
-                                      ]
-                                }
-                                inputSearchStyle={{
-                                  color: COLORS.PRIMARYBLACK,
-                                  fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                                }}
-                                search
-                                searchPlaceholder="Search..."
-                                labelField="label"
-                                valueField="value"
-                                value={
-                                  moduleData[activeTab].isMultiple
-                                    ? userData[0]?.[item.key]?.value || null
-                                    : formData[activeTab]?.headerConfig?.find(
-                                        field => field?.[item?.key],
-                                      )?.[item?.key]?.value || null
-                                }
-                                onChange={item1 => {
-                                  isSelectingRef.current = true;
-                                  handleSelectDropdown(
-                                    formData[activeTab].headerKey,
-                                    item.key,
-                                    item1?.value,
-                                    item1?.totalMembershipAmount,
-                                    item?.name,
-                                    item?.required,
+                              <View
+                                ref={inputRef}
+                                onLayout={() => {
+                                  setTimeout(measureInput, 100);
+                                }}>
+                                <Dropdown
+                                  dropdownPosition={
+                                    Platform.OS == 'android'
+                                      ? dropdownPosition
+                                      : 'auto'
+                                  }
+                                  onFocus={() => {
+                                    Keyboard.dismiss();
+                                    measureInput();
+                                  }}
+                                  autoScroll={false}
+                                  data={
+                                    filteredData?.length > 0
+                                      ? filteredData
+                                      : [
+                                          {
+                                            label: 'No Data Available',
+                                            value: null,
+                                          },
+                                        ]
+                                  }
+                                  inputSearchStyle={{
+                                    color: COLORS.PRIMARYBLACK,
+                                    fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                  }}
+                                  search
+                                  searchPlaceholder="Search..."
+                                  labelField="label"
+                                  valueField="value"
+                                  value={
+                                    moduleData[activeTab].isMultiple
+                                      ? userData[0]?.[item.key]?.value || null
+                                      : formData[activeTab]?.headerConfig?.find(
+                                          field => field?.[item?.key],
+                                        )?.[item?.key]?.value || null
+                                  }
+                                  onChange={item1 => {
+                                    isSelectingRef.current = true;
+                                    handleSelectDropdown(
+                                      formData[activeTab].headerKey,
+                                      item.key,
+                                      item1?.value,
+                                      item1?.totalMembershipAmount,
+                                      item?.name,
+                                      item?.required,
+                                      item?.label,
+                                    );
+                                    setTimeout(() => {
+                                      isSelectingRef.current = false;
+                                    }, 100);
+                                  }}
+                                  onChangeText={txt => {
+                                    handleSearchChange(txt, item?.name);
+                                  }}
+                                  itemTextStyle={{color: COLORS.PRIMARYBLACK}}
+                                  placeholder={`Select ${capitalizeFirstLetter(
                                     item?.label,
-                                  );
-                                  setTimeout(() => {
-                                    isSelectingRef.current = false;
-                                  }, 100);
-                                }}
-                                onChangeText={txt => {
-                                  handleSearchChange(txt, item?.name);
-                                }}
-                                itemTextStyle={{color: COLORS.PRIMARYBLACK}}
-                                placeholder={`Select ${capitalizeFirstLetter(
-                                  item?.label,
-                                )}`}
-                                placeholderStyle={styles.placeholderStyle}
-                                selectedTextStyle={styles.selectedTextStyle}
-                                renderItem={item => (
-                                  <View style={styles.itemContainer}>
-                                    <Text style={styles.itemText}>
-                                      {item.label}
-                                    </Text>
-                                  </View>
-                                )}
-                                style={[
-                                  styles.dropdown,
-                                  {
-                                    borderColor:
-                                      errors[item?.key] || errors1[item?.key]
-                                        ? COLORS.PRIMARYRED
-                                        : COLORS.INPUTBORDER,
-                                  },
-                                ]}
-                                maxHeight={200}
-                              />
+                                  )}`}
+                                  placeholderStyle={styles.placeholderStyle}
+                                  selectedTextStyle={styles.selectedTextStyle}
+                                  renderItem={item => (
+                                    <View style={styles.itemContainer}>
+                                      <Text style={styles.itemText}>
+                                        {item.label}
+                                      </Text>
+                                    </View>
+                                  )}
+                                  style={[
+                                    styles.dropdown,
+                                    {
+                                      borderColor:
+                                        errors[item?.key] || errors1[item?.key]
+                                          ? COLORS.PRIMARYRED
+                                          : COLORS.INPUTBORDER,
+                                    },
+                                  ]}
+                                  maxHeight={200}
+                                />
+                              </View>
                               {errors[item?.key] && (
                                 <Text
                                   style={{
@@ -4061,6 +4113,7 @@ const Registration1 = ({route}) => {
                               </TouchableOpacity>
                               {datePickerVisible[item?.key] && (
                                 <DateTimePickerModal
+                                  is24Hour={false}
                                   isVisible={datePickerVisible[item?.key]}
                                   mode="date"
                                   display="inline"
@@ -4169,6 +4222,7 @@ const Registration1 = ({route}) => {
                               </TouchableOpacity>
                               {timePickerVisible[item?.key] && (
                                 <DateTimePickerModal
+                                  is24Hour={false}
                                   isVisible={timePickerVisible[item?.key]}
                                   mode="time"
                                   display="inline"

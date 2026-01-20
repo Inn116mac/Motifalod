@@ -13,8 +13,9 @@ import {
   useWindowDimensions,
   KeyboardAvoidingView,
   Keyboard,
+  Dimensions,
 } from 'react-native';
-import React, {useState, useEffect, useRef, useCallback} from 'react';
+import React, {useState, useEffect, useRef, useCallback, useMemo} from 'react';
 import FONTS from '../../theme/Fonts';
 import ButtonComponent from './ButtonComponent';
 import {Entypo} from '@react-native-vector-icons/entypo';
@@ -49,6 +50,7 @@ import {
 import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import {Feather} from '@react-native-vector-icons/feather';
 import {unformatPhone, isPhoneField} from '../../constant/Module';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const APP_ID = '1173536437853030';
 const APP_SECRET = '72e5b8d18e367ca47a066f5d8801e693';
@@ -429,12 +431,12 @@ export default function CustomTab({
       } else if (item.type === 'time') {
         const today = item?.value
           ? item?.value
-          : moment(new Date()).format('h:mm A');
+          : moment(new Date()).format('hh:mm A');
         initialFormData[item.key] = today;
       } else if (item.type === 'datetime') {
         const today = item?.value
           ? item?.value
-          : moment(new Date()).format('MM/DD/YYYY h:mm A');
+          : moment(new Date()).format('MM/DD/YYYY hh:mm A');
         initialFormData[item.key] = today;
       } else if (item.type === 'checkbox-group') {
         const selectedOptions = item.values
@@ -629,7 +631,7 @@ export default function CustomTab({
       }));
       const formattedDate =
         type == 'datetime'
-          ? moment(date).format('MM/DD/YYYY h:mm A')
+          ? moment(date).format('MM/DD/YYYY hh:mm A')
           : moment(date).format('MM/DD/YYYY');
 
       setFormData(prevFormData => ({
@@ -656,7 +658,7 @@ export default function CustomTab({
 
   const onTimeChange = (time, label, key) => {
     if (time) {
-      const formattedTime = moment(time).format('HH:mm A');
+      const formattedTime = moment(time).format('hh:mm A');
       setSelectedTime(prev => ({
         ...prev,
         [key]: time,
@@ -1167,7 +1169,6 @@ export default function CustomTab({
   const handleTextInputPress = (key, required, label) => {
     navigation.navigate('MapScreen', {
       currentLocation: formData[key],
-      onLocationSelect: selectedLocation => {},
       onLabelSelect: location => {
         setLocation(location);
         handleInputChange(key, location, required, label);
@@ -1313,6 +1314,7 @@ export default function CustomTab({
     await fetchData(text); // search via API
   };
 
+  const [preventModalOpen, setPreventModalOpen] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () =>
@@ -1780,6 +1782,80 @@ export default function CustomTab({
     });
   };
 
+  const handleUploadPress = useCallback(
+    item => {
+      if (formData[item?.key]?.length >= 6) {
+        Alert.alert(
+          `Maximum ${isImageGallery ? 'Images' : 'Videos'} Reached`,
+          `You can only upload a maximum of 6 ${
+            isImageGallery ? 'images' : 'videos'
+          }.`,
+          [{text: 'OK'}],
+        );
+        return;
+      }
+      // CRITICAL: Block modal during keyboard animation
+      if (keyboardOpen && !preventModalOpen) {
+        setPreventModalOpen(true);
+        Keyboard.dismiss();
+
+        // Wait for keyboard to FULLY dismiss + extra buffer
+        const timeout = setTimeout(() => {
+          setModalVisible(prev => ({
+            ...prev,
+            [item?.key]: true,
+          }));
+          setPreventModalOpen(false);
+          clearTimeout(timeout);
+        }, 500); // 500ms = keyboard animation + buffer
+        return;
+      }
+
+      // Keyboard already closed
+      setModalVisible(prev => ({
+        ...prev,
+        [item?.key]: true,
+      }));
+    },
+    [keyboardOpen, preventModalOpen, formData],
+  );
+
+  const insets = useSafeAreaInsets();
+  const {height: screenHeight} = Dimensions.get('window');
+
+  const [inputY, setInputY] = useState(0);
+  const inputRef = useRef(null);
+
+  // Measure input position relative to SCREEN (not ScrollView)
+  const measureInput = useCallback(() => {
+    if (inputRef.current) {
+      inputRef.current.measureInWindow((x, y, width, height) => {
+        setInputY(y);
+      });
+    }
+  }, []);
+
+  const isNearBottom = useCallback(() => {
+    const gestureArea =
+      Platform.OS === 'android' ? Math.max(insets.bottom, 40) : 0;
+    const dropdownHeight = 200;
+    const safePadding = 20;
+    const spaceNeeded = dropdownHeight + gestureArea + safePadding;
+
+    // Calculate space from BOTTOM of input to bottom of screen
+    const inputHeight = 60; // Approximate input height
+    const spaceBelowInput = screenHeight - (inputY + inputHeight);
+
+    // Use TOP if there's not enough space below
+    const result = spaceBelowInput < spaceNeeded;
+
+    return result;
+  }, [inputY, screenHeight, insets.bottom]);
+
+  const dropdownPosition = useMemo(() => {
+    return isNearBottom() ? 'top' : 'auto';
+  }, [inputY, screenHeight, insets.bottom]);
+
   return (
     <KeyboardAvoidingView
       style={{flex: 1}}
@@ -2009,6 +2085,7 @@ export default function CustomTab({
                         />
                         <TouchableOpacity
                           onPress={() => {
+                            Keyboard.dismiss();
                             handleTextInputPress(
                               item?.key,
                               item?.required,
@@ -2292,57 +2369,69 @@ export default function CustomTab({
                           </Text>
                         )}
                       </Text>
-                      <Dropdown
-                        autoScroll={false}
-                        data={
-                          item?.values?.length > 0
-                            ? item?.values
-                            : [{label: 'No Data Available', value: null}]
-                        }
-                        inputSearchStyle={{
-                          color: COLORS.PRIMARYBLACK,
-                          fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                        }}
-                        search
-                        searchPlaceholder="Search..."
-                        labelField="label"
-                        valueField="value"
-                        value={formData[item?.key]}
-                        onChange={item1 => {
-                          Keyboard.dismiss();
-                          handleSelectDropdown(
-                            item.key,
-                            item1.value,
-                            item.required,
+                      <View
+                        ref={inputRef}
+                        onLayout={() => {
+                          setTimeout(measureInput, 100);
+                        }}>
+                        <Dropdown
+                          dropdownPosition={
+                            Platform.OS == 'android' ? dropdownPosition : 'auto'
+                          }
+                          onFocus={() => {
+                            Keyboard.dismiss();
+                            measureInput();
+                          }}
+                          autoScroll={false}
+                          data={
+                            item?.values?.length > 0
+                              ? item?.values
+                              : [{label: 'No Data Available', value: null}]
+                          }
+                          inputSearchStyle={{
+                            color: COLORS.PRIMARYBLACK,
+                            fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                          }}
+                          search
+                          searchPlaceholder="Search..."
+                          labelField="label"
+                          valueField="value"
+                          value={formData[item?.key]}
+                          onChange={item1 => {
+                            handleSelectDropdown(
+                              item.key,
+                              item1.value,
+                              item.required,
+                              item?.label,
+                              item?.name,
+                              response1?.constantName?.toLowerCase() === 'rsvp',
+                            );
+                          }}
+                          onChangeText={txt => {
+                            handleSearchChange(txt, item?.name);
+                          }}
+                          itemTextStyle={{color: COLORS.PRIMARYBLACK}}
+                          placeholder={`Select ${capitalizeFirstLetter(
                             item?.label,
-                            item?.name,
-                            response1?.constantName?.toLowerCase() === 'rsvp',
-                          );
-                        }}
-                        onChangeText={txt => {
-                          handleSearchChange(txt, item?.name);
-                        }}
-                        itemTextStyle={{color: COLORS.PRIMARYBLACK}}
-                        placeholder={`Select ${capitalizeFirstLetter(
-                          item?.label,
-                        )}`}
-                        placeholderStyle={styles.placeholderStyle}
-                        selectedTextStyle={styles.selectedTextStyle}
-                        renderItem={item => (
-                          <View style={styles.itemContainer}>
-                            <Text style={styles.itemText}>{item.label}</Text>
-                          </View>
-                        )}
-                        style={[
-                          styles.dropdown,
-                          {
-                            borderColor: errors[item?.key]
-                              ? COLORS.PRIMARYRED
-                              : COLORS.INPUTBORDER,
-                          },
-                        ]}
-                        maxHeight={200}
-                      />
+                          )}`}
+                          placeholderStyle={styles.placeholderStyle}
+                          selectedTextStyle={styles.selectedTextStyle}
+                          renderItem={item => (
+                            <View style={styles.itemContainer}>
+                              <Text style={styles.itemText}>{item.label}</Text>
+                            </View>
+                          )}
+                          style={[
+                            styles.dropdown,
+                            {
+                              borderColor: errors[item?.key]
+                                ? COLORS.PRIMARYRED
+                                : COLORS.INPUTBORDER,
+                            },
+                          ]}
+                          maxHeight={200}
+                        />
+                      </View>
                       {errors[item?.key] && (
                         <Text
                           style={{
@@ -2397,25 +2486,7 @@ export default function CustomTab({
                             isVideoGallery ? 'Upload Video' : 'Upload Image'
                           }
                           width={'50%'}
-                          onPress={() => {
-                            Keyboard.dismiss();
-                            if (formData[item?.key]?.length >= 6) {
-                              Alert.alert(
-                                `Maximum ${
-                                  isImageGallery ? 'Images' : 'Videos'
-                                } Reached`,
-                                `You can only upload a maximum of 6 ${
-                                  isImageGallery ? 'images' : 'videos'
-                                }.`,
-                                [{text: 'OK'}],
-                              );
-                              return;
-                            }
-                            setModalVisible(prev => ({
-                              ...prev,
-                              [item?.key]: true,
-                            }));
-                          }}
+                          onPress={() => handleUploadPress(item)}
                         />
                         {/* {uploadComplete[item?.key] && (
                           <Text
@@ -2630,6 +2701,7 @@ export default function CustomTab({
                           justifyContent: 'space-between',
                         }}
                         onPress={() => {
+                          Keyboard.dismiss();
                           setDatePickerVisible(prev => ({
                             ...prev,
                             [item?.key]: true,
@@ -2654,6 +2726,7 @@ export default function CustomTab({
 
                       {datePickerVisible[item?.key] && (
                         <DateTimePickerModal
+                          is24Hour={false}
                           isVisible={datePickerVisible[item?.key]}
                           mode="date"
                           display="inline"
@@ -2730,6 +2803,7 @@ export default function CustomTab({
                           justifyContent: 'space-between',
                         }}
                         onPress={() => {
+                          Keyboard.dismiss();
                           setDatePickerVisible(prev => ({
                             ...prev,
                             [item?.key]: true,
@@ -2754,6 +2828,7 @@ export default function CustomTab({
 
                       {datePickerVisible[item?.key] && (
                         <DateTimePickerModal
+                          is24Hour={false}
                           isVisible={datePickerVisible[item?.key]}
                           mode="datetime"
                           display="inline"
@@ -2836,14 +2911,15 @@ export default function CustomTab({
                               alignItems: 'center',
                               gap: 8,
                             }}
-                            onPress={() =>
+                            onPress={() => {
+                              Keyboard.dismiss();
                               handleCheckboxSelect(
                                 item?.key,
                                 checkboxItem.value,
                                 item?.required,
                                 item?.label,
-                              )
-                            }>
+                              );
+                            }}>
                             {formData[item?.key]
                               ?.split(',')
                               ?.includes(String(checkboxItem.value)) ? (
@@ -2923,6 +2999,7 @@ export default function CustomTab({
                           justifyContent: 'space-between',
                         }}
                         onPress={() => {
+                          Keyboard.dismiss();
                           setTimePickerVisible(prev => ({
                             ...prev,
                             [item?.key]: true,
@@ -2947,6 +3024,7 @@ export default function CustomTab({
 
                       {timePickerVisible[item?.key] && (
                         <DateTimePickerModal
+                          is24Hour={false}
                           isVisible={timePickerVisible[item?.key]}
                           mode="time"
                           display={Platform.OS == 'ios' ? 'spinner' : 'inline'}

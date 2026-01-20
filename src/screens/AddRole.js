@@ -401,9 +401,7 @@ const AddRole = ({route}) => {
               </View>
 
               {/* Scrollable Table Rows */}
-              <ScrollView
-                style={{flex: 1}}
-                contentContainerStyle={{paddingBottom: 10}}>
+              <ScrollView style={{flex: 1}} contentContainerStyle={{}}>
                 {moduleData.map((module, index) => (
                   <View key={index} style={styles.tableRow}>
                     {/* Module Select Checkbox */}

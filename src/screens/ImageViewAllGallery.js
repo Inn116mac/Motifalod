@@ -10,7 +10,10 @@ import {
   Platform,
 } from 'react-native';
 import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
-import {heightPercentageToDP} from 'react-native-responsive-screen';
+import {
+  heightPercentageToDP,
+  widthPercentageToDP,
+} from 'react-native-responsive-screen';
 import FONTS from '../theme/Fonts';
 import COLORS from '../theme/Color';
 import {IMAGE_URL} from '../connection/Config';
@@ -47,7 +50,7 @@ export default function ImageViewAllGallery({route}) {
     },
     image: {
       height: heightPercentageToDP(13),
-      width: width / 3 - 15,
+      width: width / 3 - 18,
       borderRadius: 10,
       backgroundColor: '#f0f0f0',
     },
@@ -206,21 +209,22 @@ export default function ImageViewAllGallery({route}) {
     }
   }, [allImageKeys, currentBatchIndex, BATCH_SIZE]);
 
-  // 🔥 Handle successful image load
   const handleImageLoad = useCallback(
     imageKey => {
-      const attempts = retryCount[imageKey] || 0;
-      setHasError(prev => ({...prev, [imageKey]: false}));
+      const hasFailed = hasError[imageKey] === true;
 
-      if (Platform.OS === 'ios') {
-        loadingImages.current.delete(imageKey);
-        checkBatchCompletion();
+      if (!hasFailed) {
+        setHasError(prev => ({...prev, [imageKey]: false}));
+
+        if (Platform.OS === 'ios') {
+          loadingImages.current.delete(imageKey);
+          checkBatchCompletion();
+        }
       }
     },
-    [retryCount, currentBatchIndex, allImageKeys],
+    [hasError, currentBatchIndex, allImageKeys],
   );
 
-  // 🔥 Handle image error with retry
   const handleImageError = useCallback(
     imageKey => {
       const attempts = retryCount[imageKey] || 0;
@@ -229,20 +233,37 @@ export default function ImageViewAllGallery({route}) {
         const nextAttempt = attempts + 1;
         const delay = RETRY_DELAYS[attempts] || 1000;
 
+        console.warn(
+          `⚠️ Image error: ${imageKey}, retry ${nextAttempt}/${MAX_RETRIES} in ${delay}ms`,
+        );
+
         retryTimeouts.current[imageKey] = setTimeout(() => {
           setRetryCount(prev => ({...prev, [imageKey]: nextAttempt}));
           setRetryKey(prev => ({...prev, [imageKey]: Date.now()}));
 
-          loadingImages.current.add(imageKey);
+          if (Platform.OS === 'ios') {
+            loadingImages.current.add(imageKey);
+          }
         }, delay);
       } else {
-        setHasError(prev => ({...prev, [imageKey]: true}));
-        loadingImages.current.delete(imageKey);
+        // PERMANENT FAILURE - Prevent further state updates
+        console.error(
+          `❌ Image permanently failed: ${imageKey} after ${MAX_RETRIES} retries`,
+        );
 
-        checkBatchCompletion();
+        // Set error state ONCE
+        setHasError(prev => {
+          if (prev[imageKey] === true) return prev; // Already failed, don't update
+          return {...prev, [imageKey]: true};
+        });
+
+        if (Platform.OS === 'ios') {
+          loadingImages.current.delete(imageKey);
+          checkBatchCompletion();
+        }
       }
     },
-    [retryCount, currentBatchIndex, allImageKeys],
+    [retryCount], // Minimal dependencies
   );
 
   // 🔥 Check if batch is complete
@@ -308,26 +329,32 @@ export default function ImageViewAllGallery({route}) {
   const renderItemIOS = ({item, index}) => {
     const imageKey = item.imageKey;
     const shouldLoad = visibleImages.has(imageKey);
-    const currentRetryKey = retryKey[imageKey] || 0;
+    const hasFailed = hasError[imageKey] === true;
+
+    // Don't use retryKey if already failed - keep key stable
+    const currentRetryKey = hasFailed ? 'failed' : retryKey[imageKey] || 0;
     const fullUrl = IMAGE_URL + item?.imagePath;
+    const isLoading = loadingImages.current.has(imageKey) && !hasFailed;
 
     return (
       <View key={`wrapper_${index}`} style={styles.imageContainer}>
         <TouchableOpacity
-          disabled={hasError[imageKey]}
+          disabled={hasFailed}
           style={styles.imageContainer}
-          onPress={() =>
-            navigation.navigate('FullImageScreen', {
-              image: item?.imagePath,
-            })
-          }>
+          onPress={() => {
+            if (!hasFailed) {
+              navigation.navigate('FullImageScreen', {
+                image: item?.imagePath,
+              });
+            }
+          }}>
           <View style={{position: 'relative'}}>
             {shouldLoad ? (
               <FastImage
                 key={`${imageKey}_${currentRetryKey}`}
                 defaultSource={require('../assets/images/Image_placeholder.png')}
                 source={
-                  hasError[imageKey]
+                  hasFailed
                     ? require('../assets/images/noimage.png')
                     : {
                         uri: fullUrl,
@@ -336,28 +363,33 @@ export default function ImageViewAllGallery({route}) {
                       }
                 }
                 style={styles.image}
-                resizeMode={hasError[imageKey] ? 'contain' : 'cover'}
-                onLoad={() => handleImageLoad(imageKey)}
+                resizeMode={hasFailed ? 'contain' : 'cover'}
+                onLoad={() => {
+                  if (!hasFailed) {
+                    handleImageLoad(imageKey);
+                  }
+                }}
                 onError={() => {
-                  handleImageError(imageKey);
+                  if (!hasFailed) {
+                    console.warn(`❌ Image load error: ${imageKey}`);
+                    handleImageError(imageKey);
+                  }
                 }}
               />
             ) : (
               <FastImage
                 source={require('../assets/images/Image_placeholder.png')}
                 style={styles.image}
-                resizeMode="cover"
+                resizeMode="contain"
               />
             )}
 
             {/* Loading indicator */}
-            {shouldLoad &&
-              loadingImages.current.has(imageKey) &&
-              !hasError[imageKey] && (
-                <View style={styles.loadingOverlay}>
-                  <ActivityIndicator size="small" color={COLORS.LABELCOLOR} />
-                </View>
-              )}
+            {shouldLoad && isLoading && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="small" color={COLORS.LABELCOLOR} />
+              </View>
+            )}
           </View>
         </TouchableOpacity>
       </View>
@@ -444,10 +476,11 @@ export default function ImageViewAllGallery({route}) {
               <View
                 style={{
                   flexDirection: 'row',
-                  justifyContent: 'center',
                   alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: heightPercentageToDP('1%'),
+                  paddingHorizontal: widthPercentageToDP('5%'),
                   gap: 30,
-                  paddingVertical: 10,
                 }}>
                 {pageNumber > 1 && (
                   <TouchableOpacity

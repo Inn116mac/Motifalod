@@ -13,8 +13,9 @@ import {
   useWindowDimensions,
   KeyboardAvoidingView,
   Keyboard,
+  Dimensions,
 } from 'react-native';
-import React, {useState, useEffect, useRef, useCallback} from 'react';
+import React, {useState, useEffect, useRef, useCallback, useMemo} from 'react';
 import FONTS from '../../theme/Fonts';
 import {Fontisto} from '@react-native-vector-icons/fontisto';
 import {Entypo} from '@react-native-vector-icons/entypo';
@@ -42,6 +43,7 @@ import {
   unformatPhone,
   isPhoneField,
 } from '../../constant/Module';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
   const {width, height} = useWindowDimensions();
@@ -579,7 +581,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       }));
       const formattedDate =
         type == 'datetime'
-          ? moment(date).format('MM/DD/YYYY h:mm A')
+          ? moment(date).format('MM/DD/YYYY hh:mm A')
           : moment(date).format('MM/DD/YYYY');
 
       setFormData(prevState => ({
@@ -618,7 +620,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
 
   const onTimeChange = (key, time, label, isRequired) => {
     if (time) {
-      const formattedTime = moment(time).format('HH:mm A');
+      const formattedTime = moment(time).format('hh:mm A');
       setSelectedTime(prev => ({
         ...prev,
         [key]: time,
@@ -1169,7 +1171,6 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
   const handleTextInputPress = (key, item) => {
     navigation.navigate('MapScreen', {
       currentLocation: item?.value,
-      onLocationSelect: selectedLocation => {},
       onLabelSelect: location => {
         handleInputChange(item?.name, location, item?.required, item?.label);
       },
@@ -1293,6 +1294,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
   };
 
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [preventModalOpen, setPreventModalOpen] = useState(false);
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () =>
       setKeyboardOpen(true),
@@ -1329,6 +1331,66 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
     }
     return new Date();
   };
+
+  const handleUploadPress = useCallback(
+    item => {
+      if (keyboardOpen && !preventModalOpen) {
+        setPreventModalOpen(true);
+        Keyboard.dismiss();
+
+        const timeOut = setTimeout(() => {
+          setModalVisible(prev => ({
+            ...prev,
+            [item?.name]: true,
+          }));
+          setPreventModalOpen(false);
+          clearTimeout(timeOut);
+        }, 500);
+        return;
+      }
+      setModalVisible(prev => ({
+        ...prev,
+        [item?.name]: true,
+      }));
+    },
+    [keyboardOpen, preventModalOpen, formData],
+  );
+
+  const insets = useSafeAreaInsets();
+  const {height: screenHeight} = Dimensions.get('window');
+
+  const [inputY, setInputY] = useState(0);
+  const inputRef = useRef(null);
+
+  // Measure input position relative to SCREEN (not ScrollView)
+  const measureInput = useCallback(() => {
+    if (inputRef.current) {
+      inputRef.current.measureInWindow((x, y, width, height) => {
+        setInputY(y);
+      });
+    }
+  }, []);
+
+  const isNearBottom = useCallback(() => {
+    const gestureArea =
+      Platform.OS === 'android' ? Math.max(insets.bottom, 40) : 0;
+    const dropdownHeight = 200;
+    const safePadding = 20;
+    const spaceNeeded = dropdownHeight + gestureArea + safePadding;
+
+    // Calculate space from BOTTOM of input to bottom of screen
+    const inputHeight = 60; // Approximate input height
+    const spaceBelowInput = screenHeight - (inputY + inputHeight);
+
+    // Use TOP if there's not enough space below
+    const result = spaceBelowInput < spaceNeeded;
+
+    return result;
+  }, [inputY, screenHeight, insets.bottom]);
+
+  const dropdownPosition = useMemo(() => {
+    return isNearBottom() ? 'top' : 'auto';
+  }, [inputY, screenHeight, insets.bottom]);
 
   return (
     <KeyboardAvoidingView
@@ -1501,6 +1563,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                         />
                         <TouchableOpacity
                           onPress={() => {
+                            Keyboard.dismiss();
                             handleTextInputPress(item?.name, item);
                           }}>
                           <Text
@@ -1656,58 +1719,78 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           </Text>
                         )}
                       </Text>
-                      <Dropdown
-                        disable={shouldDisableRelationship}
-                        onChangeText={txt => {
-                          handleSearchChange(txt, item?.name);
-                        }}
-                        search={
-                          (editItem?.contentType === 'RSVP' &&
-                            item?.name === 'member') ||
-                          (editItem?.contentType == 'FAMILY MEMBER' &&
-                            item?.name === 'member')
-                            ? false
-                            : true
-                        }
-                        searchPlaceholder="Search..."
-                        autoScroll={false}
-                        data={
-                          item?.values?.length > 0
-                            ? item?.values
-                            : [{label: 'No Data Available', value: null}]
-                        }
-                        labelField="label"
-                        valueField="value"
-                        value={item?.value}
-                        onChange={item1 => {
-                          handleSelectDropdown(
-                            item?.name,
-                            item1.value,
+                      <View
+                        ref={inputRef}
+                        onLayout={() => {
+                          setTimeout(measureInput, 100);
+                        }}>
+                        <Dropdown
+                          dropdownPosition={
+                            Platform.OS == 'android' ? dropdownPosition : 'auto'
+                          }
+                          onFocus={() => {
+                            Keyboard.dismiss();
+                            measureInput();
+                          }}
+                          disable={shouldDisableRelationship}
+                          onChangeText={txt => {
+                            handleSearchChange(txt, item?.name);
+                          }}
+                          search={
+                            (editItem?.contentType === 'RSVP' &&
+                              item?.name === 'member') ||
+                            (editItem?.contentType == 'FAMILY MEMBER' &&
+                              item?.name === 'member')
+                              ? false
+                              : true
+                          }
+                          searchPlaceholder="Search..."
+                          autoScroll={false}
+                          data={
+                            item?.values?.length > 0
+                              ? item?.values
+                              : [{label: 'No Data Available', value: null}]
+                          }
+                          labelField="label"
+                          valueField="value"
+                          value={item?.value}
+                          onChange={item1 => {
+                            handleSelectDropdown(
+                              item?.name,
+                              item1.value,
+                              item?.label,
+                              item?.required,
+                            );
+                          }}
+                          itemTextStyle={{color: COLORS.PRIMARYBLACK}}
+                          placeholder={`Select ${capitalizeFirstLetter(
                             item?.label,
-                            item?.required,
-                          );
-                        }}
-                        itemTextStyle={{color: COLORS.PRIMARYBLACK}}
-                        placeholder={`Select ${capitalizeFirstLetter(
-                          item?.label,
-                        )}`}
-                        placeholderStyle={styles.placeholderStyle}
-                        selectedTextStyle={styles.selectedTextStyle}
-                        renderItem={item => (
-                          <View style={styles.itemContainer}>
-                            <Text style={styles.itemText}>{item.label}</Text>
-                          </View>
-                        )}
-                        style={[
-                          styles.dropdown,
-                          {
-                            borderColor: errors[item?.key]
-                              ? COLORS.PRIMARYRED
-                              : COLORS.INPUTBORDER,
-                          },
-                        ]}
-                        maxHeight={200}
-                      />
+                          )}`}
+                          placeholderStyle={styles.placeholderStyle}
+                          selectedTextStyle={styles.selectedTextStyle}
+                          renderItem={item => (
+                            <View style={styles.itemContainer}>
+                              <Text style={styles.itemText}>{item.label}</Text>
+                            </View>
+                          )}
+                          style={[
+                            {
+                              borderColor: errors[item?.key]
+                                ? COLORS.PRIMARYRED
+                                : COLORS.INPUTBORDER,
+                              height: 38,
+                              borderWidth: 1,
+                              borderRadius: 10,
+                              backgroundColor: shouldDisableRelationship
+                                ? '#8080801a'
+                                : COLORS.PRIMARYWHITE,
+                              paddingHorizontal: 10,
+                              justifyContent: 'center',
+                            },
+                          ]}
+                          maxHeight={200}
+                        />
+                      </View>
                       {errors[item?.name] && (
                         <Text
                           style={{
@@ -1761,13 +1844,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                             isVideoGallery ? 'Upload Video' : 'Upload Image'
                           }
                           width={'50%'}
-                          onPress={() => {
-                            Keyboard.dismiss();
-                            setModalVisible(prev => ({
-                              ...prev,
-                              [item?.name]: true,
-                            }));
-                          }}
+                          onPress={() => handleUploadPress(item)}
                         />
                       </View>
 
@@ -1796,21 +1873,32 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                             horizontal
                             showsHorizontalScrollIndicator={false}>
                             {(() => {
-                              let imageUris = [];
+                              let rawValue = formData[item?.name]?.value;
 
-                              try {
-                                const parsedValue = JSON.parse(
-                                  formData[item?.name]?.value,
-                                );
-
-                                imageUris = Array.isArray(parsedValue)
-                                  ? parsedValue
-                                  : [parsedValue];
-                              } catch (error) {
-                                imageUris = [formData[item?.name]?.value];
+                              let mediaUris = [];
+                              if (rawValue) {
+                                try {
+                                  const parsedValue = JSON.parse(rawValue);
+                                  const rawArray = Array.isArray(parsedValue)
+                                    ? parsedValue
+                                    : [parsedValue];
+                                  mediaUris = rawArray.filter(
+                                    uri =>
+                                      uri &&
+                                      typeof uri === 'string' &&
+                                      uri.trim() !== '',
+                                  );
+                                } catch (error) {
+                                  if (
+                                    typeof rawValue === 'string' &&
+                                    rawValue.trim() !== ''
+                                  ) {
+                                    mediaUris = [rawValue];
+                                  }
+                                }
                               }
 
-                              return imageUris.map((uri, index) => (
+                              return mediaUris.map((uri, index) => (
                                 <View key={index} style={{margin: 5}}>
                                   {getFileType(uri) === 'video' ? (
                                     <View>
@@ -1970,6 +2058,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           justifyContent: 'space-between',
                         }}
                         onPress={() => {
+                          Keyboard.dismiss();
                           setDatePickerVisible(prev => ({
                             ...prev,
                             [item?.name]: true,
@@ -1994,6 +2083,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
 
                       {datePickerVisible[item?.name] && (
                         <DateTimePickerModal
+                          is24Hour={false}
                           isVisible={datePickerVisible[item?.name]}
                           mode="date"
                           display="inline"
@@ -2071,6 +2161,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           justifyContent: 'space-between',
                         }}
                         onPress={() => {
+                          Keyboard.dismiss();
                           setDatePickerVisible(prev => ({
                             ...prev,
                             [item?.name]: true,
@@ -2095,6 +2186,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
 
                       {datePickerVisible[item?.name] && (
                         <DateTimePickerModal
+                          is24Hour={false}
                           isVisible={datePickerVisible[item?.name]}
                           mode="datetime"
                           display="inline"
@@ -2169,14 +2261,15 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                               alignItems: 'center',
                               gap: 8,
                             }}
-                            onPress={() =>
+                            onPress={() => {
+                              Keyboard.dismiss();
                               handleCheckboxSelect(
                                 key,
                                 checkboxItem.value,
                                 item?.required,
                                 item?.label,
-                              )
-                            }>
+                              );
+                            }}>
                             {item?.value
                               ?.split(',')
                               .includes(String(checkboxItem.value)) ? (
@@ -2254,6 +2347,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           justifyContent: 'space-between',
                         }}
                         onPress={() => {
+                          Keyboard.dismiss();
                           setTimePickerVisible(prev => ({
                             ...prev,
                             [item?.name]: true,
@@ -2278,6 +2372,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
 
                       {timePickerVisible[item?.name] && (
                         <DateTimePickerModal
+                          is24Hour={false}
                           isVisible={timePickerVisible[item?.name]}
                           mode="time"
                           display={Platform.OS == 'ios' ? 'spinner' : 'inline'}

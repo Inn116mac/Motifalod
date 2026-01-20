@@ -115,7 +115,7 @@ const NewPassword = ({route}) => {
   return (
     <KeyboardAvoidingView
       style={{flex: 1}}
-      behavior={Platform.OS === 'ios' ? undefined : 'height'}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View
         style={{
           flex: 1,
@@ -146,8 +146,15 @@ const NewPassword = ({route}) => {
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
-            paddingBottom: keyboardOpen && Platform.OS == 'android' ? 34 : 0,
+            paddingBottom:
+              keyboardOpen && Platform.OS == 'android'
+                ? 34
+                : keyboardOpen && Platform.OS == 'ios'
+                ? 40
+                : 0,
           }}
+          keyboardShouldPersistTaps="handled"
+          scrollToOverflowEnabled={true}
           showsVerticalScrollIndicator={false}
           style={{
             borderRadius: 10,

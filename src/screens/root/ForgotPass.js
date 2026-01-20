@@ -144,6 +144,7 @@ const ForgotPass = () => {
                   setText={setEmail}
                   placeholder={'Email'}
                   title={'Email'}
+                  keyboardType={'email-address'}
                 />
               </View>
               <View style={{marginTop: 'auto'}}>

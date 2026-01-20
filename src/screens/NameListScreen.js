@@ -398,7 +398,7 @@ const NameListScreen = ({route}) => {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingVertical: heightPercentageToDP('0.5%'),
+              paddingVertical: heightPercentageToDP('1%'),
               paddingHorizontal: widthPercentageToDP('5%'),
               gap: 30,
             }}>

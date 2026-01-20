@@ -113,7 +113,7 @@ const MemberScreen = () => {
   const [openIndex, setOpenIndex] = useState(null);
 
   const renderMemberList = ({item, index}) => {
-    const number = index >= 0 && index <= 9 ? `0${index + 1}` : `${index + 1}`;
+    const number = index + 1 < 10 ? `0${index + 1}` : `${index + 1}`;
     const handleToggle = index => {
       setOpenIndex(openIndex === index ? null : index);
     };

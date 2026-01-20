@@ -9,7 +9,10 @@ import {
   Platform,
 } from 'react-native';
 import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
-import {heightPercentageToDP} from 'react-native-responsive-screen';
+import {
+  heightPercentageToDP,
+  widthPercentageToDP,
+} from 'react-native-responsive-screen';
 import Video from 'react-native-video';
 import {useNavigation} from '@react-navigation/native';
 import FONTS from '../theme/Fonts';
@@ -36,6 +39,12 @@ const VideoViewAllGallery = ({route}) => {
     container: {
       flex: 1,
       overflow: 'hidden',
+    },
+    paginationText: {
+      fontSize: FONTS.FONTSIZE.SMALL,
+      color: 'blue',
+      textAlign: 'center',
+      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
     },
   });
 
@@ -115,13 +124,6 @@ const VideoViewAllGallery = ({route}) => {
 
   const [hasError, setHasError] = useState({});
 
-  const handleVideoError = index => {
-    setHasError(prevState => ({
-      ...prevState,
-      [index]: true,
-    }));
-  };
-
   const {isConnected, networkLoading} = useNetworkStatus();
 
   const allImages = rsvpConfig.flatMap(item => {
@@ -138,15 +140,13 @@ const VideoViewAllGallery = ({route}) => {
     }));
   });
 
-  const [videoLoading, setVideoLoading] = useState({});
-
   const renderItem = ({item, index}) => {
-    const uniqueKey = index;
+    const uniqueKey = `viewall_${index}`;
 
     return (
       <View style={styles.imageContainer}>
         <TouchableOpacity
-          disabled={Platform.OS == 'android' && hasError[uniqueKey]}
+          disabled={hasError[uniqueKey]}
           style={{
             borderRadius: 10,
             overflow: 'hidden',
@@ -169,7 +169,7 @@ const VideoViewAllGallery = ({route}) => {
               }
               style={{
                 height: heightPercentageToDP(12),
-                width: width / 3 - 20,
+                width: width / 3 - 18,
                 borderRadius: 10,
                 backgroundColor: '#f0f0f0',
               }}
@@ -183,40 +183,59 @@ const VideoViewAllGallery = ({route}) => {
               }}
             />
           )}
+          {Platform.OS == 'ios' &&
+            (hasError[uniqueKey] ? (
+              <FastImage
+                source={require('../assets/images/video.jpg')}
+                style={{
+                  height: heightPercentageToDP(12),
+                  width: width / 3 - 18,
+                  borderRadius: 10,
+                  backgroundColor: '#f0f0f0',
+                }}
+                resizeMode="contain"
+              />
+            ) : (
+              <Video
+                poster={{
+                  source: require('../assets/images/Video_placeholder.png'),
+                  resizeMode: 'cover',
+                }}
+                source={{uri: IMAGE_URL + item.videoPath, cache: true}}
+                controls={false}
+                paused={true}
+                muted={true}
+                style={{
+                  height: heightPercentageToDP(12),
+                  width: width / 3 - 18,
+                  borderRadius: 10,
+                  backgroundColor: '#f0f0f0',
+                }}
+                onError={e => {
+                  setHasError(prevState => ({
+                    ...prevState,
+                    [uniqueKey]: true,
+                  }));
+                }}
+                resizeMode="cover"
+              />
+            ))}
 
-          {Platform.OS == 'ios' && (
-            <Video
-              poster={{
-                source: require('../assets/images/Video_placeholder.png'),
-                resizeMode: 'cover',
-              }}
-              source={{uri: IMAGE_URL + item.videoPath, cache: true}}
-              controls={false}
-              paused={true}
-              muted={true}
+          {!hasError[uniqueKey] && (
+            <View
               style={{
-                height: 100,
-                width: width / 3 - 18,
-                borderRadius: 10,
-              }}
-              resizeMode="cover"
-            />
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: [{translateX: -12}, {translateY: -12}],
+              }}>
+              <FontAwesome6
+                name="circle-play"
+                size={24}
+                color="rgba(255,255,255,0.8)"
+              />
+            </View>
           )}
-
-          <View
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: [{translateX: -12}, {translateY: -12}],
-            }}>
-            <FontAwesome6
-              iconStyle="solid"
-              name="circle-play"
-              size={24}
-              color="rgba(255,255,255,0.8)"
-            />
-          </View>
         </TouchableOpacity>
       </View>
     );
@@ -272,43 +291,23 @@ const VideoViewAllGallery = ({route}) => {
               <View
                 style={{
                   flexDirection: 'row',
+                  alignItems: 'center',
                   justifyContent: 'center',
+                  paddingVertical: heightPercentageToDP('1%'),
+                  paddingHorizontal: widthPercentageToDP('5%'),
                   gap: 30,
                 }}>
                 {pageNumber > 1 && (
                   <TouchableOpacity
                     onPress={() =>
                       setPageNumber(prevPage => Math.max(prevPage - 1, 1))
-                    }
-                    style={{
-                      paddingVertical: heightPercentageToDP('1%'),
-                    }}>
-                    <Text
-                      style={{
-                        fontSize: FONTS.FONTSIZE.SMALL,
-                        color: 'blue',
-                        textAlign: 'center',
-                        fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                      }}>
-                      Previous
-                    </Text>
+                    }>
+                    <Text style={styles.paginationText}>Previous</Text>
                   </TouchableOpacity>
                 )}
                 {hasMore && (
-                  <TouchableOpacity
-                    onPress={loadMore}
-                    style={{
-                      paddingVertical: heightPercentageToDP('1%'),
-                    }}>
-                    <Text
-                      style={{
-                        fontSize: FONTS.FONTSIZE.SMALL,
-                        color: 'blue',
-                        textAlign: 'center',
-                        fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                      }}>
-                      Load More
-                    </Text>
+                  <TouchableOpacity onPress={loadMore}>
+                    <Text style={styles.paginationText}>Load More</Text>
                   </TouchableOpacity>
                 )}
               </View>

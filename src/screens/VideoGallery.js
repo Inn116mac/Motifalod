@@ -13,9 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
-import {
-  heightPercentageToDP,
-} from 'react-native-responsive-screen';
+import {heightPercentageToDP} from 'react-native-responsive-screen';
 import Loader from '../components/root/Loader';
 import {NOTIFY_MESSAGE} from '../constant/Module';
 import {IMAGE_URL} from '../connection/Config';
@@ -360,10 +358,7 @@ const VideoGallery = ({route}) => {
                 key={`${img.videoPath}_${imgIndex}`}
                 style={{width: width / 3 - 17}}>
                 <TouchableOpacity
-                  disabled={
-                    Platform.OS == 'android' &&
-                    hasError[`${img.videoPath}_${imgIndex}`]
-                  }
+                  disabled={hasError[`${img.videoPath}_${imgIndex}`]}
                   onPress={() => {
                     navigation.navigate('VideoGalleryVideoScreen', {
                       videoData: img?.videoPath,
@@ -402,39 +397,59 @@ const VideoGallery = ({route}) => {
                       defaultSource={require('../assets/images/Video_placeholder.png')}
                     />
                   )}
-                  {Platform.OS == 'ios' && (
-                    <Video
-                      poster={{
-                        source: require('../assets/images/Video_placeholder.png'),
-                        resizeMode: 'cover',
-                      }}
-                      source={{uri: IMAGE_URL + img.videoPath, cache: true}}
-                      controls={false}
-                      paused={true}
-                      muted={true}
-                      style={{
-                        height: 100,
-                        width: width / 3 - 18,
-                        borderRadius: 10,
-                      }}
-                      resizeMode="cover"
-                    />
-                  )}
+                  {Platform.OS == 'ios' &&
+                    (hasError[`${img?.videoPath}_${imgIndex}`] ? (
+                      <FastImage
+                        source={require('../assets/images/video.jpg')}
+                        style={{
+                          height: heightPercentageToDP(12),
+                          width: width / 3 - 18,
+                          borderRadius: 10,
+                          backgroundColor: '#f0f0f0',
+                        }}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <Video
+                        poster={{
+                          source: require('../assets/images/Video_placeholder.png'),
+                          resizeMode: 'cover',
+                        }}
+                        source={{uri: IMAGE_URL + img.videoPath, cache: true}}
+                        controls={false}
+                        paused={true}
+                        muted={true}
+                        style={{
+                          height: heightPercentageToDP(12),
+                          width: width / 3 - 18,
+                          borderRadius: 10,
+                          backgroundColor: '#f0f0f0',
+                        }}
+                        onError={e => {
+                          setHasError(prevState => ({
+                            ...prevState,
+                            [`${img?.videoPath}_${imgIndex}`]: true,
+                          }));
+                        }}
+                        resizeMode="cover"
+                      />
+                    ))}
 
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: [{translateX: -12}, {translateY: -12}],
-                    }}>
-                    <FontAwesome6
-                      iconStyle="solid"
-                      name="circle-play"
-                      size={24}
-                      color="rgba(255,255,255,0.8)"
-                    />
-                  </View>
+                  {!hasError[`${img?.videoPath}_${imgIndex}`] && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: [{translateX: -12}, {translateY: -12}],
+                      }}>
+                      <FontAwesome6
+                        name="circle-play"
+                        size={24}
+                        color="rgba(255,255,255,0.8)"
+                      />
+                    </View>
+                  )}
                 </TouchableOpacity>
 
                 <Text numberOfLines={1} style={styles.txtAddress}>

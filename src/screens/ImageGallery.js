@@ -85,7 +85,7 @@ export default function ImageGallery({route}) {
     },
     image: {
       height: heightPercentageToDP(12),
-      width: width / 3 - 17,
+      width: width / 3 - 18,
       marginTop: 4,
       borderRadius: 10,
       backgroundColor: '#f0f0f0',
@@ -406,7 +406,6 @@ export default function ImageGallery({route}) {
     [currentBatchIndex, allImageKeys, BATCH_SIZE, retryCount],
   );
 
-  // 🔥 NEW: Handle image error with retry logic
   const handleImageError = useCallback(
     imageKey => {
       const attempts = retryCount[imageKey] || 0;
@@ -415,9 +414,11 @@ export default function ImageGallery({route}) {
         const nextAttempt = attempts + 1;
         const delay = RETRY_DELAYS[attempts] || 1000;
 
-        // Schedule retry
+        console.warn(
+          `⚠️ Image error: ${imageKey}, retry ${nextAttempt}/${MAX_RETRIES} in ${delay}ms`,
+        );
+
         retryTimeouts.current[imageKey] = setTimeout(() => {
-          // Update retry count and force re-render by changing key
           setRetryCount(prev => ({...prev, [imageKey]: nextAttempt}));
           setRetryKey(prev => ({...prev, [imageKey]: Date.now()}));
 
@@ -426,14 +427,24 @@ export default function ImageGallery({route}) {
           }
         }, delay);
       } else {
-        setHasError(prev => ({...prev, [imageKey]: true}));
+        // PERMANENT FAILURE - Don't update any more state
+        console.error(
+          `❌ Image permanently failed: ${imageKey} (max retries: ${MAX_RETRIES})`,
+        );
+
+        // Set error state ONCE and stop
+        setHasError(prev => {
+          if (prev[imageKey] === true) return prev; // Already failed, don't update
+          return {...prev, [imageKey]: true};
+        });
+
         if (Platform.OS === 'ios') {
           loadingImages.current.delete(imageKey);
           checkBatchCompletion(imageKey);
         }
       }
     },
-    [retryCount],
+    [retryCount], // Remove dependencies that could cause re-creation
   );
 
   // 🔥 Check if batch is complete
@@ -585,16 +596,23 @@ export default function ImageGallery({route}) {
               const fullUrl = IMAGE_URL + img?.imagePath;
               const imageKey = `${index}_${imgIndex}`;
               const shouldLoad = visibleImages.has(imageKey);
-              const currentRetryKey = retryKey[imageKey] || 0;
+              const hasFailed = hasError[imageKey] === true;
+
+              // Don't use currentRetryKey if already failed
+              const currentRetryKey = hasFailed
+                ? 'failed'
+                : retryKey[imageKey] || 0;
+              const isLoading =
+                loadingImages.current.has(imageKey) && !hasFailed;
 
               return (
                 <TouchableOpacity
                   activeOpacity={0.7}
                   style={{width: width / 3 - 17}}
                   key={`${imageKey}_wrapper`}
-                  disabled={hasError[imageKey]}
+                  disabled={hasFailed}
                   onPress={() => {
-                    if (!hasError[imageKey]) {
+                    if (!hasFailed) {
                       navigation.navigate('FullImageScreen', {
                         image: img.imagePath,
                       });
@@ -605,7 +623,7 @@ export default function ImageGallery({route}) {
                       <FastImage
                         key={`${imageKey}_${currentRetryKey}`}
                         source={
-                          hasError[imageKey]
+                          hasFailed
                             ? require('../assets/images/noimage.png')
                             : {
                                 uri: fullUrl,
@@ -614,12 +632,25 @@ export default function ImageGallery({route}) {
                               }
                         }
                         style={styles.image}
-                        resizeMode={FastImage.resizeMode.cover}
+                        resizeMode={
+                          hasFailed
+                            ? FastImage.resizeMode.contain
+                            : FastImage.resizeMode.cover
+                        }
                         defaultSource={require('../assets/images/Image_placeholder.png')}
-                        onLoad={() => handleImageLoad(imageKey)}
+                        onLoad={() => {
+                          if (!hasFailed) {
+                            handleImageLoad(imageKey);
+                          }
+                        }}
                         onError={e => {
-                          const err = e?.nativeEvent?.error || 'Unknown error';
-                          handleImageError(imageKey);
+                          if (!hasFailed) {
+                            // Don't trigger error handler if already failed
+                            const err =
+                              e?.nativeEvent?.error || 'Unknown error';
+                            console.warn(`Image failed to load: ${err}`);
+                            handleImageError(imageKey);
+                          }
                         }}
                       />
                     ) : (
@@ -631,16 +662,14 @@ export default function ImageGallery({route}) {
                     )}
 
                     {/* Loading indicator */}
-                    {shouldLoad &&
-                      loadingImages.current.has(imageKey) &&
-                      !hasError[imageKey] && (
-                        <View style={styles.loadingOverlay}>
-                          <ActivityIndicator
-                            size="small"
-                            color={COLORS.LABELCOLOR}
-                          />
-                        </View>
-                      )}
+                    {shouldLoad && isLoading && (
+                      <View style={styles.loadingOverlay}>
+                        <ActivityIndicator
+                          size="small"
+                          color={COLORS.LABELCOLOR}
+                        />
+                      </View>
+                    )}
                   </View>
                   <Text numberOfLines={1} style={styles.txtAddress}>
                     {img.createdAt ? img.createdAt : '-'}

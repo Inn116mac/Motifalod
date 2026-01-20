@@ -43,8 +43,8 @@ export const getDeviceType = () => {
 
 // Helper function to categorize screen size
 const getScreenSizeCategory = () => {
-  if (SCALE < 350) return 'small';
-  if (SCALE > 500) return 'large';
+  if (SCALE < 400) return 'small';
+  if (SCALE > 450) return 'large';
   return 'medium';
 };
 

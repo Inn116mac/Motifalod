@@ -115,6 +115,7 @@ const FamilyMemberList = ({route}) => {
       color: COLORS.PRIMARYBLACK,
       width: '48%',
       marginRight: 4,
+      lineHeight: Platform.OS == 'ios' ? FONTS.FONTSIZE.MINI * 1.2 : null,
     },
     text: {
       width: '50%',
@@ -837,43 +838,76 @@ const FamilyMemberList = ({route}) => {
             {showPaymentButton && (
               <TouchableOpacity
                 style={styles.approveAllButton}
+                // onPress={() => {
+                //   // Check if all members are approved before navigating to payment
+                //   const allMembersApproved =
+                //     item1?.familyMembers &&
+                //     item1.familyMembers.length > 0 &&
+                //     item1.familyMembers.every(member => {
+                //       // Check if member has isApproved property
+                //       const hasIsApprovedKey =
+                //         member.hasOwnProperty('isApproved');
+
+                //       if (hasIsApprovedKey) {
+                //         // If isApproved exists, check if it's valid and approved
+                //         const isApprovedValueEmpty =
+                //           !member.isApproved ||
+                //           member.isApproved === null ||
+                //           member.isApproved === undefined ||
+                //           member.isApproved === '';
+
+                //         return (
+                //           !isApprovedValueEmpty && isMemberApproved(member)
+                //         );
+                //       }
+
+                //       return true;
+                //     });
+
+                //   if (!allMembersApproved) {
+                //     Alert.alert(
+                //       'Approval Required',
+                //       'Please approve all family members before completing payment.',
+                //       [{text: 'OK'}],
+                //     );
+
+                //     return;
+                //   }
+
+                //   // All members approved, proceed to payment
+                //   navigation.navigate('PaymentInfoFromAdmin', {
+                //     item: item1,
+                //     memberConfiguration: item1?.configurationId,
+                //   });
+                // }}
                 onPress={() => {
-                  // Check if all members are approved before navigating to payment
-                  const allMembersApproved =
+                  // Check if at least one member is approved
+                  const hasAtLeastOneApproved =
                     item1?.familyMembers &&
                     item1.familyMembers.length > 0 &&
-                    item1.familyMembers.every(member => {
-                      // Check if member has isApproved property
-                      const hasIsApprovedKey =
-                        member.hasOwnProperty('isApproved');
+                    item1.familyMembers.some(member => {
+                      // Skip members without isApproved key
+                      if (!member.hasOwnProperty('isApproved')) return true;
 
-                      if (hasIsApprovedKey) {
-                        // If isApproved exists, check if it's valid and approved
-                        const isApprovedValueEmpty =
-                          !member.isApproved ||
-                          member.isApproved === null ||
-                          member.isApproved === undefined ||
-                          member.isApproved === '';
+                      // Check if isApproved is truthy and not empty
+                      const isApprovedValueEmpty =
+                        !member.isApproved ||
+                        member.isApproved === null ||
+                        member.isApproved === undefined ||
+                        member.isApproved === '';
 
-                        return (
-                          !isApprovedValueEmpty && isMemberApproved(member)
-                        );
-                      }
-
-                      return true;
+                      return !isApprovedValueEmpty && isMemberApproved(member);
                     });
 
-                  if (!allMembersApproved) {
+                  if (!hasAtLeastOneApproved) {
                     Alert.alert(
                       'Approval Required',
-                      'Please approve all family members before completing payment.',
+                      'Please approve at least one family member before completing payment.',
                       [{text: 'OK'}],
                     );
-
                     return;
                   }
 
-                  // All members approved, proceed to payment
                   navigation.navigate('PaymentInfoFromAdmin', {
                     item: item1,
                     memberConfiguration: item1?.configurationId,
@@ -1535,7 +1569,7 @@ const FamilyMemberList = ({route}) => {
               alignItems: 'center',
               borderWidth: 1,
               borderColor: '#ebedf0',
-              height: 40,
+              height: 38,
             }}>
             <TextInput
               placeholder="Search..."
@@ -1611,7 +1645,7 @@ const FamilyMemberList = ({route}) => {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingVertical: heightPercentageToDP('0.3%'),
+              paddingVertical: heightPercentageToDP('1%'),
               paddingHorizontal: widthPercentageToDP('5%'),
               gap: 30,
             }}>
