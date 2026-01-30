@@ -1358,39 +1358,71 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
 
   const insets = useSafeAreaInsets();
   const {height: screenHeight} = Dimensions.get('window');
+  const [inputPositions, setInputPositions] = useState({});
 
-  const [inputY, setInputY] = useState(0);
-  const inputRef = useRef(null);
+  // Measure input position relative to SCREEN viewport
+  const measureInput = useCallback(
+    key => {
+      const inputRef = inputPositions[key]?.ref;
+      if (inputRef?.current) {
+        inputRef.current.measureInWindow((x, y, width, height) => {
+          setInputPositions(prev => ({
+            ...prev,
+            [key]: {
+              ...prev[key],
+              y,
+              height,
+            },
+          }));
+        });
+      }
+    },
+    [inputPositions],
+  );
 
-  // Measure input position relative to SCREEN (not ScrollView)
-  const measureInput = useCallback(() => {
-    if (inputRef.current) {
-      inputRef.current.measureInWindow((x, y, width, height) => {
-        setInputY(y);
-      });
-    }
+  // Calculate if dropdown should appear on top
+  const shouldShowOnTop = useCallback(
+    key => {
+      const position = inputPositions[key];
+      if (!position?.y) return false;
+
+      const gestureArea =
+        Platform.OS === 'android' ? Math.max(insets.bottom, 40) : 0;
+      const dropdownHeight = 200;
+      const safePadding = 20;
+      const spaceNeeded = dropdownHeight + gestureArea + safePadding;
+
+      const inputHeight = position.height || 60;
+      // const spaceBelowInput = screenHeight - (position.y + inputHeight);
+      const spaceBelowInput =
+        screenHeight - (position.y + inputHeight) - insets.bottom;
+
+      return spaceBelowInput < spaceNeeded;
+    },
+    [inputPositions, screenHeight, insets.bottom],
+  );
+
+  const getInputRef = useCallback(
+    key => {
+      // Create ref if missing (synchronous)
+      if (!inputPositions[key]?.ref) {
+        const newRef = React.createRef();
+        setInputPositions(prev => ({
+          ...prev,
+          [key]: {ref: newRef, y: 0, height: 0},
+        }));
+        return newRef; // Return immediately
+      }
+      return inputPositions[key].ref;
+    },
+    [inputPositions],
+  );
+
+  useEffect(() => {
+    return () => {
+      setInputPositions(prev => ({})); // Functional update
+    };
   }, []);
-
-  const isNearBottom = useCallback(() => {
-    const gestureArea =
-      Platform.OS === 'android' ? Math.max(insets.bottom, 40) : 0;
-    const dropdownHeight = 200;
-    const safePadding = 20;
-    const spaceNeeded = dropdownHeight + gestureArea + safePadding;
-
-    // Calculate space from BOTTOM of input to bottom of screen
-    const inputHeight = 60; // Approximate input height
-    const spaceBelowInput = screenHeight - (inputY + inputHeight);
-
-    // Use TOP if there's not enough space below
-    const result = spaceBelowInput < spaceNeeded;
-
-    return result;
-  }, [inputY, screenHeight, insets.bottom]);
-
-  const dropdownPosition = useMemo(() => {
-    return isNearBottom() ? 'top' : 'auto';
-  }, [inputY, screenHeight, insets.bottom]);
 
   return (
     <KeyboardAvoidingView
@@ -1720,17 +1752,22 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                         )}
                       </Text>
                       <View
-                        ref={inputRef}
+                        ref={getInputRef(item?.name)}
                         onLayout={() => {
-                          setTimeout(measureInput, 100);
+                          setTimeout(() => measureInput(item?.name), 100);
                         }}>
                         <Dropdown
                           dropdownPosition={
-                            Platform.OS == 'android' ? dropdownPosition : 'auto'
+                            Platform.OS === 'android'
+                              ? shouldShowOnTop(item?.name)
+                                ? 'top'
+                                : 'auto'
+                              : 'auto'
                           }
                           onFocus={() => {
                             Keyboard.dismiss();
-                            measureInput();
+                            // Re-measure on focus to get accurate position after scroll
+                            setTimeout(() => measureInput(item?.name), 50);
                           }}
                           disable={shouldDisableRelationship}
                           onChangeText={txt => {
@@ -1751,6 +1788,13 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                               ? item?.values
                               : [{label: 'No Data Available', value: null}]
                           }
+                          inputSearchStyle={{
+                            color: COLORS.PRIMARYBLACK,
+                            fontSize: FONTS.FONTSIZE.SMALL,
+                            fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                            paddingVertical: 0,
+                            includeFontPadding: false,
+                          }}
                           labelField="label"
                           valueField="value"
                           value={item?.value}
@@ -1775,7 +1819,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           )}
                           style={[
                             {
-                              borderColor: errors[item?.key]
+                              borderColor: errors[item?.name]
                                 ? COLORS.PRIMARYRED
                                 : COLORS.INPUTBORDER,
                               height: 38,
@@ -2483,7 +2527,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                     item?.name == 'numberofKids' ? (
                     <>
                       <View
-                        key={item?.key}
+                        key={item?.name}
                         style={{
                           marginBottom: 8,
                           gap: 4,
@@ -2502,7 +2546,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           {item?.required && (
                             <Text
                               style={{
-                                color: errors[item?.key]
+                                color: errors[item?.name]
                                   ? COLORS.PRIMARYRED
                                   : COLORS.TITLECOLOR,
                               }}>
@@ -2599,7 +2643,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                     </>
                   ) : item?.name == 'membershipamount' ||
                     item?.name == 'totalmembershipamount' ? (
-                    <View key={item?.key} style={{marginBottom: 8, gap: 4}}>
+                    <View key={item?.name} style={{marginBottom: 8, gap: 4}}>
                       <Text
                         style={{
                           fontSize: FONTS.FONTSIZE.MEDIUM,

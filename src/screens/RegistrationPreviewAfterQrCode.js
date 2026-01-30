@@ -407,18 +407,23 @@ export default function RegistrationPreviewAfterQrCode({route}) {
                 let mediaUris = [];
 
                 try {
-                  const parsedValue =
-                    configItem.type === 'file'
-                      ? JSON.parse(configItem.value)
-                      : [];
+                  let parsedValue;
+
+                  if (configItem.type === 'file') {
+                    parsedValue = JSON.parse(configItem.value);
+                  } else {
+                    parsedValue = [];
+                  }
+
                   if (Array.isArray(parsedValue)) {
                     mediaUris = parsedValue.filter(
-                      uri => uri !== null && uri !== undefined && uri !== '',
+                      uri => uri != null && uri !== '',
                     );
                   } else {
-                    mediaUris = [parsedValue];
+                    mediaUris = parsedValue ? [parsedValue] : [];
                   }
                 } catch (error) {
+                  console.log('JSON Parse Error:', error, configItem.value);
                   mediaUris = configItem.value ? [configItem.value] : [];
                 }
 

@@ -444,7 +444,18 @@ const EventScreen = ({route}) => {
               ]}>
               {item.name}
             </Text>
-            <Text numberOfLines={1} style={[styles.txtAddress]}>
+            <Text
+              numberOfLines={1}
+              style={[
+                styles.txtAddress,
+                {
+                  marginTop:
+                    item?.isRSVPEnable == '1' ||
+                    item?.isRSVPEnable?.toLowerCase() == 'yes'
+                      ? 8
+                      : 0,
+                },
+              ]}>
               {item.venue}
             </Text>
             <Text

@@ -108,8 +108,9 @@ const CustomDrawerContent = props => {
         },
         {
           text: 'OK',
-          onPress: () => {
-            removeData('user');
+          onPress: async () => {
+            await setEventAdminVerified(false);
+            await removeData('user');
             navigation.dispatch(
               CommonActions.reset({
                 index: 0,

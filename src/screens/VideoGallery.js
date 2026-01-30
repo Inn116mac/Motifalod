@@ -574,7 +574,6 @@ const VideoGallery = ({route}) => {
       </View>
 
       <Modal
-        statusBarTranslucent={true}
         transparent={true}
         visible={modalVisible}
         animationType="slide">

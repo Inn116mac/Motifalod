@@ -57,16 +57,54 @@ const AddMembership = ({route}) => {
   }, [isEdit, editItem, configurationId]);
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+    if (field !== 'price') {
+      // Handle non-price fields normally
+      setFormData(prev => ({
+        ...prev,
+        [field]: value,
+      }));
+      if (errors[field]) {
+        setErrors(prev => {
+          const newErrors = {...prev};
+          delete newErrors[field];
+          return newErrors;
+        });
+      }
+      return;
+    }
 
-    // Clear error for this field when user starts typing
-    if (errors[field]) {
+    // For price field: validate and format to 2 decimal places
+    let numericValue = value.replace(/[^0-9.]/g, '');
+
+    if (numericValue === '' || numericValue === '.') {
+      setFormData(prev => ({...prev, price: ''}));
+      if (errors.price) {
+        setErrors(prev => {
+          const newErrors = {...prev};
+          delete newErrors.price;
+          return newErrors;
+        });
+      }
+      return;
+    }
+
+    const parts = numericValue.split('.');
+    if (parts.length > 2) {
+      // Keep first part + decimal + second part, ignore rest
+      numericValue = parts[0] + '.' + parts.slice(1).join('');
+    }
+
+    if (parts.length === 2 && parts[1].length > 2) {
+      numericValue = parts[0] + '.' + parts[1].substring(0, 2);
+    }
+
+    setFormData(prev => ({...prev, price: numericValue}));
+
+    // Clear price error
+    if (errors.price) {
       setErrors(prev => {
         const newErrors = {...prev};
-        delete newErrors[field];
+        delete newErrors.price;
         return newErrors;
       });
     }
@@ -325,7 +363,7 @@ const AddMembership = ({route}) => {
               placeholderTextColor={COLORS.grey500}
               value={formData.price}
               onChangeText={value => handleInputChange('price', value)}
-              keyboardType="decimal-pad"
+              keyboardType="numeric"
             />
             {errors.price && (
               <Text style={styles.errorText}>{errors.price}</Text>

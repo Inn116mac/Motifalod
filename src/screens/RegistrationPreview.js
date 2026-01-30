@@ -257,17 +257,23 @@ const RegistrationPreview = ({route}) => {
                         let mediaUris = [];
 
                         try {
-                          const parsedValue = JSON.parse(item.value);
+                          let parsedValue;
+
+                          if (item.type == 'file') {
+                            parsedValue = JSON.parse(item?.value);
+                          } else {
+                            parsedValue = [];
+                          }
+
                           if (Array.isArray(parsedValue)) {
-                            // Filter out null, empty strings, and undefined
                             mediaUris = parsedValue.filter(
-                              uri =>
-                                uri !== null && uri !== undefined && uri !== '',
+                              uri => uri != null && uri !== '',
                             );
                           } else {
-                            mediaUris = [parsedValue];
+                            mediaUris = parsedValue ? [parsedValue] : [];
                           }
                         } catch (error) {
+                          console.log('JSON Parse Error:', error, item.value);
                           mediaUris = item.value ? [item.value] : [];
                         }
 
@@ -287,33 +293,43 @@ const RegistrationPreview = ({route}) => {
                           return item.value;
                         };
 
-                        return item.value && item.type === 'file' ? (
+                        return item.type === 'file' ? (
                           <View key={index} style={styles.lstFileContainer}>
                             <Text style={styles.txtlstLbl}>
                               {item?.label} :
                             </Text>
                             <View style={styles.fileLinksContainer}>
-                              {mediaUris.map((uri, uriIndex) => {
-                                // Extract just the filename part after the last slash
-                                const pathParts = uri.split('/');
-                                const fileName =
-                                  pathParts[pathParts.length - 1] || uri;
+                              {mediaUris?.length > 0 ? (
+                                mediaUris?.map((uri, uriIndex) => {
+                                  const pathParts = uri?.split('/');
+                                  const fileName =
+                                    pathParts[pathParts?.length - 1] || uri;
 
-                                return (
-                                  <TouchableOpacity
-                                    key={uriIndex}
-                                    onPress={() => {
-                                      navigation.navigate('FullImageScreen', {
-                                        image: uri,
-                                      });
-                                    }}
-                                    style={styles.fileLinkItem}>
-                                    <Text style={styles.fileLinkText}>
-                                      {uriIndex + 1}. {fileName}
-                                    </Text>
-                                  </TouchableOpacity>
-                                );
-                              })}
+                                  return (
+                                    <TouchableOpacity
+                                      key={uriIndex}
+                                      onPress={() => {
+                                        navigation.navigate('FullImageScreen', {
+                                          image: uri,
+                                        });
+                                      }}
+                                      style={styles.fileLinkItem}>
+                                      <Text style={styles.fileLinkText}>
+                                        {uriIndex + 1}. {fileName}
+                                      </Text>
+                                    </TouchableOpacity>
+                                  );
+                                })
+                              ) : (
+                                <Text
+                                  style={{
+                                    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                                    fontSize: FONTS.FONTSIZE.SMALL,
+                                    color: COLORS.TITLECOLOR,
+                                  }}>
+                                  No files to Display!
+                                </Text>
+                              )}
                             </View>
                           </View>
                         ) : (

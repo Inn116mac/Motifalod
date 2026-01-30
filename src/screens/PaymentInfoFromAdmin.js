@@ -75,6 +75,11 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
       return !isMemberPaid(member);
     }) || [];
 
+  const unpaidMembersToShow =
+    item?.familyMembers?.filter(member => {
+      return !isMemberPaid(member);
+    }) || [];
+
   // Calculate total amount from unpaid family members only
   const calculateTotalAmount = () => {
     return unpaidMembers.reduce((total, member) => {
@@ -699,13 +704,20 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
           </View>
 
           {/* Family Members List - Only Unpaid Members */}
-          {unpaidMembers.length > 0 ? (
+          {unpaidMembersToShow.length > 0 ? (
             <View style={styles.membersContainer}>
-              {unpaidMembers.map((member, index) => {
+              {unpaidMembersToShow.map((member, index) => {
                 const firstName = member?.firstName || '';
                 const lastName = member?.lastName || '';
                 const relationship = member?.relationship || '';
                 const amount = member?.membershipamount || '0';
+
+                const hasIsApprovedKey = member?.hasOwnProperty('isApproved');
+                const isApproved = member?.isApproved;
+
+                const isNotApproved =
+                  hasIsApprovedKey &&
+                  !(isApproved?.toLowerCase() === 'yes' || isApproved === true);
 
                 return (
                   <View key={member.configurationId || index}>
@@ -714,18 +726,42 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
                         <Text style={styles.memberName}>
                           {firstName} {lastName}
                         </Text>
-                        {relationship && relationship !== '-' && (
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 6,
+                          }}>
                           <Text style={styles.memberRelation}>
                             {capitalizeFirstLetter(relationship)}
                           </Text>
-                        )}
+
+                          {isNotApproved && (
+                            <View
+                              style={{
+                                backgroundColor: '#FEE2E2',
+                                paddingHorizontal: 6,
+                                paddingVertical: 2,
+                                borderRadius: 4,
+                              }}>
+                              <Text
+                                style={{
+                                  fontSize: FONTS.FONTSIZE.MINI - 2.8,
+                                  fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                                  color: '#EF4444',
+                                }}>
+                                Not Approved
+                              </Text>
+                            </View>
+                          )}
+                        </View>
                       </View>
                       <Text style={styles.memberAmount}>
                         ${parseFloat(amount).toFixed(0)}
                       </Text>
                     </View>
 
-                    {index < unpaidMembers.length - 1 && (
+                    {index < unpaidMembersToShow.length - 1 && (
                       <View style={styles.divider} />
                     )}
                   </View>
@@ -741,16 +777,16 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
           )}
 
           {/* Total Amount Row */}
-          {unpaidMembers.length > 0 && (
+          {unpaidMembersToShow.length > 0 && (
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalAmount}>${totalAmount.toFixed(0)}</Text>
+              <Text style={styles.totalLabel}>Total Payable Amount</Text>
+              <Text style={styles.totalAmount}>${totalAmount?.toFixed(0)}</Text>
             </View>
           )}
         </View>
 
         {/* Payment Method Card - Only show if there are unpaid members */}
-        {unpaidMembers.length > 0 && (
+        {unpaidMembers.length > 0 && totalAmount > 0 && (
           <View style={styles.card}>
             <Text style={styles.paymentMethodTitle}>Select Payment Method</Text>
             <View style={styles.paymentMethodsList}>
@@ -883,7 +919,7 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
       </ScrollView>
 
       {/* Bottom Action Buttons - Only show if there are unpaid members */}
-      {unpaidMembers.length > 0 && (
+      {unpaidMembers.length > 0 && totalAmount > 0 && (
         <View style={styles.bottomContainer}>
           <TouchableOpacity
             style={styles.cancelButton}
@@ -1122,6 +1158,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.FONT_FAMILY.REGULAR,
     fontSize: FONTS.FONTSIZE.MINI,
     color: COLORS.TITLECOLOR,
+    maxWidth: '65%',
   },
   membersContainer: {
     marginTop: 5,

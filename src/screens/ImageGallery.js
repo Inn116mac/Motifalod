@@ -919,7 +919,6 @@ export default function ImageGallery({route}) {
         )}
       </View>
       <Modal
-        statusBarTranslucent={true}
         transparent={true}
         visible={modalVisible}
         animationType="slide">

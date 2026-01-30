@@ -22,6 +22,26 @@ const unsubscribeFromTopic = async () => {
   }
 };
 
+let isLoggingOut = false;
+
+const handleLogout = async () => {
+  if (isLoggingOut) return; // Atomic check
+  isLoggingOut = true;
+
+  try {
+    await unsubscribeFromTopic();
+    await removeData('user');
+    NavigationService.reset('Login');
+  } catch (err) {
+    console.error('Logout error:', err);
+  } finally {
+    // Optional: Reset flag after delay to allow relogin
+    setTimeout(() => {
+      isLoggingOut = false;
+    }, 5000);
+  }
+};
+
 httpClient.interceptors.request.use(
   async config => {
     const userRes = await getData('user');
@@ -40,8 +60,8 @@ httpClient.interceptors.request.use(
 httpClient.interceptors.response.use(
   async response => {
     if (response.data && response.data.message === 'Token is invalid') {
-      await removeData('user');
-      NavigationService.reset('Login');
+      if (isLoggingOut) return response;
+      await handleLogout();
       return Promise.resolve({
         data: {
           status: false,
@@ -57,9 +77,8 @@ httpClient.interceptors.response.use(
       error.response &&
       (error.response.status === 401 || error.response.status === 403)
     ) {
-      await unsubscribeFromTopic();
-      await removeData('user');
-      NavigationService.reset('Login');
+      if (isLoggingOut) return Promise.reject(error);
+      await handleLogout();
       return Promise.resolve({
         data: {
           status: false,
