@@ -177,9 +177,9 @@ const MemberScreen = () => {
           </View>
           <View>
             {openIndex === index ? (
-              <AntDesign name="up" size={20} color={COLORS.LABELCOLOR} />
+              <AntDesign name="up" size={18} color={COLORS.LABELCOLOR} />
             ) : (
-              <AntDesign name="down" size={20} color={COLORS.LABELCOLOR} />
+              <AntDesign name="down" size={18} color={COLORS.LABELCOLOR} />
             )}
           </View>
         </TouchableOpacity>

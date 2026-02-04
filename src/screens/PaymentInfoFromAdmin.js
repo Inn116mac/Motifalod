@@ -57,10 +57,6 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
     return member.isPaid.toLowerCase() === 'yes';
   };
 
-  // Filter out members who have already paid
-  // const unpaidMembers =
-  //   item?.familyMembers?.filter(member => !isMemberPaid(member)) || [];
-
   const unpaidMembers =
     item?.familyMembers?.filter(member => {
       if (member?.hasOwnProperty('isApproved')) {
@@ -248,7 +244,6 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
           responseData?.message || 'Payment captured successfully',
         );
 
-        // IMMEDIATELY set completed state and close modal
         setIsPaymentCompleted(true);
         setLoading(false);
 
@@ -276,9 +271,8 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
           }, 300);
         }, 10000);
       } else {
-        NOTIFY_MESSAGE(
-          responseData?.message || 'Payment captured successfully',
-        );
+        NOTIFY_MESSAGE(responseData?.message || 'Payment captured failed!');
+
         setLoading(false);
         captureCalledRef.current = false;
         setIsPaymentCompleted(false);
@@ -467,21 +461,12 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
 
     // For PayPal, trigger PayPal flow
     if (selectedPaymentMethod === 'paypal') {
-      if (totalAmount <= 0) {
-        NOTIFY_MESSAGE('Invalid payment amount');
-        return;
-      }
       await createPaymentOrder('PayPal');
       return;
     }
 
     // For Venmo
     if (selectedPaymentMethod === 'venmo') {
-      if (totalAmount <= 0) {
-        NOTIFY_MESSAGE('Invalid payment amount');
-        return;
-      }
-
       await processVenmoPayment();
 
       return;
@@ -785,6 +770,25 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
           )}
         </View>
 
+        {unpaidMembersToShow.length > 0 &&
+          totalAmount === 0 &&
+          unpaidMembersToShow.some(member => {
+            const hasIsApprovedKey = member?.hasOwnProperty('isApproved');
+            return (
+              hasIsApprovedKey &&
+              !(
+                member.isApproved?.toLowerCase() === 'yes' ||
+                member.isApproved === true
+              )
+            );
+          }) && (
+            <View style={styles.noMembersContainer}>
+              <Text style={styles.noMembersText}>
+                Payment will be available once the member is approved.
+              </Text>
+            </View>
+          )}
+
         {/* Payment Method Card - Only show if there are unpaid members */}
         {unpaidMembers.length > 0 && totalAmount > 0 && (
           <View style={styles.card}>
@@ -838,10 +842,6 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
                   style={styles.uploadButton}
                   disabled={isUploading}
                   onPress={() => {
-                    if (totalAmount <= 0) {
-                      NOTIFY_MESSAGE('Invalid payment amount');
-                      return;
-                    }
                     setReceiptModalVisible(true);
                   }}>
                   <MaterialDesignIcons

@@ -83,22 +83,24 @@ const NotificationManagement = ({route}) => {
   const [hasMore, setHasMore] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isLoading1, setIsLoading1] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const {isConnected, networkLoading} = useNetworkStatus();
 
   const PAGE_SIZE = 20;
 
   useFocusEffect(
     useCallback(() => {
-      setPageNumber(1);
-      setSearchKeyword('');
-      getViewData();
+      setRefreshTrigger(prev => prev + 1);
       return () => {};
     }, []),
   );
 
   useEffect(() => {
+    if (refreshTrigger == 0 && pageNumber == 1) {
+      return;
+    }
     getViewData();
-  }, [pageNumber]);
+  }, [pageNumber, refreshTrigger, getViewData]);
 
   useEffect(() => {
     filterLocalData();
@@ -191,7 +193,6 @@ const NotificationManagement = ({route}) => {
 
   // get notification data
   const getViewData = useCallback(() => {
-    setIsLoading(true);
     let data = {
       pageNumber: pageNumber,
       pageSize: PAGE_SIZE,
@@ -199,8 +200,10 @@ const NotificationManagement = ({route}) => {
       orderBy: 'Action',
       orderType: 1,
     };
+
     NetInfo.fetch().then(state => {
       if (state.isConnected) {
+        setIsLoading(true);
         httpClient
           .post(`notification/pagination`, data)
           .then(response => {
@@ -234,6 +237,7 @@ const NotificationManagement = ({route}) => {
           })
           .finally(() => {
             setIsLoading(false);
+            setRefreshing(false);
           });
       } else {
         NOTIFY_MESSAGE('Please check your internet connectivity');
@@ -243,10 +247,7 @@ const NotificationManagement = ({route}) => {
 
   // display data
   const renderItem = ({item: item1, index}) => {
-    const originalIndex = allUserData.findIndex(
-      dataItem => dataItem?.moduleId === item1?.moduleId,
-    );
-    const number1 = (pageNumber - 1) * PAGE_SIZE + originalIndex + 1;
+    const number1 = (pageNumber - 1) * PAGE_SIZE + index + 1;
     const number = number1 <= 9 ? `0${number1}` : `${number1}`;
 
     return (
@@ -328,7 +329,7 @@ const NotificationManagement = ({route}) => {
   };
 
   const loadMore = () => {
-    if (hasMore && !searchKeyword) {
+    if (hasMore && !isLoading) {
       setPageNumber(prevPage => prevPage + 1);
     }
   };
@@ -336,56 +337,13 @@ const NotificationManagement = ({route}) => {
   //refresh data
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setPageNumber(1);
     setSearchKeyword('');
-
-    let data = {
-      pageNumber: 1,
-      pageSize: PAGE_SIZE,
-      keyword: '',
-      orderBy: 'Action',
-      orderType: 1,
-    };
-
-    NetInfo.fetch().then(state => {
-      if (state.isConnected) {
-        httpClient
-          .post(`notification/pagination`, data)
-          .then(response => {
-            if (response.data.status) {
-              const newData = response?.data?.result?.data;
-              const totalRecords = response.data.result.totalRecord || 0;
-              const calculatedTotalPages = Math.ceil(totalRecords / PAGE_SIZE);
-
-              if (newData?.length > 0) {
-                setAllUserData(newData);
-                setFilteredData(newData);
-              } else {
-                setAllUserData([]);
-                setFilteredData([]);
-              }
-
-              const canLoadMore =
-                1 < calculatedTotalPages && newData.length > 0;
-              setHasMore(canLoadMore);
-            } else {
-              NOTIFY_MESSAGE(response.data.message);
-            }
-          })
-          .catch(error => {
-            NOTIFY_MESSAGE(
-              error || error.message ? 'Something Went Wrong' : null,
-            );
-          })
-          .finally(() => {
-            setRefreshing(false);
-          });
-      } else {
-        NOTIFY_MESSAGE('Please check your internet connectivity');
-        setRefreshing(false);
-      }
-    });
-  }, [PAGE_SIZE]);
+    if (pageNumber !== 1) {
+      setPageNumber(1);
+    } else {
+      getViewData();
+    }
+  }, [PAGE_SIZE, pageNumber, getViewData]);
 
   return (
     <KeyboardAvoidingView

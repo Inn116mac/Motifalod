@@ -4,8 +4,8 @@ import {getData, removeData, setEventAdminVerified} from '../utils/Storage';
 import {NavigationService} from '../utils/NavigationService';
 import messaging from '@react-native-firebase/messaging';
 
-const httpClient = axios.create({
-  baseURL: Config.API_HOST,
+const httpClientV2 = axios.create({
+  baseURL: Config.API_HOST1,
   headers: {
     Accept: '*',
     'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ const handleLogout = async () => {
   }
 };
 
-httpClient.interceptors.request.use(
+httpClientV2.interceptors.request.use(
   async config => {
     const userRes = await getData('user');
     if (userRes && userRes.token) {
@@ -58,7 +58,7 @@ httpClient.interceptors.request.use(
   },
 );
 
-httpClient.interceptors.response.use(
+httpClientV2.interceptors.response.use(
   async response => {
     if (response.data && response.data.message === 'Token is invalid') {
       if (isLoggingOut) return response;
@@ -91,4 +91,4 @@ httpClient.interceptors.response.use(
   },
 );
 
-export default httpClient;
+export default httpClientV2;

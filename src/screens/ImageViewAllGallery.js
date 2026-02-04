@@ -455,6 +455,7 @@ export default function ImageViewAllGallery({route}) {
               contentContainerStyle={{
                 paddingBottom: 10,
                 padding: Platform.OS == 'android' ? 10 : 0,
+                alignItems:'center'
               }}
               numColumns={3}
               data={allImages}

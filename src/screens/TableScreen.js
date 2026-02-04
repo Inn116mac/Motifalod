@@ -40,6 +40,18 @@ import {getFileType} from '../utils/fileType';
 import Offline from '../components/root/Offline';
 import moment from 'moment';
 
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+};
 const TableScreen = ({route}) => {
   const {item, isDashboard} = route?.params?.data;
 
@@ -114,34 +126,40 @@ const TableScreen = ({route}) => {
 
   const PAGE_SIZE = 20;
 
-  const useDebounce = (value, delay) => {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-    useEffect(() => {
-      const handler = setTimeout(() => {
-        setDebouncedValue(value);
-      }, delay);
-      return () => {
-        clearTimeout(handler);
-      };
-    }, [value, delay]);
-    return debouncedValue;
-  };
   const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
+  useEffect(() => {
+    if (debouncedSearchKeyword && pageNumber !== 1) {
+      setPageNumber(1);
+    }
+  }, [debouncedSearchKeyword]);
 
   useEffect(() => {
+    if (refreshTrigger == 0 && pageNumber == 1 && !debouncedSearchKeyword) {
+      return;
+    }
     getViewData();
-  }, [pageNumber, debouncedSearchKeyword, refreshTrigger]);
+  }, [pageNumber, debouncedSearchKeyword, refreshTrigger, getViewData]);
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       setRefreshTrigger(prev => prev + 1);
       setOpenIndex(null);
       return () => {};
     }, []),
   );
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setOpenIndex(null);
+    setSearchKeyword('');
+    if (pageNumber !== 1) {
+      setPageNumber(1);
+    } else {
+      getViewData();
+    }
+  };
+
   const getViewData = useCallback(() => {
-    setIsLoading(true);
     let data = {
       pageNumber: pageNumber,
       pageSize: PAGE_SIZE,
@@ -154,6 +172,7 @@ const TableScreen = ({route}) => {
 
     NetInfo.fetch().then(state => {
       if (state.isConnected) {
+        setIsLoading(true);
         httpClient
           .post(`module/mobile/configuration/pagination`, data)
           .then(response => {
@@ -184,6 +203,7 @@ const TableScreen = ({route}) => {
           })
           .finally(() => {
             setIsLoading(false);
+            setRefreshing(false);
           });
       } else {
         NOTIFY_MESSAGE('Please check your internet connectivity');
@@ -848,59 +868,6 @@ const TableScreen = ({route}) => {
       setPageNumber(prevPage => prevPage + 1);
     }
   };
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setPageNumber(1);
-    setOpenIndex(null);
-    setSearchKeyword('');
-
-    let data = {
-      pageNumber: 1,
-      pageSize: PAGE_SIZE,
-      keyword: item?.constantName === 'FOOD TEAM' ? 'All' : '',
-      orderBy: 'order',
-      orderType: -1,
-      type: item?.constantName,
-      searchKeyword: '',
-    };
-
-    NetInfo.fetch().then(state => {
-      if (state.isConnected) {
-        httpClient
-          .post(`module/mobile/configuration/pagination`, data)
-          .then(response => {
-            if (response.data.status) {
-              const newData = response?.data?.result?.data;
-
-              const totalRecords = response.data.result.totalRecord || 0;
-              const calculatedTotalPages = Math.ceil(totalRecords / PAGE_SIZE);
-
-              if (newData?.length > 0) {
-                setAllUserData(newData);
-              } else {
-                setAllUserData([]);
-              }
-              const canLoadMore =
-                1 < calculatedTotalPages && newData.length > 0;
-              setHasMore(canLoadMore);
-            } else {
-              NOTIFY_MESSAGE(response.data.message);
-            }
-          })
-          .catch(error => {
-            NOTIFY_MESSAGE(
-              error || error.message ? 'Something Went Wrong' : null,
-            );
-          })
-          .finally(() => {
-            setRefreshing(false);
-          });
-      } else {
-        NOTIFY_MESSAGE('Please check your internet connectivity');
-        setRefreshing(false);
-      }
-    });
-  }, [item, PAGE_SIZE]);
 
   return (
     <KeyboardAvoidingView

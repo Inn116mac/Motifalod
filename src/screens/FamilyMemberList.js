@@ -40,6 +40,18 @@ import {getFileType} from '../utils/fileType';
 import Offline from '../components/root/Offline';
 import moment from 'moment';
 
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+};
 const FamilyMemberList = ({route}) => {
   const {item} = route?.params?.data;
 
@@ -337,40 +349,25 @@ const FamilyMemberList = ({route}) => {
   const [hasMore, setHasMore] = useState(true);
   const [openIndex, setOpenIndex] = useState(null);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [debouncedSearchKeyword, setDebouncedSearchKeyword] = useState('');
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
 
   const [formFields, setFormFields] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const searchTimeoutRef = useRef(null);
   const PAGE_SIZE = 20;
-
-  useEffect(() => {
-    getViewData();
-  }, [pageNumber, debouncedSearchKeyword, refreshTrigger]);
-
-  useFocusEffect(
-    useCallback(() => {
-      setRefreshTrigger(prev => prev + 1);
-      setOpenIndex(null);
-      setExpandedFamilyMember(null);
-      return () => {};
-    }, []),
-  );
 
   const isMemberApproved = member =>
     member?.isApproved?.toLowerCase() == 'yes' || member?.isApproved === true;
 
   const getViewData = useCallback(() => {
-    setIsLoading(true);
-
     NetInfo.fetch().then(state => {
       if (!state.isConnected) {
         setIsLoading(false);
+        setRefreshing(false);
         NOTIFY_MESSAGE('Please check your internet connectivity');
         return;
       }
-
+      setIsLoading(true);
       httpClient
         .get(
           `module/get/FamilymemberList?pageNumber=${pageNumber}&pageSize=${PAGE_SIZE}&searchKey=${debouncedSearchKeyword}`,
@@ -411,6 +408,53 @@ const FamilyMemberList = ({route}) => {
         });
     });
   }, [pageNumber, debouncedSearchKeyword, PAGE_SIZE, navigation]);
+
+  useEffect(() => {
+    if (debouncedSearchKeyword && pageNumber !== 1) {
+      setPageNumber(1);
+    }
+  }, [debouncedSearchKeyword, pageNumber]);
+
+  useEffect(() => {
+    if (refreshTrigger == 0 && pageNumber == 1 && !debouncedSearchKeyword) {
+      return;
+    }
+    getViewData();
+  }, [pageNumber, debouncedSearchKeyword, refreshTrigger, getViewData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setRefreshTrigger(prev => prev + 1);
+      setOpenIndex(null);
+      setExpandedFamilyMember(null);
+      return () => {};
+    }, []),
+  );
+
+  const goPrevious = () => {
+    if (pageNumber > 1) {
+      setOpenIndex(null);
+      setPageNumber(prev => prev - 1);
+    }
+  };
+
+  const loadMore = () => {
+    if (hasMore && !isLoading) {
+      setOpenIndex(null);
+      setPageNumber(prev => prev + 1);
+    }
+  };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setOpenIndex(null);
+    setSearchKeyword('');
+    if (pageNumber !== 1) {
+      setPageNumber(1);
+    } else {
+      getViewData();
+    }
+  }, [pageNumber, getViewData]);
 
   const [loadingItemId, setLoadingItemId] = useState(null);
   const [deletingItemId, setDeletingItemId] = useState(null);
@@ -838,48 +882,6 @@ const FamilyMemberList = ({route}) => {
             {showPaymentButton && (
               <TouchableOpacity
                 style={styles.approveAllButton}
-                // onPress={() => {
-                //   // Check if all members are approved before navigating to payment
-                //   const allMembersApproved =
-                //     item1?.familyMembers &&
-                //     item1.familyMembers.length > 0 &&
-                //     item1.familyMembers.every(member => {
-                //       // Check if member has isApproved property
-                //       const hasIsApprovedKey =
-                //         member.hasOwnProperty('isApproved');
-
-                //       if (hasIsApprovedKey) {
-                //         // If isApproved exists, check if it's valid and approved
-                //         const isApprovedValueEmpty =
-                //           !member.isApproved ||
-                //           member.isApproved === null ||
-                //           member.isApproved === undefined ||
-                //           member.isApproved === '';
-
-                //         return (
-                //           !isApprovedValueEmpty && isMemberApproved(member)
-                //         );
-                //       }
-
-                //       return true;
-                //     });
-
-                //   if (!allMembersApproved) {
-                //     Alert.alert(
-                //       'Approval Required',
-                //       'Please approve all family members before completing payment.',
-                //       [{text: 'OK'}],
-                //     );
-
-                //     return;
-                //   }
-
-                //   // All members approved, proceed to payment
-                //   navigation.navigate('PaymentInfoFromAdmin', {
-                //     item: item1,
-                //     memberConfiguration: item1?.configurationId,
-                //   });
-                // }}
                 onPress={() => {
                   // Check if at least one member is approved
                   const hasAtLeastOneApproved =
@@ -1493,51 +1495,6 @@ const FamilyMemberList = ({route}) => {
     );
   };
 
-  const goPrevious = () => {
-    if (pageNumber > 1) {
-      setPageNumber(prev => prev - 1);
-    }
-  };
-
-  const loadMore = () => {
-    if (hasMore && !isLoading) {
-      setPageNumber(prev => prev + 1);
-    }
-  };
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setOpenIndex(null);
-    setSearchKeyword('');
-    setDebouncedSearchKeyword('');
-    setPageNumber(1);
-    setAllUserData([]);
-    getViewData();
-  }, []);
-
-  const onChangeSearch = useCallback(text => {
-    setSearchKeyword(text); // Update UI immediately
-
-    // Clear the previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    // Set new timeout - API call happens after 500ms of no typing
-    searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedSearchKeyword(text);
-      setPageNumber(1); // Reset to first page
-    }, 500); // 500ms delay
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, []);
-
   return (
     <KeyboardAvoidingView
       style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}
@@ -1574,7 +1531,7 @@ const FamilyMemberList = ({route}) => {
             <TextInput
               placeholder="Search..."
               value={searchKeyword}
-              onChangeText={onChangeSearch}
+              onChangeText={text => setSearchKeyword(text)}
               style={[styles.searchInput, {flex: 1}]}
               returnKeyType="search"
               placeholderTextColor={COLORS.grey500}
@@ -1583,7 +1540,6 @@ const FamilyMemberList = ({route}) => {
               <TouchableOpacity
                 onPress={() => {
                   setSearchKeyword('');
-                  setDebouncedSearchKeyword('');
                 }}
                 style={{}}>
                 <AntDesign

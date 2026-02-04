@@ -120,7 +120,9 @@ const Dashboard = ({route}) => {
                 item?.constantName !== 'ROLE MANAGEMENT' &&
                 item?.constantName !== 'MEMBERSHIP MANAGEMENT' &&
                 item?.constantName !== 'NOTIFICATION MANAGEMENT' &&
-                item?.constantName !== 'REMINDER MANAGEMENT',
+                item?.constantName !== 'REMINDER MANAGEMENT' &&
+                item?.constantName !== 'TRANSACTIONS' &&
+                item?.constantName !== 'MODULE MANAGEMENT',
             );
             if (newArray?.length > 0) {
               setData(newArray);

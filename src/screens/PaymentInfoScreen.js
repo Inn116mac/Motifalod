@@ -281,10 +281,6 @@ const PaymentInfoScreen = ({route}) => {
   };
 
   const handlePayment = paymentMethod => {
-    if (totalAmount <= 0) {
-      NOTIFY_MESSAGE('Invalid payment amount');
-      return;
-    }
 
     if (paymentMethod.isVenmo) {
       processVenmoPayment();

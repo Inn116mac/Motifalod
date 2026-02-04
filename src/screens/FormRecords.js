@@ -136,31 +136,7 @@ const FormRecords = ({route}) => {
     setIsRefresh(false);
   };
 
-  const moduleDescriptions = {
-    'SIGN UP': 'User registration & management',
-    'FAMILY MEMBER': 'Family accounts & relationships',
-    EVENT: 'Event creation & scheduling',
-    RSVP: 'Response tracking & reminders',
-    HOTELS: 'Accommodation bookings',
-    ENTERTAINMENT: 'Shows & performances',
-    'IMAGE GALLERY': 'Photo management & sharing',
-    'VIDEO GALLERY': 'Video content & streaming',
-    NEWS: 'News articles & announcements',
-    DONATION: 'Fundraising & contributions',
-    'LOCAL TALENT': 'Talent showcase & auditions',
-    EXPENSE: 'Budget tracking & reporting',
-    CONVENTION: 'Conference management',
-    'BOARD OF DIRECTORS': 'Board communications & docs',
-    'EXECUTIVE TEAM': 'Leadership management & decisions',
-    'FOOD TEAM': 'Menu planning & Catering management',
-    'MEMBERSHIP FEES': 'Member dues & payment tracking',
-    'SAD DEMISES': 'Maintain funeral & memorial ceremony details',
-    'ROLE MANAGEMENT': 'User roles & permission control',
-  };
-
   const renderItem = ({item, index}) => {
-    const description = moduleDescriptions[item?.constantName?.trim()] || '';
-
     return (
       <TouchableOpacity
         key={index}
@@ -178,6 +154,10 @@ const FormRecords = ({route}) => {
             navigation.navigate('ReminderList', (item = {data}));
           } else if (item?.constantName == 'FAMILY MEMBER') {
             navigation.navigate('FamilyMemberList', (item = {data}));
+          } else if (item?.constantName == 'TRANSACTIONS') {
+            navigation.navigate('Transactions', (item = {data}));
+          } else if (item?.constantName == 'MODULE MANAGEMENT') {
+            navigation.navigate('ModuleList', (item = {data}));
           } else {
             navigation.navigate('TableScreen', (item = {data}));
           }
@@ -204,7 +184,9 @@ const FormRecords = ({route}) => {
         </View>
         <View style={styles.itemTexts}>
           <Text style={[styles.mainText]}>{item?.name}</Text>
-          {description && <Text style={styles.descText}>{description}</Text>}
+          {item?.description && (
+            <Text style={styles.descText}>{item?.description}</Text>
+          )}
         </View>
         <View style={styles.arrowBox}>
           <AntDesign name="right" size={18} color="#FB8C00" />

@@ -59,6 +59,10 @@ import AddUpdateReminder from '../screens/AddUpdateReminder';
 import FamilyMemberList from '../screens/FamilyMemberList';
 import PaymentInfoScreen from '../screens/PaymentInfoScreen';
 import PaymentInfoFromAdmin from '../screens/PaymentInfoFromAdmin';
+import Transactions from '../screens/Transactions';
+import TransactionDetails from '../screens/TransactionDetails';
+import ModuleList from '../screens/ModuleList';
+import AddUpdateModule from '../screens/AddUpdateModule';
 
 const Stack = createStackNavigator();
 
@@ -184,6 +188,13 @@ function AppNavigation() {
               name="PaymentInfoFromAdmin"
               component={PaymentInfoFromAdmin}
             />
+            <Stack.Screen name="Transactions" component={Transactions} />
+            <Stack.Screen
+              name="TransactionDetails"
+              component={TransactionDetails}
+            />
+            <Stack.Screen name="ModuleList" component={ModuleList} />
+            <Stack.Screen name="AddUpdateModule" component={AddUpdateModule} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaView>

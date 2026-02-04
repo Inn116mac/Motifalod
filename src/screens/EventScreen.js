@@ -603,10 +603,8 @@ const EventScreen = ({route}) => {
                   setActiveTab(item);
                   if (item.id === 0) {
                     setPageNumber(1);
-                    setHasMore(true);
                   } else {
                     setPageNumber1(1);
-                    setHasMore(true);
                   }
                 }}>
                 <Text

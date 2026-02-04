@@ -12,7 +12,11 @@ import {
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import COLORS from '../theme/Color';
 import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
-import {useIsFocused, useNavigation} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+} from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
 import {NOTIFY_MESSAGE} from '../constant/Module';
 import Loader from '../components/root/Loader';
@@ -118,13 +122,15 @@ const ViewScreen = ({route}) => {
   const [data, setData] = useState([]);
 
   const {isConnected, networkLoading} = useNetworkStatus();
+  const PAGE_SIZE = 20;
+  const isInitialMount = useRef(true);
 
   const [eventData, setEventData] = useState([]);
   const [filterLoading, setFilterLoading] = useState(false);
   const [isEventDataModal, setIsEventDataModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [tabValues, setTabValues] = useState([]);
-
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedTab, setSelectedTab] = useState(null);
 
   function onEventFilter() {
@@ -163,21 +169,30 @@ const ViewScreen = ({route}) => {
     });
   }
 
-  const isFocused = useIsFocused();
-
   useEffect(() => {
     const cancel = getViewData();
     return () => cancel && cancel();
-  }, [pageNumber, selectedEvent, selectedTab, isFocused]);
+  }, [pageNumber, selectedEvent, selectedTab, refreshTrigger, getViewData]);
 
-  const PAGE_SIZE = 20;
+  useFocusEffect(
+    useCallback(() => {
+      if (isInitialMount.current) {
+        isInitialMount.current = false; // ← Skip first time
+        return;
+      }
+      setRefreshTrigger(prev => prev + 1);
+      return () => {};
+    }, []),
+  );
 
   useEffect(() => {
     onEventFilter();
   }, []);
 
   useEffect(() => {
-    setPageNumber(1);
+    if (pageNumber !== 1) {
+      setPageNumber(1);
+    }
     setData([]);
   }, [selectedEvent, selectedTab]);
 

@@ -3373,9 +3373,10 @@ export default function CustomTab({
                             }}>
                             <Text
                               style={{
-                                fontSize: FONTS.FONTSIZE.MEDIUM,
+                                fontSize: FONTS.FONTSIZE.EXTRASMALL,
                                 color: COLORS.TITLECOLOR,
                                 fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                                includeFontPadding: false,
                               }}>
                               {formData[item?.key] ?? 0}
                             </Text>

@@ -81,26 +81,27 @@ const MembershipPrice = ({route}) => {
   const [openIndex, setOpenIndex] = useState(null);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isReresh, setIsRefresh] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
+    if (refreshTrigger == 0) {
+      return;
+    }
     getViewData();
-  }, []);
+  }, [refreshTrigger]);
 
   const handleRefresh = async () => {
     setIsRefresh(true);
     setSearchKeyword('');
     await getViewData();
-    setIsRefresh(false);
   };
 
   useFocusEffect(
-    React.useCallback(() => {
-      setAllUserData([]);
-      setSearchKeyword('');
-      getViewData();
+    useCallback(() => {
       setOpenIndex(null);
+      setRefreshTrigger(prev => prev + 1);
       return () => {};
-    }, [getViewData]),
+    }, []),
   );
 
   useEffect(() => {
@@ -121,9 +122,9 @@ const MembershipPrice = ({route}) => {
   };
 
   const getViewData = useCallback(() => {
-    setIsLoading(true);
     NetInfo.fetch().then(state => {
       if (state.isConnected) {
+        setIsLoading(true);
         httpClient
           .get(`member/membershipprice`)
           .then(response => {
@@ -149,6 +150,7 @@ const MembershipPrice = ({route}) => {
           })
           .finally(() => {
             setIsLoading(false);
+            setIsRefresh(false);
           });
       } else {
         NOTIFY_MESSAGE('Please check your internet connectivity');
@@ -236,7 +238,6 @@ const MembershipPrice = ({route}) => {
               editItem: item1,
               configurationId: item1?.configurationId,
             };
-            setSearchKeyword('');
             navigation.navigate('AddMembership', {data});
           },
         },

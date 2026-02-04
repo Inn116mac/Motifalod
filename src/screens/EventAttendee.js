@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -27,41 +27,35 @@ import NoDataFound from '../components/root/NoDataFound';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import httpClient from '../connection/httpClient';
 import {useNavigation} from '@react-navigation/native';
+import httpClientV2 from '../connection/httpClientV2';
 
 const EventAttendee = ({route}) => {
   const {width, height} = useWindowDimensions();
   const {item} = route.params.data;
 
   const styles = StyleSheet.create({
+    paginationText: {
+      fontSize: FONTS.FONTSIZE.SMALL,
+      color: 'blue',
+      textAlign: 'center',
+      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+    },
     listContainer: {
       padding: 10,
       flexGrow: 1,
     },
     memberText: {
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
-      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+      fontSize: FONTS.FONTSIZE.SMALL,
       color: COLORS.PLACEHOLDERCOLOR,
       width: widthPercentageToDP('35%'),
     },
     membervalue: {
       fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+      fontSize: FONTS.FONTSIZE.SMALL,
       color: COLORS.PLACEHOLDERCOLOR,
       width: widthPercentageToDP('50%'),
       textAlign: 'left',
-    },
-    itemContainer: {
-      borderRadius: 10,
-      overflow: 'hidden',
-      backgroundColor: COLORS.TITLECOLOR,
-      marginVertical: 8,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    innerContainer: {
-      gap: 10,
-      paddingBottom: 10,
     },
     filterContainer: {
       backgroundColor: COLORS.LABELCOLOR,
@@ -73,18 +67,6 @@ const EventAttendee = ({route}) => {
       paddingHorizontal: 10,
       paddingVertical: 4,
       right: 10,
-    },
-    modalContainer: {
-      flex: 1,
-      alignItems: 'flex-end',
-      overflow: 'hidden',
-    },
-    modalContent: {
-      width: widthPercentageToDP(42),
-      backgroundColor: COLORS.PRIMARYWHITE,
-      borderRadius: 8,
-      top: heightPercentageToDP(12),
-      right: widthPercentageToDP(3),
     },
     backdrop: {
       position: 'absolute',
@@ -113,75 +95,86 @@ const EventAttendee = ({route}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
   const [checkinData, setCheckinData] = useState([]);
+
   const [eventData, setEventData] = useState([]);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const PAGE_SIZE = 20;
+
   const [isEventDataModal, setIsEventDataModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [isReresh, setIsRefresh] = useState(false);
+  const [isRefresh, setIsRefresh] = useState(false);
+  const [openIndices, setOpenIndices] = useState(null);
 
-  const handleRefresh = async () => {
+  const fetchCheckinData = useCallback(async () => {
+    const state = await NetInfo.fetch();
+    if (state.isConnected) {
+      setIsLoading(true);
+      try {
+        const response = await httpClientV2.get(
+          `member/getcheckin?memberid=${0}&eventid=${
+            selectedEvent ? selectedEvent?.id : 0
+          }&pageNumber=${pageNumber}&pageSize=${PAGE_SIZE}`,
+        );
+
+        const {data} = response;
+        const {status, message, result} = data;
+
+        if (status || (status === true && result)) {
+          const totalRecords = result?.totalRecord || 0;
+          const calculatedTotalPages = Math.ceil(totalRecords / PAGE_SIZE);
+          const apiData = result?.data || [];
+
+          setCheckinData(apiData);
+
+          const canLoadMore =
+            pageNumber < calculatedTotalPages && apiData.length > 0;
+          setHasMore(canLoadMore);
+        } else {
+          setCheckinData([]);
+          NOTIFY_MESSAGE(message || 'No data found');
+        }
+      } catch (err) {
+        NOTIFY_MESSAGE('Something Went Wrong.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [pageNumber, selectedEvent]);
+
+  const handleRefresh = useCallback(async () => {
     setIsRefresh(true);
-    await onGetCheckInApiCall();
-    setIsRefresh(false);
-  };
+    setOpenIndices(null);
 
-  const data = [
-    {
-      id: 1,
-      name: 'All',
-    },
-    {
-      id: 2,
-      name: 'Event',
-    },
-  ];
+    if (pageNumber === 1) {
+      await fetchCheckinData();
+    } else {
+      setPageNumber(1);
+    }
+
+    setIsRefresh(false);
+  }, [pageNumber, fetchCheckinData]);
 
   useEffect(() => {
-    onGetCheckInApiCall();
     onEventFilter();
+  }, []);
+
+  useEffect(() => {
+    fetchCheckinData();
+  }, [pageNumber, selectedEvent]);
+
+  useEffect(() => {
+    setOpenIndices(null);
+    if (pageNumber !== 1) {
+      setPageNumber(1);
+    }
   }, [selectedEvent]);
 
-  function onGetCheckInApiCall() {
-    NetInfo.fetch().then(state => {
-      if (state.isConnected) {
-        setIsLoading(true);
-        httpClient
-          .get(
-            `member/getcheckin?memberid=${0}&eventid=${
-              selectedEvent ? selectedEvent?.id : 0
-            }`,
-          )
-          .then(response => {
-            const {data} = response;
-            const {status, message, result} = data;
-            if (status || (status == true && result)) {
-              const groupedData = result.reduce((acc, item) => {
-                const eventName = item.eventName;
-                if (!acc[eventName]) {
-                  acc[eventName] = [];
-                }
-                acc[eventName].push(item);
-                return acc;
-              }, {});
-
-              const formattedData = Object.keys(groupedData).map(eventName => ({
-                eventName,
-                members: groupedData[eventName],
-              }));
-              setCheckinData(formattedData);
-            } else {
-              setCheckinData([]);
-              NOTIFY_MESSAGE(message);
-            }
-          })
-          .catch(err => {
-            setIsLoading(false);
-            NOTIFY_MESSAGE(err ? 'Something Went Wrong.' : null);
-            navigation.goBack();
-          })
-          .finally(() => setIsLoading(false));
-      }
-    });
-  }
+  const loadMore = async () => {
+    if (hasMore) {
+      setPageNumber(prev => prev + 1);
+    }
+  };
 
   function onEventFilter() {
     NetInfo.fetch().then(state => {
@@ -218,195 +211,139 @@ const EventAttendee = ({route}) => {
     });
   }
 
-  const [openIndices, setOpenIndices] = useState({});
-
   const renderList = ({item, index}) => {
-    const isSelected = openIndices[index];
-
-    const handleToggle = index => {
-      setOpenIndices(prev => ({
-        ...prev,
-        [index]: !prev[index],
-      }));
+    const handleToggleMember = index => {
+      setOpenIndices(openIndices === index ? null : index);
     };
 
-    const handleToggleMember = memberIndex => {
-      setOpenIndices(prev => {
-        const newIndices = {...prev};
-        const memberKey = `${index}-${memberIndex}`;
+    const number1 = (pageNumber - 1) * PAGE_SIZE + index + 1;
+    const number = number1 <= 9 ? `0${number1}` : `${number1}`;
 
-        if (newIndices[memberKey]) {
-          delete newIndices[memberKey];
-        } else {
-          Object.keys(newIndices).forEach(key => {
-            if (key.startsWith(`${index}-`)) {
-              delete newIndices[key];
-            }
-          });
-          newIndices[memberKey] = true;
-        }
-
-        return newIndices;
-      });
-    };
+    const isMemberOpen = openIndices == index;
 
     return (
-      <View key={index}>
-        <TouchableOpacity
-          onPress={() => handleToggle(index)}
-          style={styles.itemContainer}>
-          <Text
-            numberOfLines={1}
-            style={{
-              fontSize: FONTS.FONTSIZE.SEMIMINI,
-              fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-              color: COLORS.PRIMARYWHITE,
-              padding: 8,
-            }}>
-            {item?.eventName &&
-            item.eventName !== 'null' &&
-            item.eventName !== null
-              ? item.eventName
-              : '-'}
-          </Text>
+      <TouchableOpacity
+        style={{
+          backgroundColor: COLORS.PRIMARYWHITE,
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: 10,
+          marginBottom: 10,
+        }}
+        onPress={() => {
+          handleToggleMember(index);
+        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
           <View
-            activeOpacity={0.35}
             style={{
-              paddingHorizontal: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              width: width / 1.4,
             }}>
-            {isSelected ? (
-              <AntDesign name="up" size={20} color={COLORS.PRIMARYWHITE} />
+            <View
+              style={{
+                backgroundColor: COLORS.LABELCOLOR,
+                maxWidth: '20%',
+                padding: 6,
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderRadius: 10,
+              }}>
+              <Text
+                style={[
+                  {
+                    color: COLORS.PRIMARYWHITE,
+                    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                    fontSize: FONTS.FONTSIZE.SEMIMINI,
+                    textAlign: 'center',
+                  },
+                ]}>
+                {number}
+              </Text>
+            </View>
+            <View>
+              <Text
+                numberOfLines={1}
+                style={[
+                  {
+                    color: COLORS.PRIMARYBLACK,
+                    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                    fontSize: FONTS.FONTSIZE.SMALL,
+                  },
+                ]}>
+                {item?.firstname} {item?.lastname}
+              </Text>
+              <Text
+                numberOfLines={1}
+                style={[
+                  {
+                    color: COLORS.TABLELABELTEXTCOLOR,
+                    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                    fontSize: FONTS.FONTSIZE.SEMIMINI,
+                  },
+                ]}>
+                {item?.eventName}
+              </Text>
+            </View>
+          </View>
+          <View>
+            {isMemberOpen ? (
+              <AntDesign name="up" size={16} color={COLORS.LABELCOLOR} />
             ) : (
-              <AntDesign name="down" size={20} color={COLORS.PRIMARYWHITE} />
+              <AntDesign name="down" size={16} color={COLORS.LABELCOLOR} />
             )}
           </View>
-        </TouchableOpacity>
-        {isSelected && (
-          <View style={styles.innerContainer}>
-            {item.members.map((member, memberIndex) => {
-              const number =
-                memberIndex + 1 < 10
-                  ? `0${memberIndex + 1}`
-                  : `${memberIndex + 1}`;
+        </View>
 
-              const isMemberOpen = openIndices[`${index}-${memberIndex}`];
-              return (
-                <View key={memberIndex}>
-                  <View
-                    style={{
-                      backgroundColor: COLORS.PRIMARYWHITE,
-                      padding: 10,
-                      borderRadius: 10,
-                    }}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        handleToggleMember(memberIndex);
-                      }}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 10,
-                          width: width / 1.4,
-                        }}>
-                        <View
-                          style={{
-                            backgroundColor: COLORS.LABELCOLOR,
-                            maxWidth: '30%',
-                            padding: 6,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            borderRadius: 10,
-                          }}>
-                          <Text
-                            style={[
-                              {
-                                color: COLORS.PRIMARYWHITE,
-                                fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                                fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                              },
-                            ]}>
-                            {number}
-                          </Text>
-                        </View>
-                        <Text
-                          numberOfLines={1}
-                          style={[
-                            {
-                              color: COLORS.PRIMARYBLACK,
-                              fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                              fontSize: FONTS.FONTSIZE.EXTRASMALL,
-                            },
-                          ]}>
-                          {member.firstname} {member.lastname}
-                        </Text>
-                      </View>
-                      <View>
-                        {isMemberOpen ? (
-                          <AntDesign
-                            name="up"
-                            size={20}
-                            color={COLORS.LABELCOLOR}
-                          />
-                        ) : (
-                          <AntDesign
-                            name="down"
-                            size={20}
-                            color={COLORS.LABELCOLOR}
-                          />
-                        )}
-                      </View>
-                    </TouchableOpacity>
-
-                    {isMemberOpen && (
-                      <View key={memberIndex}>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            marginTop: 10,
-                          }}>
-                          <Text style={styles.memberText}>Name : </Text>
-                          <Text style={styles.membervalue}>
-                            {member.firstname} {member.lastname}
-                          </Text>
-                        </View>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                          }}>
-                          <Text style={styles.memberText}>Check In : </Text>
-                          <Text style={styles.membervalue}>
-                            {member.checkIn || '-'}
-                          </Text>
-                        </View>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                          }}>
-                          <Text style={styles.memberText}>Member Name : </Text>
-                          <Text style={styles.membervalue}>
-                            {member.memberName || '-'}
-                          </Text>
-                        </View>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              );
-            })}
+        {isMemberOpen && (
+          <View key={index}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginTop: 10,
+              }}>
+              <Text style={styles.memberText}>Name : </Text>
+              <Text style={styles.membervalue}>
+                {item?.firstname} {item?.lastname}
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={styles.memberText}>Check In : </Text>
+              <Text style={styles.membervalue}>{item?.checkIn || '-'}</Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={styles.memberText}>Event : </Text>
+              <Text style={styles.membervalue}>{item?.eventName || '-'}</Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={styles.memberText}>Member Name : </Text>
+              <Text style={styles.membervalue}>{item?.memberName || '-'}</Text>
+            </View>
           </View>
         )}
-      </View>
+      </TouchableOpacity>
     );
   };
+
   const {isConnected, networkLoading} = useNetworkStatus();
 
   return (
@@ -421,10 +358,10 @@ const EventAttendee = ({route}) => {
           }}
           leftIcon={
             <FontAwesome6
-              iconStyle="solid"
               name="angle-left"
               size={26}
               color={COLORS.LABELCOLOR}
+              iconStyle="solid"
             />
           }
           title={item?.name}
@@ -458,7 +395,7 @@ const EventAttendee = ({route}) => {
                     refreshControl={
                       <RefreshControl
                         onRefresh={handleRefresh}
-                        refreshing={isReresh}
+                        refreshing={isRefresh}
                       />
                     }
                     contentContainerStyle={styles.listContainer}
@@ -471,6 +408,30 @@ const EventAttendee = ({route}) => {
                     windowSize={40}
                     initialNumToRender={10}
                   />
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      paddingVertical: heightPercentageToDP('1%'),
+                      paddingHorizontal: widthPercentageToDP('5%'),
+                      gap: 30,
+                    }}>
+                    {pageNumber > 1 && (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setPageNumber(prevPage => Math.max(prevPage - 1, 1));
+                        }}
+                        style={{}}>
+                        <Text style={styles.paginationText}>Previous</Text>
+                      </TouchableOpacity>
+                    )}
+                    {hasMore && (
+                      <TouchableOpacity onPress={loadMore} style={{}}>
+                        <Text style={styles.paginationText}>Load More</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
               ) : (
                 <NoDataFound />
@@ -481,6 +442,7 @@ const EventAttendee = ({route}) => {
           )}
         </View>
       </View>
+
       <Modal
         animationType="none"
         transparent={true}
