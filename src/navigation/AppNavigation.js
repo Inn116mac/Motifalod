@@ -63,6 +63,9 @@ import Transactions from '../screens/Transactions';
 import TransactionDetails from '../screens/TransactionDetails';
 import ModuleList from '../screens/ModuleList';
 import AddUpdateModule from '../screens/AddUpdateModule';
+import AppSettings from '../screens/AppSettings';
+import PaymentCredList from '../screens/PaymentCredList';
+import AddUpdatePaymentCred from '../screens/AddUpdatePaymentCred';
 
 const Stack = createStackNavigator();
 
@@ -195,6 +198,12 @@ function AppNavigation() {
             />
             <Stack.Screen name="ModuleList" component={ModuleList} />
             <Stack.Screen name="AddUpdateModule" component={AddUpdateModule} />
+            <Stack.Screen name="AppSettings" component={AppSettings} />
+            <Stack.Screen name="PaymentCredList" component={PaymentCredList} />
+            <Stack.Screen
+              name="AddUpdatePaymentCred"
+              component={AddUpdatePaymentCred}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaView>

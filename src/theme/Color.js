@@ -22,5 +22,6 @@ const COLORS = {
   TABLELABELTEXTCOLOR: '#6b7280',
   PRIMARYCOLOR: '#0f74bc1a',
   PRIMARYBLUE: '#0f74bc17',
+  grey200: '#E5E7EB',
 };
 export default COLORS;

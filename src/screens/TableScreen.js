@@ -872,8 +872,7 @@ const TableScreen = ({route}) => {
   return (
     <KeyboardAvoidingView
       style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <CustomHeader
         leftOnPress={() => {
           navigation.goBack();

@@ -158,6 +158,10 @@ const FormRecords = ({route}) => {
             navigation.navigate('Transactions', (item = {data}));
           } else if (item?.constantName == 'MODULE MANAGEMENT') {
             navigation.navigate('ModuleList', (item = {data}));
+          } else if (item?.constantName == 'APP SETTINGS') {
+            navigation.navigate('AppSettings', (item = {data}));
+          } else if (item?.constantName == 'PAYMENT CREDENTIALS') {
+            navigation.navigate('PaymentCredList', (item = {data}));
           } else {
             navigation.navigate('TableScreen', (item = {data}));
           }

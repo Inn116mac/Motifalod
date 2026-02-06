@@ -250,6 +250,7 @@ const AddUpdateModule = ({route}) => {
     name: '',
     layout: '',
     icon: '',
+    description: '',
     mobileVisible: false,
     isForm: false,
   });
@@ -263,6 +264,7 @@ const AddUpdateModule = ({route}) => {
         name: editItem.name || '',
         layout: editItem.layout || '',
         icon: editItem.icon || '',
+        description: editItem?.description || '',
         mobileVisible:
           editItem?.isMobileDashboard == '1' ||
           editItem?.isMobileDashboard == true ||
@@ -515,7 +517,7 @@ const AddUpdateModule = ({route}) => {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+      >
       <CustomHeader
         leftOnPress={() => navigation.goBack()}
         leftIcon={
@@ -706,6 +708,35 @@ const AddUpdateModule = ({route}) => {
             {errors.icon && <Text style={styles.errorText}>{errors.icon}</Text>}
           </View>
 
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={[
+                styles.input,
+                errors?.description && styles.errorInput,
+                {height: 100, textAlignVertical: 'top', paddingTop: 10},
+              ]}
+              placeholder="Enter Description"
+              placeholderTextColor={COLORS.grey500}
+              value={formData?.description}
+              multiline
+              numberOfLines={4}
+              onChangeText={value => {
+                setFormData(prev => ({...prev, description: value}));
+                if (errors?.description) {
+                  setErrors(prev => {
+                    const newErrors = {...prev};
+                    delete newErrors?.description;
+                    return newErrors;
+                  });
+                }
+              }}
+            />
+            {errors?.description && (
+              <Text style={styles.errorText}>{errors?.description}</Text>
+            )}
+          </View>
+
           {/* Mobile Visible Switch */}
           <View style={styles.switchContainer}>
             <Switch
@@ -751,7 +782,7 @@ const AddUpdateModule = ({route}) => {
             alignItems: 'center',
             gap: 20,
             margin: 10,
-            paddingBottom: keyboardOpen && Platform.OS == 'android' ? 20 : 0,
+            paddingBottom: keyboardOpen ? 30 : 0,
           }}>
           <ButtonComponent
             title={isLoading ? 'Please Wait...' : isEdit ? 'Update' : 'Submit'}

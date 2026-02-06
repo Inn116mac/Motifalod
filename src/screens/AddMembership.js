@@ -242,7 +242,7 @@ const AddMembership = ({route}) => {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+      >
       <CustomHeader
         leftOnPress={() => navigation.goBack()}
         leftIcon={
@@ -377,7 +377,7 @@ const AddMembership = ({route}) => {
             alignItems: 'center',
             gap: 20,
             margin: 10,
-            paddingBottom: keyboardOpen && Platform.OS == 'android' ? 20 : 0,
+            paddingBottom: keyboardOpen ? 30 : 0,
           }}>
           {/* <ButtonComponent
             title="Cancel"

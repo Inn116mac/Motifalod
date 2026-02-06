@@ -59,7 +59,7 @@ const NotificationManagement = ({route}) => {
       marginHorizontal: 10,
       borderRadius: 10,
       flexGrow: 1,
-      paddingBottom: 10,
+      paddingBottom: 20,
     },
     pkgLbl: {
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
@@ -348,8 +348,7 @@ const NotificationManagement = ({route}) => {
   return (
     <KeyboardAvoidingView
       style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <CustomHeader
         leftOnPress={() => {
           navigation.goBack();
@@ -410,6 +409,7 @@ const NotificationManagement = ({route}) => {
         <View style={{flex: 1}}>
           {filteredData?.length > 0 ? (
             <FlatList
+              keyboardShouldPersistTaps={'handled'}
               data={filteredData}
               initialNumToRender={10}
               maxToRenderPerBatch={20}

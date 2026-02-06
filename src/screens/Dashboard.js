@@ -122,7 +122,9 @@ const Dashboard = ({route}) => {
                 item?.constantName !== 'NOTIFICATION MANAGEMENT' &&
                 item?.constantName !== 'REMINDER MANAGEMENT' &&
                 item?.constantName !== 'TRANSACTIONS' &&
-                item?.constantName !== 'MODULE MANAGEMENT',
+                item?.constantName !== 'MODULE MANAGEMENT' &&
+                item?.constantName !== 'APP SETTINGS' &&
+                item?.constantName !== 'PAYMENT CREDENTIALS',
             );
             if (newArray?.length > 0) {
               setData(newArray);
