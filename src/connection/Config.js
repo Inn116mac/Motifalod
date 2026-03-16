@@ -17,19 +17,21 @@ export const API_TOKEN = '';
 // export const IMAGE_URL = 'http://ems.inngenius.net:5001/';
 // export const IMAGE_URL_ICONS = 'http://ems.inngenius.net:5001/icon/';
 
-// export const API_HOST = 'https://innevent.inngenius.com/api/v1/';
-// export const API_HOST1 = 'https://innevent.inngenius.com/api/v2/';
-// export const IMAGE_URL = 'https://innevent.inngenius.com/';
-// export const IMAGE_URL_ICONS = 'https://innevent.inngenius.com/icon/';
+export const API_HOST = 'https://innevent.inngenius.com/api/v1/';
+export const API_HOST1 = 'https://innevent.inngenius.com/api/v2/';
+export const API_HOST2 = 'https://innevent.inngenius.com/api/';
+export const IMAGE_URL = 'https://innevent.inngenius.com/';
+export const IMAGE_URL_ICONS = 'https://innevent.inngenius.com/icon/';
 
 // export const API_HOST = 'http://99.96.208.123:5001/api/v1/';
 // export const IMAGE_URL = "http://99.96.208.123:5001/"
 // export const IMAGE_URL_ICONS = "http://99.96.208.123:5001/icon/"
 
-export const API_HOST = 'https://motifalodapi.inngenius.com/api/v1/';
-export const API_HOST1 = 'https://motifalodapi.inngenius.com/api/v2/';
-export const IMAGE_URL = 'https://motifalodapi.inngenius.com/';
-export const IMAGE_URL_ICONS = 'https://motifalodapi.inngenius.com/icon/';
+// export const API_HOST = 'https://motifalodapi.inngenius.com/api/v1/';
+// export const API_HOST1 = 'https://motifalodapi.inngenius.com/api/v2/';
+// export const API_HOST2 = 'https://motifalodapi.inngenius.com/api/';
+// export const IMAGE_URL = 'https://motifalodapi.inngenius.com/';
+// export const IMAGE_URL_ICONS = 'https://motifalodapi.inngenius.com/icon/';
 
 // export const API_HOST = 'https://gselpasoapi.inngenius.com/api/v1/';
 // export const API_HOST1 = 'https://gselpasoapi.inngenius.com/api/v2/';

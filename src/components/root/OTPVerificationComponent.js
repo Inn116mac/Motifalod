@@ -214,6 +214,7 @@ const OTPVerificationComponent = ({
           />
         )}
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
             flexGrow: 1,
             paddingBottom: keyboardOpen && Platform.OS === 'android' ? 34 : 0,

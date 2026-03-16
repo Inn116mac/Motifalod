@@ -25,12 +25,12 @@ import FONTS from '../theme/Fonts';
 import CustomHeader from '../components/root/CustomHeader';
 import {MaterialIcons} from '@react-native-vector-icons/material-icons';
 import {capitalizeFirstLetter, NOTIFY_MESSAGE} from '../constant/Module';
-import {API_HOST, IMAGE_URL} from '../connection/Config';
+import {IMAGE_URL} from '../connection/Config';
 import httpClient from '../connection/httpClient';
 import BraintreeDropIn from 'react-native-braintree-dropin-ui';
 
 const PaymentInfoFromAdmin = ({route, navigation}) => {
-  const {item, memberConfiguration} = route.params || {};
+  const {item, memberConfiguration, formFields} = route.params || {};
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [receiptModalVisible, setReceiptModalVisible] = useState(false);
@@ -93,6 +93,28 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
     {id: 'venmo', label: 'Venmo', icon: '📱', requiresReceipt: false},
     {id: 'paypal', label: 'PayPal', icon: '💳', requiresReceipt: false},
   ];
+
+  const paymentTypeField = formFields?.find(
+    field => field.name === 'paymentType',
+  )?.values;
+
+  const allowedPaymentTypes = (() => {
+    if (!paymentTypeField) return [];
+
+    try {
+      const parsed = JSON.parse(paymentTypeField);
+      return Array.isArray(parsed)
+        ? parsed.map(v => v.label?.toLowerCase()?.trim()).filter(Boolean)
+        : [];
+    } catch (error) {
+      console.log('JSON Parse Error:', error);
+      return [];
+    }
+  })();
+
+  const filteredPaymentMethods = paymentMethods?.filter(method =>
+    allowedPaymentTypes.includes(method?.label?.toLowerCase()?.trim()),
+  );
 
   // Check if selected payment method requires receipt
   const selectedMethod = paymentMethods.find(
@@ -794,43 +816,51 @@ const PaymentInfoFromAdmin = ({route, navigation}) => {
           <View style={styles.card}>
             <Text style={styles.paymentMethodTitle}>Select Payment Method</Text>
             <View style={styles.paymentMethodsList}>
-              {paymentMethods.map(method => (
-                <TouchableOpacity
-                  key={method.id}
-                  style={[
-                    styles.paymentMethodCard,
-                    selectedPaymentMethod === method.id &&
-                      styles.paymentMethodCardSelected,
-                  ]}
-                  onPress={() => {
-                    setSelectedPaymentMethod(method.id);
-                    // Reset receipt when changing payment method
-                    if (!method.requiresReceipt) {
-                      setReceiptUri(null);
-                      setUploadedReceiptUrl(null);
-                      setUploadComplete(false);
-                    }
-                  }}>
-                  <View style={styles.paymentMethodContent}>
-                    <Text style={styles.paymentMethodIcon}>{method.icon}</Text>
-                    <Text
-                      style={[
-                        styles.paymentMethodLabel,
-                        selectedPaymentMethod === method.id &&
-                          styles.paymentMethodLabelSelected,
-                      ]}>
-                      {method.label}
-                    </Text>
-                  </View>
-                  {selectedPaymentMethod === method.id && (
-                    <MaterialDesignIcons
-                      name="check-circle"
-                      size={24}
-                      color={'#246403'}
-                    />
-                  )}
-                </TouchableOpacity>
-              ))}
+              {filteredPaymentMethods?.length > 0 ? (
+                filteredPaymentMethods?.map(method => (
+                  <TouchableOpacity
+                    key={method.id}
+                    style={[
+                      styles.paymentMethodCard,
+                      selectedPaymentMethod === method.id &&
+                        styles.paymentMethodCardSelected,
+                    ]}
+                    onPress={() => {
+                      setSelectedPaymentMethod(method.id);
+                      // Reset receipt when changing payment method
+                      if (!method.requiresReceipt) {
+                        setReceiptUri(null);
+                        setUploadedReceiptUrl(null);
+                        setUploadComplete(false);
+                      }
+                    }}>
+                    <View style={styles.paymentMethodContent}>
+                      <Text style={styles.paymentMethodIcon}>
+                        {method.icon}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.paymentMethodLabel,
+                          selectedPaymentMethod === method.id &&
+                            styles.paymentMethodLabelSelected,
+                        ]}>
+                        {method.label}
+                      </Text>
+                    </View>
+                    {selectedPaymentMethod === method.id && (
+                      <MaterialDesignIcons
+                        name="check-circle"
+                        size={24}
+                        color={'#246403'}
+                      />
+                    )}
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.noMembersText}>
+                  No payment method available!
+                </Text>
+              )}
             </View>
 
             {/* Receipt Upload Section - Show only for Cash/Check */}

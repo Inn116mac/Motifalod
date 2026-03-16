@@ -15,11 +15,10 @@ import {
   Keyboard,
   Dimensions,
 } from 'react-native';
-import React, {useState, useEffect, useRef, useCallback, useMemo} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import FONTS from '../../theme/Fonts';
 import {Fontisto} from '@react-native-vector-icons/fontisto';
 import {Entypo} from '@react-native-vector-icons/entypo';
-import {Ionicons} from '@react-native-vector-icons/ionicons';
 import {FontAwesome} from '@react-native-vector-icons/fontawesome';
 import {capitalizeFirstLetter, NOTIFY_MESSAGE} from '../../constant/Module';
 import NetInfo from '@react-native-community/netinfo';
@@ -1560,10 +1559,10 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                       <View
                         style={{
                           flexDirection: 'row',
-                          alignItems: 'center',
+                          alignItems: 'flex-start',
                           borderWidth: 1,
-                          height: 38,
-                          paddingVertical: 0,
+                          height: 100,
+                          paddingVertical: 4,
                           borderRadius: 10,
                           paddingHorizontal: 8,
                           borderColor: errors[key]
@@ -1573,14 +1572,15 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           backgroundColor: COLORS.PRIMARYWHITE,
                         }}>
                         <TextInput
-                          numberOfLines={1}
-                          editable={false}
+                          numberOfLines={4}
+                          multiline
                           style={{
-                            color: COLORS.PLACEHOLDERCOLOR,
+                            color: COLORS.PRIMARYBLACK,
                             fontSize: FONTS.FONTSIZE.MINI,
                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
-                            width: '85%',
-                            paddingVertical: 0,
+                            flex: 1,
+                            paddingVertical: 4,
+                            textAlignVertical: 'top',
                           }}
                           value={item?.value || ''}
                           maxLength={
@@ -1589,7 +1589,12 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           placeholder={`${item.label}`}
                           placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                           onChangeText={value =>
-                            handleInputChange(item?.name, value)
+                            handleInputChange(
+                              item?.name,
+                              value,
+                              item?.required,
+                              item?.label,
+                            )
                           }
                           keyboardType="default"
                         />

@@ -913,6 +913,7 @@ const FamilyMemberList = ({route}) => {
                   navigation.navigate('PaymentInfoFromAdmin', {
                     item: item1,
                     memberConfiguration: item1?.configurationId,
+                    formFields: formFields,
                   });
                 }}>
                 <Text

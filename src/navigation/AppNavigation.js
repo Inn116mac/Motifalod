@@ -66,6 +66,10 @@ import AddUpdateModule from '../screens/AddUpdateModule';
 import AppSettings from '../screens/AppSettings';
 import PaymentCredList from '../screens/PaymentCredList';
 import AddUpdatePaymentCred from '../screens/AddUpdatePaymentCred';
+import PollList from '../screens/PollList';
+import PollComments from '../screens/PollComments';
+import EventTemplatePickerScreen from '../screens/EventTemplatePickerScreen';
+import EventCategoryPickerScreen from '../screens/EventCategoryPickerScreen';
 
 const Stack = createStackNavigator();
 
@@ -203,6 +207,16 @@ function AppNavigation() {
             <Stack.Screen
               name="AddUpdatePaymentCred"
               component={AddUpdatePaymentCred}
+            />
+            <Stack.Screen name="PollList" component={PollList} />
+            <Stack.Screen name="PollComments" component={PollComments} />
+            <Stack.Screen
+              name="EventTemplates"
+              component={EventTemplatePickerScreen}
+            />
+            <Stack.Screen
+              name="EventCategoryPicker"
+              component={EventCategoryPickerScreen}
             />
           </Stack.Navigator>
         </NavigationContainer>

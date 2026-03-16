@@ -279,6 +279,7 @@ const EventDetails = ({route}) => {
             style={styles.container}
             contentContainerStyle={{
               paddingBottom: 10,
+              // paddingBottom: isUpcommingEvent ? 90 : 10,
               flexGrow: 1,
             }}
             showsVerticalScrollIndicator={false}>
@@ -841,6 +842,52 @@ const EventDetails = ({route}) => {
       ) : (
         <Offline />
       )}
+      {/* {isConnected && !loading && !networkLoading && isUpcommingEvent && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+            backgroundColor: COLORS.BACKGROUNDCOLOR,
+            borderTopWidth: 1,
+            borderTopColor: COLORS.TABLEBORDER,
+          }}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('EventCategoryPicker', {event: evnentObj})
+            }
+            activeOpacity={0.85}
+            style={{
+              backgroundColor: COLORS.LABELCOLOR,
+              borderRadius: 14,
+              paddingVertical: 14,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              elevation: 5,
+              shadowColor: COLORS.LABELCOLOR,
+              shadowOffset: {width: 0, height: 4},
+              shadowOpacity: 0.35,
+              shadowRadius: 10,
+            }}>
+            <Text style={{fontSize: 17}}>🎨</Text>
+            <Text
+              style={{
+                fontSize: FONTS.FONTSIZE.SMALL,
+                fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                color: '#fff',
+                includeFontPadding: false,
+              }}>
+              Create Invitation
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )} */}
     </View>
   );
 };

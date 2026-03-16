@@ -5,6 +5,7 @@ import {BackHandler} from 'react-native';
 
 const VerifyScreen = ({route}) => {
   const userName = route?.params?.userName;
+  const isUpdatePassword = route?.params?.isUpdatePassword;
   const userInfo = route?.params?.userInfo;
 
   const navigation = useNavigation();
@@ -41,6 +42,7 @@ const VerifyScreen = ({route}) => {
         navigation.navigate('NewPassword', {
           userName: userName,
           userInfo: userInfo,
+          isUpdatePassword: isUpdatePassword,
         });
       }}
       onVerifyError={error => {
@@ -60,7 +62,7 @@ const VerifyScreen = ({route}) => {
       }}
       otpLength={6}
       initialTimer={60}
-      showHeader={true}
+      showHeader={isUpdatePassword ? false : true}
       showLogo={true}
     />
   );

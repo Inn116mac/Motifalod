@@ -2879,30 +2879,6 @@ const Registration1 = ({route}) => {
     return [...new Set(disabledOptions)];
   };
 
-  // Add this function before your return statement
-  const checkConfigurationIds = () => {
-    const personalInfoSection = formData.find(
-      section => section.headerKey === 'personalInfo',
-    );
-
-    if (!personalInfoSection || !personalInfoSection.headerConfig) {
-      return true;
-    }
-
-    const hasInvalidConfig = personalInfoSection.headerConfig.some(member => {
-      const configId = member?.configurationid?.value;
-      return (
-        configId === 0 ||
-        configId === '0' ||
-        configId === null ||
-        configId === undefined ||
-        configId === ''
-      );
-    });
-
-    return hasInvalidConfig;
-  };
-
   const getPaymentButtonState = () => {
     const personalInfoSection = formData.find(
       section => section.headerKey === 'personalInfo',
@@ -3310,7 +3286,15 @@ const Registration1 = ({route}) => {
                       moduleData[activeTab].isMultiple;
 
                     const isEmailDisable = hasMembershipValue && hasEmailField;
-                    const isPhoneDisable = hasMembershipValue && hasPhoneField;
+                    // const isPhoneDisable = hasMembershipValue && hasPhoneField;
+                    const phoneValue = moduleData[activeTab].isMultiple
+                      ? userData[0]?.contact?.value || ''
+                      : '';
+
+                    const isPhoneDisable =
+                      hasMembershipValue &&
+                      hasPhoneField &&
+                      phoneValue?.length > 0;
 
                     if (
                       moduleData[activeTab]?.headerKey === 'personalInfo' &&

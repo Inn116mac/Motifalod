@@ -398,7 +398,6 @@ const ViewScreen = ({route}) => {
                     let data = {
                       item: item,
                       isTabView: true,
-                      isFromEventAdmin: true,
                     };
                     navigation.navigate('Form', {data});
                   }}

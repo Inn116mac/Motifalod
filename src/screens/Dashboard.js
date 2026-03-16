@@ -236,6 +236,10 @@ const Dashboard = ({route}) => {
               navigation.navigate('MemberSummary', {
                 data: data,
               });
+            } else if (constantName === 'POLL') {
+              navigation.navigate('PollList', {
+                data: data,
+              });
             } else {
               navigation.navigate('View', {data: data});
             }
@@ -491,7 +495,7 @@ const Dashboard = ({route}) => {
                   numberOfLines={1}
                   style={{
                     color: COLORS.PRIMARYWHITE,
-                    fontSize: FONTS.FONTSIZE.TOOSMALL,
+                    fontSize: FONTS.FONTSIZE.MICRO,
                     fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                   }}>
                   {item.name}

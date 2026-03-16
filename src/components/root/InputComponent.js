@@ -70,7 +70,7 @@ const InputComponent = ({
             }}
           />
         </View>
-        <TouchableOpacity onPress={onPress}>{icon}</TouchableOpacity>
+        {icon && <TouchableOpacity onPress={onPress}>{icon}</TouchableOpacity>}
       </View>
     </View>
   );

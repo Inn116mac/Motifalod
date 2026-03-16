@@ -17,7 +17,7 @@ import InputComponent from '../../components/root/InputComponent';
 import ButtonComponent from '../../components/root/ButtonComponent';
 import {useNavigation} from '@react-navigation/native';
 import CustomHeader from '../../components/root/CustomHeader';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import Offline from '../../components/root/Offline';
 import httpClient from '../../connection/httpClient';
 import {useNetworkStatus} from '../../connection/UseNetworkStatus';
@@ -96,12 +96,13 @@ const ForgotPass = () => {
             <FontAwesome6
               name="angle-left"
               size={26}
-              iconStyle='solid'
+              iconStyle="solid"
               color={COLORS.LABELCOLOR}
             />
           }
         />
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets={true}
           contentContainerStyle={{
             flexGrow: 1,

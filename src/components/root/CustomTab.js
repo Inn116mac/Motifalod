@@ -15,7 +15,7 @@ import {
   Keyboard,
   Dimensions,
 } from 'react-native';
-import React, {useState, useEffect, useRef, useCallback, useMemo} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import FONTS from '../../theme/Fonts';
 import ButtonComponent from './ButtonComponent';
 import {Entypo} from '@react-native-vector-icons/entypo';
@@ -1164,13 +1164,10 @@ export default function CustomTab({
     };
   }, [uploadComplete, isFocused]);
 
-  const [location, setLocation] = useState(null);
-
   const handleTextInputPress = (key, required, label) => {
     navigation.navigate('MapScreen', {
       currentLocation: formData[key],
       onLabelSelect: location => {
-        setLocation(location);
         handleInputChange(key, location, required, label);
       },
     });
@@ -1961,7 +1958,10 @@ export default function CustomTab({
                   : 'text'
               ) {
                 case 'text':
-                  return (
+                  return item.className ===
+                    'form-control mobile-hide memberid' ||
+                    item.className === 'mobile-hide' ||
+                    item.className === 'form-control mobile-hide' ? null : (
                     <View key={item?.key} style={{marginBottom: 8, gap: 4}}>
                       <View
                         style={{flexDirection: 'row', alignItems: 'center'}}>
@@ -2079,10 +2079,10 @@ export default function CustomTab({
                       <View
                         style={{
                           flexDirection: 'row',
-                          alignItems: 'center',
+                          alignItems: 'flex-start',
                           borderWidth: 1,
-                          height: 38,
-                          paddingVertical: 0,
+                          height: 100,
+                          paddingVertical: 4,
                           borderRadius: 10,
                           paddingHorizontal: 8,
                           borderColor: errors[item?.key]
@@ -2092,16 +2092,17 @@ export default function CustomTab({
                           backgroundColor: COLORS.PRIMARYWHITE,
                         }}>
                         <TextInput
-                          numberOfLines={1}
-                          editable={false}
+                          numberOfLines={4}
+                          multiline
                           style={{
-                            color: COLORS.PLACEHOLDERCOLOR,
+                            color: COLORS.PRIMARYBLACK,
                             fontSize: FONTS.FONTSIZE.MINI,
                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
-                            width: '85%',
-                            paddingVertical: 0,
+                            flex: 1,
+                            paddingVertical: 4,
+                            textAlignVertical: 'top',
                           }}
-                          value={formData[item?.key] || location}
+                          value={formData[item?.key]}
                           maxLength={250}
                           placeholder={`${item.label}`}
                           placeholderTextColor={COLORS.PLACEHOLDERCOLOR}

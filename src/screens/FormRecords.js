@@ -143,7 +143,7 @@ const FormRecords = ({route}) => {
         style={styles.itemContainer}
         activeOpacity={0.8}
         onPress={() => {
-          let data = {item, isTabView: false, isTable: true};
+          let data = {item, isTabView: false, isTable: true, isAdmin: true};
           if (item?.constantName === 'MEMBERSHIP MANAGEMENT') {
             navigation.navigate('MembershipPrice', (item = {data}));
           } else if (item?.constantName == 'ROLE MANAGEMENT') {
@@ -162,6 +162,8 @@ const FormRecords = ({route}) => {
             navigation.navigate('AppSettings', (item = {data}));
           } else if (item?.constantName == 'PAYMENT CREDENTIALS') {
             navigation.navigate('PaymentCredList', (item = {data}));
+          } else if (item?.constantName == 'POLL') {
+            navigation.navigate('PollList', (item = {data}));
           } else {
             navigation.navigate('TableScreen', (item = {data}));
           }

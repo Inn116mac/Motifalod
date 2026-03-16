@@ -24,9 +24,13 @@ import {Entypo} from '@react-native-vector-icons/entypo';
 import httpClient from '../../connection/httpClient';
 import {useNetworkStatus} from '../../connection/UseNetworkStatus';
 import Loader from '../../components/root/Loader';
+import messaging from '@react-native-firebase/messaging';
+import {storeData} from '../../utils/Storage';
 
 const NewPassword = ({route}) => {
   const userName = route?.params?.userName;
+  const isUpdatePassword = route?.params?.isUpdatePassword;
+  const userInfo = route?.params?.userInfo;
 
   const navigation = useNavigation();
   const {isConnected, networkLoading} = useNetworkStatus();
@@ -35,6 +39,16 @@ const NewPassword = ({route}) => {
   const [show, setShow] = useState(false);
   const [show1, setShow1] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const subscribeToTopic = async () => {
+    const topic = 'motifalod';
+    try {
+      await messaging().subscribeToTopic(topic);
+      console.log('Successfully subscribed to topic:', topic);
+    } catch (error) {
+      console.error('Error subscribing to topic:', error);
+    }
+  };
 
   function onUpdateApiCall() {
     if (!password && !confirmPassword) {
@@ -51,12 +65,34 @@ const NewPassword = ({route}) => {
           .post(
             `member/updatepassword?userName=${userName}&newPassword=${password}`,
           )
-          .then(response => {
+          .then(async response => {
             if (response.data.status) {
+              await subscribeToTopic();
+              await storeData('user', userInfo);
               NOTIFY_MESSAGE(response.data.message);
-              navigation.navigate('Login', {
-                isFromNewPassword: true,
-              });
+
+              if (isUpdatePassword) {
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{name: 'Main'}],
+                  }),
+                );
+              } else {
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [
+                      {
+                        name: 'Login',
+                        params: {
+                          isFromNewPassword: true,
+                        },
+                      },
+                    ],
+                  }),
+                );
+              }
             } else {
               NOTIFY_MESSAGE(response.data.message);
             }
@@ -121,28 +157,30 @@ const NewPassword = ({route}) => {
           flex: 1,
           backgroundColor: COLORS.BACKGROUNDCOLOR,
         }}>
-        <CustomHeader
-          leftOnPress={() => {
-            navigation.dispatch(
-              CommonActions.reset({
-                index: 0,
-                routes: [
-                  {
-                    name: 'Login',
-                  },
-                ],
-              }),
-            );
-          }}
-          leftIcon={
-            <FontAwesome6
-              iconStyle="solid"
-              name="angle-left"
-              size={26}
-              color={COLORS.LABELCOLOR}
-            />
-          }
-        />
+        {!isUpdatePassword && (
+          <CustomHeader
+            leftOnPress={() => {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [
+                    {
+                      name: 'Login',
+                    },
+                  ],
+                }),
+              );
+            }}
+            leftIcon={
+              <FontAwesome6
+                iconStyle="solid"
+                name="angle-left"
+                size={26}
+                color={COLORS.LABELCOLOR}
+              />
+            }
+          />
+        )}
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,

@@ -243,14 +243,23 @@ const LoginScreen = ({route}) => {
               }
               const {result} = response.data;
               if (result) {
-                await storeData('user', result);
-                await subscribeToTopic();
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{name: 'Main'}],
-                  }),
-                );
+                if (result?.isUpdatePassword) {
+                  navigation.navigate('Verify', {
+                    userName: loginUserName,
+                    isUpdatePassword: result.isUpdatePassword,
+                    userInfo: result,
+                  });
+                } else {
+                  await storeData('user', result);
+                  await subscribeToTopic();
+                  navigation.dispatch(
+                    CommonActions.reset({
+                      index: 0,
+                      routes: [{name: 'Main'}],
+                    }),
+                  );
+                }
+
                 setUserName('');
                 setPassword('');
               }
@@ -325,6 +334,7 @@ const LoginScreen = ({route}) => {
               flex: 1,
             }}>
             <ScrollView
+              keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               automaticallyAdjustKeyboardInsets={true}
               contentContainerStyle={{
@@ -401,7 +411,6 @@ const LoginScreen = ({route}) => {
                         gap: 8,
                       }}>
                       <TouchableOpacity
-                        style={{width: '12%'}}
                         onPress={() => setRememberMe(!rememberMe)}>
                         <Fontisto
                           name={
@@ -548,7 +557,7 @@ const LoginScreen = ({route}) => {
                         numberOfLines={1}
                         style={{
                           color: COLORS.PRIMARYWHITE,
-                          fontSize: FONTS.FONTSIZE.TOOSMALL,
+                          fontSize: FONTS.FONTSIZE.MICRO,
                           fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                         }}>
                         {item.name}

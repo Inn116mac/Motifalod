@@ -514,6 +514,7 @@ const Transactions = ({route}) => {
         } else {
           NOTIFY_MESSAGE(response?.data?.message || 'Something Went Wrong.');
           setData([]);
+          setHasMore(false);
         }
       } catch (error) {
         // ✅ Check if this error is still relevant
