@@ -42,6 +42,14 @@ export default function BroadcasterScreen({route}) {
   const [isStarting, setIsStarting] = useState(false);
   const [wantToRecord, setWantToRecord] = useState(false);
   const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   function randomRoomId() {
     return 'event-' + Math.random().toString(36).slice(2, 10);
@@ -118,7 +126,6 @@ export default function BroadcasterScreen({route}) {
 
     return () => clearInterval(monitorCapacity);
   }, [isStreaming]);
-
 
   const getMediaStream = async (isFront = true) => {
     const facingMode = isFront ? 'user' : 'environment';
@@ -269,6 +276,7 @@ export default function BroadcasterScreen({route}) {
     sock.once('connect_error', error => {
       setIsStarting(false);
       stopAll();
+      if (!mountedRef.current) return;
       Alert.alert(
         'Connection Failed',
         'Cannot connect to streaming server. The server may be overloaded or offline.',
@@ -278,6 +286,7 @@ export default function BroadcasterScreen({route}) {
     sock.once('error', error => {
       setIsStarting(false);
       stopAll();
+      if (!mountedRef.current) return;
       Alert.alert(
         'Server Error',
         'An error occurred with the streaming server connection.',
@@ -387,7 +396,6 @@ export default function BroadcasterScreen({route}) {
         await new Promise(resolve => setTimeout(resolve, 300));
         emitCameraSwitch(newIsFront);
       }
-
     } catch (error) {
       Alert.alert('Camera Error', 'Failed to switch camera. Please try again.');
     } finally {

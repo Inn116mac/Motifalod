@@ -346,7 +346,8 @@ const FamilyMemberList = ({route}) => {
 
   const [pageNumber, setPageNumber] = useState(1);
 
-  const [hasMore, setHasMore] = useState(true);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [openIndex, setOpenIndex] = useState(null);
   const [searchKeyword, setSearchKeyword] = useState('');
   const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
@@ -377,20 +378,16 @@ const FamilyMemberList = ({route}) => {
             NOTIFY_MESSAGE(response.data.message || 'No data found');
             setAllUserData([]);
             setFormFields([]);
-            setHasMore(false);
             return;
           }
 
           const newData = response?.data?.result?.familyMembers || [];
-          const totalRecords = response?.data?.result?.totalRecord || 0;
-          const totalPages = Math.ceil(totalRecords / PAGE_SIZE);
-
+          const total = response?.data?.result?.totalRecord || 0;
+          const pages = Math.ceil(total / PAGE_SIZE);
+          setTotalRecords(total);
+          setTotalPages(pages);
           setFormFields(response?.data?.result?.form || []);
-          // ✅ REPLACE data for current page only (no merging)
           setAllUserData(newData);
-
-          // ✅ Calculate if more pages exist
-          setHasMore(pageNumber < totalPages);
         })
         .catch(error => {
           const errorMessage =
@@ -400,7 +397,8 @@ const FamilyMemberList = ({route}) => {
           NOTIFY_MESSAGE(errorMessage);
           setAllUserData([]);
           setFormFields([]);
-          setHasMore(false);
+          setTotalPages(1);
+          setTotalRecords(0);
         })
         .finally(() => {
           setIsLoading(false);
@@ -430,20 +428,6 @@ const FamilyMemberList = ({route}) => {
       return () => {};
     }, []),
   );
-
-  const goPrevious = () => {
-    if (pageNumber > 1) {
-      setOpenIndex(null);
-      setPageNumber(prev => prev - 1);
-    }
-  };
-
-  const loadMore = () => {
-    if (hasMore && !isLoading) {
-      setOpenIndex(null);
-      setPageNumber(prev => prev + 1);
-    }
-  };
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -1596,27 +1580,146 @@ const FamilyMemberList = ({route}) => {
             <NoDataFound />
           )}
 
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingVertical: heightPercentageToDP('1%'),
-              paddingHorizontal: widthPercentageToDP('5%'),
-              gap: 30,
-            }}>
-            {pageNumber > 1 && (
-              <TouchableOpacity onPress={goPrevious} style={{}}>
-                <Text style={styles.paginationText}>Previous</Text>
-              </TouchableOpacity>
-            )}
+          {totalPages > 1 && (
+            <View
+              style={{
+                paddingVertical: heightPercentageToDP('1%'),
+                paddingHorizontal: widthPercentageToDP('4%'),
+                backgroundColor: COLORS.PRIMARYWHITE,
+              }}>
+              <Text
+                style={{
+                  textAlign: 'center',
+                  fontSize: FONTS.FONTSIZE.MINI,
+                  fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                  color: COLORS.PLACEHOLDERCOLOR,
+                  marginBottom: 8,
+                }}>
+                Page {pageNumber} of {totalPages} • {totalRecords} records
+              </Text>
 
-            {hasMore && (
-              <TouchableOpacity onPress={loadMore} style={{}}>
-                <Text style={styles.paginationText}>Load More</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexWrap: 'wrap',
+                  gap: 6,
+                }}>
+                {/* Prev arrow */}
+                <TouchableOpacity
+                  disabled={pageNumber === 1}
+                  onPress={() => {
+                    setOpenIndex(null);
+                    setExpandedFamilyMember(null);
+                    setPageNumber(p => Math.max(p - 1, 1));
+                  }}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 17,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor:
+                      pageNumber === 1 ? COLORS.LIGHTGREY : COLORS.LABELCOLOR,
+                  }}>
+                  <AntDesign
+                    name="left"
+                    size={14}
+                    color={COLORS.PRIMARYWHITE}
+                  />
+                </TouchableOpacity>
+
+                {/* Page number pills */}
+                {Array.from({length: totalPages}, (_, i) => i + 1)
+                  .filter(p => {
+                    if (totalPages <= 5) return true;
+                    return (
+                      p === 1 ||
+                      p === totalPages ||
+                      Math.abs(p - pageNumber) <= 1
+                    );
+                  })
+                  .reduce((acc, p, idx, arr) => {
+                    if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, idx) =>
+                    p === '...' ? (
+                      <Text
+                        key={`ellipsis-${idx}`}
+                        style={{
+                          fontSize: FONTS.FONTSIZE.SMALL,
+                          color: COLORS.PLACEHOLDERCOLOR,
+                          paddingHorizontal: 2,
+                        }}>
+                        ...
+                      </Text>
+                    ) : (
+                      <TouchableOpacity
+                        key={p}
+                        onPress={() => {
+                          setOpenIndex(null);
+                          setExpandedFamilyMember(null);
+                          setPageNumber(p);
+                        }}
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 17,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          backgroundColor:
+                            p === pageNumber
+                              ? COLORS.LABELCOLOR
+                              : COLORS.PRIMARYWHITE,
+                          borderWidth: 1,
+                          borderColor: COLORS.LABELCOLOR,
+                        }}>
+                        <Text
+                          style={{
+                            fontSize: FONTS.FONTSIZE.MINI,
+                            fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                            color:
+                              p === pageNumber
+                                ? COLORS.PRIMARYWHITE
+                                : COLORS.LABELCOLOR,
+                          }}>
+                          {p}
+                        </Text>
+                      </TouchableOpacity>
+                    ),
+                  )}
+
+                {/* Next arrow */}
+                <TouchableOpacity
+                  disabled={pageNumber === totalPages}
+                  onPress={() => {
+                    setOpenIndex(null);
+                    setExpandedFamilyMember(null);
+                    setPageNumber(p => Math.min(p + 1, totalPages));
+                  }}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 17,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor:
+                      pageNumber === totalPages
+                        ? COLORS.LIGHTGREY
+                        : COLORS.LABELCOLOR,
+                  }}>
+                  <AntDesign
+                    name="right"
+                    size={14}
+                    color={COLORS.PRIMARYWHITE}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
       ) : (
         <Offline />

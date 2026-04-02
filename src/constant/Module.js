@@ -1,6 +1,7 @@
 import {Platform, ToastAndroid, Alert} from 'react-native';
 
 export function NOTIFY_MESSAGE(msg) {
+  if (!msg) return;
   if (Platform.OS === 'android') {
     ToastAndroid.show(msg, ToastAndroid.SHORT);
   } else {
@@ -76,6 +77,24 @@ export const unformatPhone = value => {
   return value.replace(/[^0-9]/g, '');
 };
 
+export const isNameField = name => {
+  const nameFields = [
+    'firstName',
+    'middleName',
+    'lastName',
+    'nameofParticipants',
+  ];
+  return nameFields.some(n => n.toLowerCase() === name?.toLowerCase());
+};
+
+export const validateNameValue = (value, label) => {
+  const nameRegex = /^[a-zA-Z\s'-]+$/;
+  if (!nameRegex.test(value.trim())) {
+    return `${label} must contain only letters.`;
+  }
+  return null;
+};
+
 export const isPhoneField = name => {
   const phoneFieldNames = [
     'contact',
@@ -87,5 +106,5 @@ export const isPhoneField = name => {
     'Phone Number',
     'phone Number',
   ];
-  return phoneFieldNames.includes(name);
+  return phoneFieldNames.some(n => n.toLowerCase() === name?.toLowerCase());
 };

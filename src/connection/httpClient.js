@@ -60,7 +60,10 @@ httpClient.interceptors.request.use(
 
 httpClient.interceptors.response.use(
   async response => {
-    if (response.data && response.data.message === 'Token is invalid') {
+    if (
+      response.data &&
+      response.data.message?.toLowerCase() === 'token is invalid'
+    ) {
       if (isLoggingOut) return response;
       await handleLogout();
       return Promise.resolve({

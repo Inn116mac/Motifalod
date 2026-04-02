@@ -8,6 +8,8 @@ import {
   useWindowDimensions,
   BackHandler,
   Alert,
+  Platform,
+  Linking,
 } from 'react-native';
 import React, {useCallback, useContext, useEffect, useState} from 'react';
 import COLORS from '../theme/Color';
@@ -87,12 +89,6 @@ const Dashboard = ({route}) => {
     }, []),
   );
 
-  useEffect(() => {
-    if (userData && !userDataLoading) {
-      dashboardApiCall();
-    }
-  }, [userData, userDataLoading]);
-
   const dashboardApiCall = async () => {
     const state = await NetInfo.fetch();
     if (state.isConnected) {
@@ -107,24 +103,25 @@ const Dashboard = ({route}) => {
 
             const storeItems = filteredData.filter(
               item =>
-                item?.constantName == 'SCAN QR' ||
-                item?.constantName == 'SELF CHECK-IN' ||
-                item?.constantName == 'EVENT ADMIN',
+                item?.constantName?.toUpperCase() == 'SCAN QR' ||
+                item?.constantName?.toUpperCase() == 'SELF CHECK-IN' ||
+                item?.constantName?.toUpperCase() == 'EVENT ADMIN',
             );
             setDrawerItems(storeItems);
             const newArray = filteredData.filter(
               item =>
-                item?.constantName !== 'SCAN QR' &&
-                item?.constantName !== 'SELF CHECK-IN' &&
-                item?.constantName !== 'EVENT ADMIN' &&
-                item?.constantName !== 'ROLE MANAGEMENT' &&
-                item?.constantName !== 'MEMBERSHIP MANAGEMENT' &&
-                item?.constantName !== 'NOTIFICATION MANAGEMENT' &&
-                item?.constantName !== 'REMINDER MANAGEMENT' &&
-                item?.constantName !== 'TRANSACTIONS' &&
-                item?.constantName !== 'MODULE MANAGEMENT' &&
-                item?.constantName !== 'APP SETTINGS' &&
-                item?.constantName !== 'PAYMENT CREDENTIALS',
+                item?.constantName?.toUpperCase() !== 'SCAN QR' &&
+                item?.constantName?.toUpperCase() !== 'SELF CHECK-IN' &&
+                item?.constantName?.toUpperCase() !== 'EVENT ADMIN' &&
+                item?.constantName?.toUpperCase() !== 'ROLE MANAGEMENT' &&
+                item?.constantName?.toUpperCase() !== 'MEMBERSHIP MANAGEMENT' &&
+                item?.constantName?.toUpperCase() !==
+                  'NOTIFICATION MANAGEMENT' &&
+                item?.constantName?.toUpperCase() !== 'REMINDER MANAGEMENT' &&
+                item?.constantName?.toUpperCase() !== 'TRANSACTIONS' &&
+                item?.constantName?.toUpperCase() !== 'MODULE MANAGEMENT' &&
+                item?.constantName?.toUpperCase() !== 'APP SETTINGS' &&
+                item?.constantName?.toUpperCase() !== 'PAYMENT CREDENTIALS',
             );
             if (newArray?.length > 0) {
               setData(newArray);
@@ -159,10 +156,15 @@ const Dashboard = ({route}) => {
 
   useEffect(() => {
     if (userData && userData?.member) {
-      const member = userData?.member?.content;
-      const memberParse = JSON.parse(member);
-      const firstName = memberParse?.firstName;
-      setFirstName(firstName?.value);
+      const member = userData.member.content;
+      let memberParse;
+      try {
+        memberParse = JSON.parse(member);
+        const firstName = memberParse?.firstName;
+        setFirstName(firstName?.value);
+      } catch (error) {
+        console.error('Failed to parse userData member content:', error);
+      }
     }
   }, [userData]);
 
@@ -199,7 +201,7 @@ const Dashboard = ({route}) => {
               navigation.navigate('Form', {data: data});
             }
           } else {
-            if (constantName === 'EVENT' || constantName === 'EVENT ') {
+            if (constantName?.trim() === 'EVENT') {
               navigation.navigate('EventScreen', {data: data});
             } else if (constantName === 'SCAN QR') {
               navigation.navigate('QRcode Scanner', {
@@ -238,6 +240,10 @@ const Dashboard = ({route}) => {
               });
             } else if (constantName === 'POLL') {
               navigation.navigate('PollList', {
+                data: data,
+              });
+            } else if (constantName === 'GALLERY') {
+              navigation.navigate('Gallery', {
                 data: data,
               });
             } else {

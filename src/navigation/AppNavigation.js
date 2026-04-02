@@ -70,6 +70,7 @@ import PollList from '../screens/PollList';
 import PollComments from '../screens/PollComments';
 import EventTemplatePickerScreen from '../screens/EventTemplatePickerScreen';
 import EventCategoryPickerScreen from '../screens/EventCategoryPickerScreen';
+import GalleryScreen from '../screens/Gallery/GalleryScreen';
 
 const Stack = createStackNavigator();
 
@@ -218,6 +219,7 @@ function AppNavigation() {
               name="EventCategoryPicker"
               component={EventCategoryPickerScreen}
             />
+            <Stack.Screen name="Gallery" component={GalleryScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaView>

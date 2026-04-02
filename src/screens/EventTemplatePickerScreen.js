@@ -149,52 +149,6 @@ export default function EventTemplatePickerScreen({route, navigation}) {
   const selected = TEMPLATES.find(t => t.id === selectedId) ?? TEMPLATES[0];
   const SelectedComponent = selected.Component;
 
-  // ── Share ──────────────────────────────────────────────
-  // const handleShare = useCallback(async () => {
-  //   if (!viewShotRef.current) return;
-  //   setSharing(true);
-  //   try {
-  //     const uri = await viewShotRef.current.capture();
-
-  //     if (Platform.OS === 'android') {
-  //       const destPath = `${
-  //         RNFS.DownloadDirectoryPath
-  //       }/invite_${Date.now()}.png`;
-  //       await RNFS.copyFile(uri, destPath);
-
-  //       await RNShare.open({
-  //         title: event?.name
-  //           ? `${event.name} — Invitation`
-  //           : 'Event Invitation',
-  //         message: event?.name
-  //           ? `You're invited to ${event.name}! 🎉`
-  //           : 'Check out this event!',
-  //         url: `file://${destPath}`, // image shared WITH message together
-  //         type: 'image/png',
-  //         failOnCancel: false,
-  //       });
-  //     } else {
-  //       await RNShare.open({
-  //         title: event?.name
-  //           ? `${event.name} — Invitation`
-  //           : 'Event Invitation',
-  //         message: event?.name
-  //           ? `You're invited to ${event.name}! 🎉`
-  //           : 'Check out this event!',
-  //         url: uri,
-  //         type: 'image/png',
-  //         failOnCancel: false,
-  //       });
-  //     }
-  //   } catch (e) {
-  //     if (e?.message !== 'User did not share') {
-  //       NOTIFY_MESSAGE('Could not share. Please try again.');
-  //     }
-  //   } finally {
-  //     setSharing(false);
-  //   }
-  // }, [event]);
-
   const handleShare = useCallback(async () => {
     if (!viewShotRef.current) return;
     setSharing(true);
@@ -372,7 +326,6 @@ export default function EventTemplatePickerScreen({route, navigation}) {
       <Modal
         visible={previewVisible}
         animationType="slide"
-        // statusBarTranslucent
         onRequestClose={() => setPreviewVisible(false)}>
         <View style={styles.modalRoot}>
           {/* Close button — always visible white circle */}

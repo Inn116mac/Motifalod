@@ -278,9 +278,12 @@ const CustomDrawerContent = props => {
   useEffect(() => {
     if (userData && userData?.member) {
       const member = userData?.member?.content;
-      const memberParse = JSON.parse(member);
-      const firstName = memberParse?.firstName;
-      setFirstName(firstName?.value);
+      try {
+        const memberParse = JSON.parse(member);
+        setFirstName(memberParse?.firstName?.value ?? '');
+      } catch {
+        setFirstName('');
+      }
     }
   }, [userData]);
 

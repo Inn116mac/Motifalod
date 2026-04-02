@@ -4,6 +4,7 @@ import {
   FlatList,
   TouchableOpacity,
   Platform,
+  PermissionsAndroid,
   TextInput,
   ScrollView,
   Modal,
@@ -15,7 +16,7 @@ import {
   Keyboard,
   Dimensions,
 } from 'react-native';
-import React, {useState, useEffect, useRef, useCallback} from 'react';
+import React, {useState, useEffect, useRef, useCallback, useMemo} from 'react';
 import FONTS from '../../theme/Fonts';
 import {Fontisto} from '@react-native-vector-icons/fontisto';
 import {Entypo} from '@react-native-vector-icons/entypo';
@@ -24,7 +25,7 @@ import {capitalizeFirstLetter, NOTIFY_MESSAGE} from '../../constant/Module';
 import NetInfo from '@react-native-community/netinfo';
 import COLORS from '../../theme/Color';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import ImagePicker from 'react-native-image-crop-picker';
+import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import moment from 'moment';
 import Video from 'react-native-video';
 import ButtonComponent from './ButtonComponent';
@@ -41,14 +42,16 @@ import {
   formatPhoneToUS,
   unformatPhone,
   isPhoneField,
+  isNameField,
+  validateNameValue,
 } from '../../constant/Module';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
-  const {width, height} = useWindowDimensions();
+  const {width} = useWindowDimensions();
   const styles = StyleSheet.create({
     dropdown: {
-      height: 38,
+      height: 44,
       borderWidth: 1,
       borderRadius: 10,
       backgroundColor: COLORS.PRIMARYWHITE,
@@ -56,12 +59,12 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       justifyContent: 'center',
     },
     placeholderStyle: {
-      fontSize: FONTS.FONTSIZE.MINI,
+      fontSize: FONTS.FONTSIZE.SMALL,
       color: COLORS.PLACEHOLDERCOLOR,
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
     },
     selectedTextStyle: {
-      fontSize: FONTS.FONTSIZE.MINI,
+      fontSize: FONTS.FONTSIZE.SMALL,
       color: COLORS.PRIMARYBLACK,
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
     },
@@ -77,6 +80,29 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
     },
     buttonRow: {
       flexDirection: 'row',
+    },
+    modalTitle: {
+      fontSize: 18,
+      marginBottom: 8,
+    },
+    button: {
+      padding: 10,
+      borderRadius: 5,
+      backgroundColor: COLORS.TITLECOLOR,
+      marginVertical: 5,
+      width: '100%',
+      alignItems: 'center',
+    },
+    buttonText: {
+      color: COLORS.PRIMARYWHITE,
+    },
+    select_Button: {
+      padding: 10,
+      borderRadius: 5,
+      backgroundColor: COLORS.TITLECOLOR,
+      marginVertical: 5,
+      width: '100%',
+      alignItems: 'center',
     },
     image: {
       width: 100,
@@ -105,7 +131,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
     itemText: {
       color: COLORS.PRIMARYBLACK,
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
-      fontSize: FONTS.FONTSIZE.MEDIUM,
+      fontSize: FONTS.FONTSIZE.EXTRASMALL,
     },
   });
   const navigation = useNavigation();
@@ -113,18 +139,14 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
   const [datePickerVisible, setDatePickerVisible] = useState({});
   const [errors, setErrors] = useState({});
   const [modalVisible, setModalVisible] = useState({});
-
   const [selectedDate, setSelectedDate] = useState({});
   const [selectedTime, setSelectedTime] = useState({});
-
   const [timePickerVisible, setTimePickerVisible] = useState({});
   const [activeButton, setActiveButton] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
   const [uploadComplete, setUploadComplete] = useState(false);
-  const [isComplete, setIsCopmlete] = useState(false);
-
+  const [isComplete, setIsComplete] = useState(false);
   const [memberShipDetails, setMemberShipDetails] = useState([]);
-
   const [memberShipLoading, setMemberShipLoading] = useState(true);
   const originalMemberValues = useRef([]);
 
@@ -145,8 +167,8 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
         ) {
           if (
             parsedContent[key].type === 'select' &&
-            (parsedContent[key].name === 'member' ||
-              parsedContent[key].name === 'eventCoordinator')
+            (parsedContent[key].name?.toLowerCase() === 'member' ||
+              parsedContent[key].name?.toLowerCase() === 'eventcoordinator')
           ) {
             originalMemberValues.current = parsedContent[key].values;
           }
@@ -232,67 +254,83 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
     onSelect,
     item,
   }) => {
-    const handleSelectCamera = () => {
-      ImagePicker.openCamera({
-        width: 300,
-        height: 400,
-      })
-        .then(response => {
-          const totalSize = response?.size;
-
-          const fileSizeInMB = totalSize / (1024 * 1024);
-
-          if (fileSizeInMB > 30) {
+    const handleSelectCamera = async () => {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          {
+            title: 'Camera Permission',
+            message: 'This app needs access to your camera to take photos.',
+            buttonPositive: 'Allow',
+            buttonNegative: 'Deny',
+          },
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          NOTIFY_MESSAGE('Camera permission denied');
+          return;
+        }
+      }
+      launchCamera(
+        {mediaType: 'photo', quality: 0.85, saveToPhotos: false},
+        response => {
+          if (response.didCancel) return;
+          if (response.errorCode) {
+            NOTIFY_MESSAGE('Something Went Wrong');
+            return;
+          }
+          const file = response.assets?.[0];
+          if (!file) return;
+          const fileSizeInMB = (file.fileSize || 0) / (1024 * 1024);
+          if (fileSizeInMB > 500) {
             Alert.alert(
               'Invalid File Size',
-              'File size cannot be greater than 30MB. Please choose a smaller file.',
+              'File size cannot be greater than 500MB. Please choose a smaller file.',
               [
                 {
                   text: 'OK',
                   onPress: () =>
-                    setModalVisible(prev => ({
-                      ...prev,
-                      [item?.name]: true,
-                    })),
+                    setModalVisible(prev => ({...prev, [item?.name]: true})),
                 },
               ],
             );
           } else {
-            onSelect(response);
+            onSelect(file);
             onClose();
           }
-        })
-        .catch(err => {
-          if (err.code === 'E_PICKER_CANCELLED') {
-          } else {
-            NOTIFY_MESSAGE(err?.message || err ? 'Something Went Wrong' : null);
-          }
-        });
+        },
+      );
     };
 
     const handleSelectGallery = () => {
-      ImagePicker.openPicker({
-        mediaType: isVideoGallery ? 'video' : 'photo',
-        multiple: item?.multiple == 'true' || item?.multiple ? true : false,
-      })
-        .then(response => {
-          const files = Array.isArray(response) ? response : [response];
-
-          const validFiles = files.filter(file => {
-            const totalSize = file?.size;
-            const fileSizeInMB = totalSize / (1024 * 1024);
-            if (fileSizeInMB > 30) {
+      const isMultipleAllowed = item?.multiple === 'true' || item?.multiple;
+      launchImageLibrary(
+        {
+          mediaType: isVideoGallery ? 'video' : 'photo',
+          selectionLimit: isMultipleAllowed ? 0 : 1,
+          quality: 0.85,
+        },
+        response => {
+          if (response.didCancel) return;
+          if (response.errorCode) {
+            NOTIFY_MESSAGE('Something Went Wrong');
+            return;
+          }
+          const assets = response.assets || [];
+          const validFiles = assets.filter(file => {
+            const rawSize =
+              (file.fileSize || 0) > Number.MAX_SAFE_INTEGER
+                ? 0
+                : file.fileSize || 0;
+            const fileSizeInMB = rawSize / (1024 * 1024);
+            if (fileSizeInMB > 500) {
               Alert.alert(
                 'Invalid File Size',
-                'File size cannot be greater than 30MB. Please choose a smaller file.',
+                'File size cannot be greater than 500MB. Please choose a smaller file.',
                 [
                   {
                     text: 'OK',
                     onPress: () =>
-                      setModalVisible(prev => ({
-                        ...prev,
-                        [item?.name]: true,
-                      })),
+                      setModalVisible(prev => ({...prev, [item?.name]: true})),
                   },
                 ],
               );
@@ -300,23 +338,17 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
             }
             return true;
           });
-
           if (validFiles.length > 0) {
             onSelect(validFiles);
             onClose();
           }
-        })
-        .catch(err => {
-          if (err.code === 'E_PICKER_CANCELLED') {
-          } else {
-            NOTIFY_MESSAGE(err?.message || err ? 'Something Went Wrong' : null);
-          }
-        });
+        },
+      );
     };
 
     return (
       <Modal transparent={true} visible={visible} animationType="slide">
-        <TouchableWithoutFeedback onPress={onClose}>
+        <TouchableWithoutFeedback onPress={activeButton ? undefined : onClose}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.buttonRow}>
@@ -338,7 +370,10 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                   onPress={handleSelectGallery}>
                   <FontAwesome name="image" size={24} color="#fff" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.roundButton} onPress={onClose}>
+                <TouchableOpacity
+                  style={[styles.roundButton, activeButton && {opacity: 0.4}]}
+                  disabled={activeButton}
+                  onPress={onClose}>
                   <FontAwesome name="close" size={24} color="#fff" />
                 </TouchableOpacity>
               </View>
@@ -358,107 +393,114 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
     className,
   ) => {
     const allowDecimal = className?.toLowerCase().includes('decimal');
+    const nameLower = name?.toLowerCase();
 
     let numericValue;
 
     if (allowDecimal) {
-      // Allow numbers and ONE decimal point only - SAME AS SUBMIT
       numericValue = value.replace(/[^0-9.]/g, '');
-
-      // Ensure only one decimal point
       const parts = numericValue.split('.');
       if (parts.length > 2) {
-        // Keep first part + decimal + second part, ignore rest
         numericValue = parts[0] + '.' + parts.slice(1).join('');
       }
-
       if (parts.length === 2 && parts[1].length > 2) {
         numericValue = parts[0] + '.' + parts[1].substring(0, 2);
       }
     } else {
-      // Only integers for other fields
       numericValue = value.replace(/[^0-9]/g, '');
     }
 
-    // Check if it's a phone field
     const isPhone = isPhoneField(name);
 
     setFormData(prevState => ({
       ...prevState,
       [key]: {
         ...prevState[key],
-        value: numericValue, // ✅ Store unformatted (with decimal if allowed)
+        value: numericValue,
       },
     }));
 
-    // Check if the value is empty
     const isValueEmpty = numericValue.trim() === '';
     let isLengthInvalid = false;
     let isAllZeros = allowDecimal
-      ? /^0+(\.0+)?$/.test(numericValue) // Handle decimal zeros for decimal fields
-      : /^0+$/.test(numericValue); // Handle integer zeros for other fields
+      ? /^0+(\.0+)?$/.test(numericValue)
+      : /^0+$/.test(numericValue);
 
     if (isPhone || className?.includes('phone')) {
-      isLengthInvalid = numericValue.replace('.', '').length !== 10; // Ignore decimal for phone
-    } else if (name === 'age' || className?.includes('age')) {
+      isLengthInvalid = numericValue.replace('.', '').length !== 10;
+    } else if (
+      nameLower === 'age' ||
+      className?.toLowerCase()?.includes('age')
+    ) {
       const ageDigits = numericValue.replace('.', '').length;
       isLengthInvalid = ageDigits < 1 || ageDigits > 3;
-    } else if (name === 'zIP' || className?.includes('zip')) {
+    } else if (
+      nameLower === 'zip' ||
+      className?.toLowerCase()?.includes('zip')
+    ) {
       isLengthInvalid = numericValue.replace('.', '').length !== 5;
     }
 
-    // Update errors state
     setErrors(prevErrors => {
       const updatedErrors = {...prevErrors};
 
-      // Check for required field
       if (isRequired) {
         if (isValueEmpty) {
           updatedErrors[key] = `${label} is required.`;
         } else if (isLengthInvalid) {
-          // Handle length validation errors for required fields
           if (isPhone || className?.includes('phone')) {
             updatedErrors[key] = `${label} must be 10 digits.`;
-          } else if (name === 'age' || className?.includes('age')) {
+          } else if (
+            nameLower === 'age' ||
+            className?.toLowerCase()?.includes('age')
+          ) {
             updatedErrors[key] = `${label} must be between 1 and 3 digits.`;
-          } else if (name === 'zIP' || className?.includes('zip')) {
+          } else if (
+            nameLower === 'zip' ||
+            className?.toLowerCase()?.includes('zip')
+          ) {
             updatedErrors[key] = `${label} must be exactly 5 digits.`;
           }
         } else if (
           isAllZeros &&
           (isPhone ||
-            className?.includes('phone') ||
-            name === 'age' ||
-            className?.includes('age'))
+            className?.toLowerCase()?.includes('phone') ||
+            nameLower === 'age' ||
+            className?.toLowerCase()?.includes('age'))
         ) {
           updatedErrors[key] = `${label} cannot be all zeros.`;
         } else {
           delete updatedErrors[key];
         }
       } else {
-        // If the field is not required
         if (
           !isValueEmpty &&
           (isLengthInvalid ||
             (isAllZeros &&
               (isPhone ||
-                className?.includes('phone') ||
-                name === 'age' ||
-                className?.includes('age'))))
+                className?.toLowerCase()?.includes('phone') ||
+                nameLower === 'age' ||
+                className?.toLowerCase()?.includes('age'))))
         ) {
-          if (isPhone || className?.includes('phone')) {
+          if (isPhone || className?.toLowerCase()?.includes('phone')) {
             if (isLengthInvalid) {
               updatedErrors[key] = `${label} must be 10 digits.`;
             } else {
               updatedErrors[key] = `${label} cannot be all zeros.`;
             }
-          } else if (name === 'age' || className?.includes('age')) {
+          } else if (
+            nameLower === 'age' ||
+            className?.toLowerCase()?.includes('age')
+          ) {
             if (isLengthInvalid) {
               updatedErrors[key] = `${label} must be between 1 and 3 digits.`;
             } else {
               updatedErrors[key] = `${label} cannot be all zeros.`;
             }
-          } else if (name === 'zIP' || className?.includes('zip')) {
+          } else if (
+            nameLower === 'zip' ||
+            className?.toLowerCase()?.includes('zip')
+          ) {
             updatedErrors[key] = `${label} must be exactly 5 digits.`;
           }
         } else {
@@ -470,31 +512,40 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
     });
   };
 
-  const handleCounterChange = (key, value, isRequired, name, label) => {
+  const handleCounterChange = (
+    key,
+    value,
+    isRequired,
+    name,
+    label,
+    maxValue,
+  ) => {
+    const nameLower = name?.toLowerCase();
     const currentValue = Number(formData[key]?.value) || 0;
+    if (value > 0 && maxValue > 0 && currentValue >= maxValue) {
+      return;
+    }
     const newValue = Math.max(0, currentValue + value);
 
-    // Update the formData object
     setFormData(prevFormData => ({
       ...prevFormData,
       [key]: {
         ...prevFormData[key],
-        value: newValue, // Update the value for the specific key
+        value: newValue,
       },
     }));
 
-    // Update the errors state based on the new value
     if (isRequired) {
       let isLengthInvalid = false;
 
       if (
-        name === 'numberofGuests' ||
-        name === 'numberofParticipants' ||
-        name === 'numberofKids'
+        nameLower === 'numberofguests' ||
+        nameLower === 'numberofparticipants' ||
+        nameLower === 'numberofkids'
       ) {
-        isLengthInvalid = newValue < 1; // Ensure at least 1 guest/participant/kid
-      } else if (name === 'howManyMinutes') {
-        isLengthInvalid = newValue < 1 || newValue > 60; // Ensure between 1 and 60 minutes
+        isLengthInvalid = newValue < 1;
+      } else if (nameLower === 'howmanyminutes') {
+        isLengthInvalid = newValue < 1 || newValue > 60;
       }
 
       const hasError = newValue === 0 || isLengthInvalid;
@@ -505,12 +556,12 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
             return {...prevErrors, [key]: `${label} is required.`};
           } else {
             if (
-              name === 'numberofGuests' ||
-              name === 'numberofParticipants' ||
-              name === 'numberofKids'
+              nameLower === 'numberofguests' ||
+              nameLower === 'numberofparticipants' ||
+              nameLower === 'numberofkids'
             ) {
               return {...prevErrors, [key]: `${label} must be at least 1.`};
-            } else if (name === 'howManyMinutes') {
+            } else if (nameLower === 'howmanyminutes') {
               return {
                 ...prevErrors,
                 [key]: `${label} must be between 1 and 60 minutes.`,
@@ -546,7 +597,6 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
 
       const updatedValue = updatedSelections.join(',');
 
-      // Validation
       if (isRequired) {
         setErrors(prevErrors => {
           if (updatedSelections.length === 0) {
@@ -566,7 +616,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
         ...prevFormData,
         [key]: {
           ...prevFormData[key],
-          value: updatedValue, // store as comma-separated string
+          value: updatedValue,
         },
       };
     });
@@ -579,7 +629,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
         [key]: date,
       }));
       const formattedDate =
-        type == 'datetime'
+        type === 'datetime'
           ? moment(date).format('MM/DD/YYYY hh:mm A')
           : moment(date).format('MM/DD/YYYY');
 
@@ -603,13 +653,6 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
         });
       }
     } else {
-      setErrors(prevErrors => ({
-        ...prevErrors,
-        [key]: `${label} is required.`,
-      }));
-    }
-
-    if (isRequired && !date) {
       setErrors(prevErrors => ({
         ...prevErrors,
         [key]: `${label} is required.`,
@@ -650,14 +693,6 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
         [key]: `${label} is required.`,
       }));
     }
-
-    // Check for required fields
-    if (isRequired && !time) {
-      setErrors(prevErrors => ({
-        ...prevErrors,
-        [key]: `${label} is required.`,
-      }));
-    }
   };
 
   const handleInputChange = (key, value, isRequired, label) => {
@@ -669,29 +704,27 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       },
     }));
 
-    let isValid = false;
+    const trimmed = typeof value === 'string' ? value.trim() : '';
+    const hasValue = Array.isArray(value) ? value.length > 0 : trimmed !== '';
 
-    // Validation logic
-    if (Array.isArray(value)) {
-      isValid = value.length > 0;
-    } else if (typeof value === 'string') {
-      isValid = value.trim() !== '';
-    }
+    setErrors(prevErrors => {
+      const updatedErrors = {...prevErrors};
 
-    if (isRequired) {
-      if (!isValid) {
-        setErrors(prevErrors => ({
-          ...prevErrors,
-          [key]: `${label} is required.`,
-        }));
-      } else {
-        setErrors(prevErrors => {
-          const updatedErrors = {...prevErrors};
+      if (isRequired && !hasValue) {
+        updatedErrors[key] = `${label} is required.`;
+      } else if (hasValue && isNameField(key)) {
+        const nameError = validateNameValue(trimmed, label);
+        if (nameError) {
+          updatedErrors[key] = nameError;
+        } else {
           delete updatedErrors[key];
-          return updatedErrors;
-        });
+        }
+      } else {
+        delete updatedErrors[key];
       }
-    }
+
+      return updatedErrors;
+    });
   };
 
   const handleEmail = (key, value, isRequired, label) => {
@@ -705,33 +738,24 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       },
     }));
 
-    // Validate the email format
     const isValidEmail = emailRegex.test(value);
     const isValueEmpty = !value.trim();
 
-    // Set errors based on the validation result
     setErrors(prevErrors => {
       const updatedErrors = {...prevErrors};
 
-      // Check for required field
       if (isRequired) {
         if (isValueEmpty) {
-          // If the field is required and empty, set the required error
           updatedErrors[key] = `${label} is required.`;
         } else if (!isValidEmail) {
-          // If the email is invalid, set the invalid email error
           updatedErrors[key] = `${label} is invalid.`;
         } else {
-          // If the email is valid, remove any existing error
           delete updatedErrors[key];
         }
       } else {
-        // If the field is not required
         if (!isValueEmpty && !isValidEmail) {
-          // If the value is not empty but invalid, set the invalid email error
           updatedErrors[key] = `${label} is invalid.`;
         } else {
-          // If the field is empty or valid, remove any existing error
           delete updatedErrors[key];
         }
       }
@@ -741,18 +765,16 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
   };
 
   const handleTextArea = (key, value, label, isRequired) => {
-    // Update the formData object directly
     setFormData(prevFormData => ({
       ...prevFormData,
       [key]: {
         ...prevFormData[key],
-        value, // Update the value for the specific key
+        value,
       },
     }));
 
     const isEmpty = !value || value.trim() === '';
 
-    // Update the errors state based on the value
     if (isRequired) {
       if (isEmpty) {
         setErrors(prevErrors => ({
@@ -770,18 +792,16 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
   };
 
   const handleRadioSelect = (key, value, label, isRequired) => {
-    // Update the formData object
     setFormData(prevState => ({
       ...prevState,
       [key]: {
         ...prevState[key],
-        value, // Update the value for the specific key
+        value,
       },
     }));
 
     const isEmpty = !value || value.trim() === '';
 
-    // Update the errors state based on the selected value
     if (isRequired) {
       if (isEmpty) {
         setErrors(prevErrors => ({
@@ -799,7 +819,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
   };
 
   const handleSelectDropdown = (key, value, label, isRequired) => {
-    if (key === 'relationship') {
+    if (key?.toLowerCase() === 'relationship') {
       const selectedMembership = memberShipDetails.find(
         item => item?.name?.toLowerCase() === value?.toLowerCase(),
       );
@@ -900,9 +920,10 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
 
     const formData = new FormData();
     validFiles.forEach(file => {
+      const rawUri = file?.uri || file?.path || '';
       const fileUri =
-        Platform.OS === 'ios' ? file?.path?.replace('file://', '') : file?.path;
-      const mimeType = file.mime;
+        Platform.OS === 'ios' ? rawUri.replace('file://', '') : rawUri;
+      const mimeType = file?.type || file?.mime;
 
       if (!mimeType) {
         setErrors(prevErrors => ({
@@ -922,6 +943,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
     });
 
     try {
+      isUploadingRef.current = true;
       setActiveButton(true);
       const response = await httpClient.post(
         'file/single/upload?location=content',
@@ -997,30 +1019,36 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
         ...prev,
         [key]: 0,
       }));
+      isUploadingRef.current = false;
       setActiveButton(false);
     }
   };
 
   const isSubmitting = useRef(false);
+  const isUploadingRef = useRef(false);
+
+  const isAnyUploading =
+    isUploadingRef.current ||
+    activeButton ||
+    Object.values(uploadProgress).some(p => p > 0);
 
   const submitHandller = async () => {
-    if (isSubmitting.current || isComplete) return;
+    if (isSubmitting.current || isComplete || isUploadingRef.current) return;
 
-    // Parse the content from editItem
     const parsedContent = JSON.parse(editItem?.content);
     const requiredFields = Object.entries(parsedContent).filter(
       ([key, item]) => item.required,
     );
     const newErrors = {};
 
-    // Validate required fields
     requiredFields.forEach(([key, item]) => {
+      const nameLower = item.name?.toLowerCase();
       const value = formData[key]?.value;
       if (
         !value ||
-        value == 'null' ||
-        value == '[]' ||
-        value?.length == 0 ||
+        value === 'null' ||
+        value === '[]' ||
+        value?.length === 0 ||
         (typeof value === 'string' && value.trim() === '')
       ) {
         newErrors[key] = `${item.label} is required.`;
@@ -1033,23 +1061,23 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
         const numericValue = value.replace(/[^0-9]/g, '');
         const isAllZeros = /^0+$/.test(numericValue);
         if (
-          (item.name === 'contact' ||
-            item.name === 'phoneNumber' ||
-            item.name === 'coordinateNumber' ||
-            item.name === 'eventcoordinatornumber' ||
-            item.name === 'contactnumber') &&
+          (nameLower === 'contact' ||
+            nameLower === 'phonenumber' ||
+            nameLower === 'coordinatenumber' ||
+            nameLower === 'eventcoordinatornumber' ||
+            nameLower === 'contactnumber') &&
           numericValue.length !== 10
         ) {
           newErrors[key] = `${item.label} must be 10 digits.`;
-        } else if (item.name === 'zIP' && numericValue.length !== 5) {
+        } else if (nameLower === 'zip' && numericValue.length !== 5) {
           newErrors[key] = `${item.label} must be exactly 5 digits.`;
         } else if (
-          (item.name === 'contact' ||
-            item.name === 'phoneNumber' ||
-            item.name === 'coordinateNumber' ||
-            item.name === 'eventcoordinatornumber' ||
-            item.name === 'contactnumber' ||
-            item.name === 'age') &&
+          (nameLower === 'contact' ||
+            nameLower === 'phonenumber' ||
+            nameLower === 'coordinatenumber' ||
+            nameLower === 'eventcoordinatornumber' ||
+            nameLower === 'contactnumber' ||
+            nameLower === 'age') &&
           isAllZeros
         ) {
           newErrors[key] = `${item.label} cannot be all zeros.`;
@@ -1057,12 +1085,12 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
       }
     });
 
-    setErrors(prev => ({...prev, ...newErrors}));
     setErrors(prev => {
+      const merged = {...prev, ...newErrors};
       Object.keys(newErrors).forEach(key => {
-        if (!newErrors[key]) delete prev[key];
+        if (!newErrors[key]) delete merged[key];
       });
-      return prev;
+      return merged;
     });
 
     if (Object.keys(newErrors).length > 0 || Object.keys(errors).length > 0) {
@@ -1078,7 +1106,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
     }
 
     isSubmitting.current = true;
-    setIsCopmlete(true);
+    setIsComplete(true);
 
     const content = {};
 
@@ -1112,19 +1140,19 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
             })
             .catch(err => {
               isSubmitting.current = false;
-              setIsCopmlete(false);
+              setIsComplete(false);
               NOTIFY_MESSAGE(
                 err?.message ? err?.message : 'Something went wrong',
               );
             })
             .finally(() => {
               isSubmitting.current = false;
-              setIsCopmlete(false);
+              setIsComplete(false);
             });
         }
       } else {
         isSubmitting.current = false;
-        setIsCopmlete(false);
+        setIsComplete(false);
         NOTIFY_MESSAGE('Please check your internet connectivity');
       }
     });
@@ -1268,7 +1296,11 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
   }, []);
 
   const handleSearchChange = async (text, name) => {
-    if ((name === 'member' || name === 'eventCoordinator') && text === '') {
+    const nameLower = name?.toLowerCase();
+    if (
+      (nameLower === 'member' || nameLower === 'eventcoordinator') &&
+      text === ''
+    ) {
       setFormData(prevFields => {
         const updatedFields = {...prevFields};
 
@@ -1287,13 +1319,16 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
 
         return updatedFields;
       });
-    } else if ((name === 'member' || name === 'eventCoordinator') && text) {
+    } else if (
+      (nameLower === 'member' || nameLower === 'eventcoordinator') &&
+      text
+    ) {
       fetchData(text);
     }
   };
 
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [preventModalOpen, setPreventModalOpen] = useState(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () =>
       setKeyboardOpen(true),
@@ -1492,18 +1527,23 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           backgroundColor: COLORS.PRIMARYWHITE,
                           color: COLORS.PLACEHOLDERCOLOR,
                           borderWidth: 1,
-                          height: 38,
+                          height: 44,
                           paddingVertical: 0,
                           borderRadius: 10,
                           paddingHorizontal: 8,
                           borderColor: errors[key]
                             ? COLORS.PRIMARYRED
                             : COLORS.INPUTBORDER,
-                          fontSize: FONTS.FONTSIZE.MINI,
+                          fontSize: FONTS.FONTSIZE.SMALL,
                           fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                          includeFontPadding: false,
                         }}
                         value={item?.value || ''}
-                        maxLength={item?.maxLength == 0 ? 250 : item?.maxLength}
+                        maxLength={
+                          (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                            ? 250
+                            : item?.maxLength ?? item?.maxlength
+                        }
                         placeholder={`${item.label}`}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                         onChangeText={value =>
@@ -1572,11 +1612,11 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           backgroundColor: COLORS.PRIMARYWHITE,
                         }}>
                         <TextInput
-                          numberOfLines={4}
                           multiline
+                          numberOfLines={4}
                           style={{
                             color: COLORS.PRIMARYBLACK,
-                            fontSize: FONTS.FONTSIZE.MINI,
+                            fontSize: FONTS.FONTSIZE.SMALL,
                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
                             flex: 1,
                             paddingVertical: 4,
@@ -1584,7 +1624,9 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           }}
                           value={item?.value || ''}
                           maxLength={
-                            item?.maxLength == 0 ? 250 : item?.maxLength
+                            (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                              ? 250
+                              : item?.maxLength ?? item?.maxlength
                           }
                           placeholder={`${item.label}`}
                           placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
@@ -1734,6 +1776,10 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                   const shouldDisableRelationship =
                     isRelationshipField && hasMembershipValue;
 
+                  // if (shouldDisableRelationship) {
+                  //   return null;
+                  // }
+
                   return (
                     <View
                       key={key}
@@ -1779,10 +1825,11 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                             handleSearchChange(txt, item?.name);
                           }}
                           search={
-                            (editItem?.contentType === 'RSVP' &&
-                              item?.name === 'member') ||
-                            (editItem?.contentType == 'FAMILY MEMBER' &&
-                              item?.name === 'member')
+                            (editItem?.contentType?.toLowerCase() === 'rsvp' &&
+                              item?.name?.toLowerCase() === 'member') ||
+                            (editItem?.contentType?.toLowerCase() ==
+                              'family member' &&
+                              item?.name?.toLowerCase() === 'member')
                               ? false
                               : true
                           }
@@ -1827,7 +1874,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                               borderColor: errors[item?.name]
                                 ? COLORS.PRIMARYRED
                                 : COLORS.INPUTBORDER,
-                              height: 38,
+                              height: 44,
                               borderWidth: 1,
                               borderRadius: 10,
                               backgroundColor: shouldDisableRelationship
@@ -2094,7 +2141,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                       <TouchableOpacity
                         style={{
                           borderWidth: 1,
-                          height: 38,
+                          height: 44,
                           borderRadius: 10,
                           justifyContent: 'center',
                           paddingHorizontal: 8,
@@ -2118,8 +2165,9 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                             color: item?.value
                               ? COLORS.PLACEHOLDERCOLOR
                               : COLORS.grey500,
-                            fontSize: FONTS.FONTSIZE.MINI,
+                            fontSize: FONTS.FONTSIZE.SMALL,
                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                            includeFontPadding: false,
                           }}>
                           {item?.value || 'Select Date'}
                         </Text>
@@ -2197,7 +2245,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                       <TouchableOpacity
                         style={{
                           borderWidth: 1,
-                          height: 38,
+                          height: 44,
                           borderRadius: 10,
                           justifyContent: 'center',
                           paddingHorizontal: 8,
@@ -2221,8 +2269,9 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                             color: item?.value
                               ? COLORS.PLACEHOLDERCOLOR
                               : COLORS.grey500,
-                            fontSize: FONTS.FONTSIZE.MINI,
+                            fontSize: FONTS.FONTSIZE.SMALL,
                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                            includeFontPadding: false,
                           }}>
                           {item?.value || 'Select Date-Time'}
                         </Text>
@@ -2383,7 +2432,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                       <TouchableOpacity
                         style={{
                           borderWidth: 1,
-                          height: 38,
+                          height: 44,
                           borderRadius: 10,
                           justifyContent: 'center',
                           paddingHorizontal: 8,
@@ -2407,8 +2456,9 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                             color: item?.value
                               ? COLORS.PLACEHOLDERCOLOR
                               : COLORS.grey500,
-                            fontSize: FONTS.FONTSIZE.MINI,
+                            fontSize: FONTS.FONTSIZE.SMALL,
                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                            includeFontPadding: false,
                           }}>
                           {item?.value || 'Select Time'}
                         </Text>
@@ -2492,13 +2542,17 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           padding: 10,
                           height: 100,
                           textAlignVertical: 'top',
-                          fontSize: FONTS.FONTSIZE.MINI,
+                          fontSize: FONTS.FONTSIZE.SMALL,
                           fontFamily: FONTS.FONT_FAMILY.REGULAR,
                           color: COLORS.PLACEHOLDERCOLOR,
                         }}
                         multiline
                         numberOfLines={4}
-                        maxLength={item?.maxLength == 0 ? 250 : item?.maxLength}
+                        maxLength={
+                          (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                            ? 250
+                            : item?.maxLength ?? item?.maxlength
+                        }
                         placeholder={`${item.label}`}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                         value={item?.value}
@@ -2526,10 +2580,10 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                   );
 
                 case 'number':
-                  return item?.name == 'numberofGuests' ||
-                    item?.name == 'numberofParticipants' ||
-                    item?.name == 'howManyMinutes' ||
-                    item?.name == 'numberofKids' ? (
+                  return item?.name?.toLowerCase() == 'numberofguests' ||
+                    item?.name?.toLowerCase() == 'numberofparticipants' ||
+                    item?.name?.toLowerCase() == 'howmanyminutes' ||
+                    item?.name?.toLowerCase() == 'numberofkids' ? (
                     <>
                       <View
                         key={item?.name}
@@ -2601,7 +2655,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                             }}>
                             <Text
                               style={{
-                                fontSize: FONTS.FONTSIZE.MEDIUM,
+                                fontSize: FONTS.FONTSIZE.SMALL,
                                 color: COLORS.TITLECOLOR,
                                 fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                               }}>
@@ -2609,6 +2663,11 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                             </Text>
                           </TouchableOpacity>
                           <TouchableOpacity
+                            disabled={
+                              (item?.maxLength ?? item?.maxlength ?? 0) > 0 &&
+                              (Number(item?.value) ?? 0) >=
+                                (item?.maxLength ?? item?.maxlength)
+                            }
                             onPress={() =>
                               handleCounterChange(
                                 item?.name,
@@ -2616,6 +2675,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                                 item?.required,
                                 item?.name,
                                 item?.label,
+                                item?.maxLength ?? item?.maxlength ?? 0,
                               )
                             }
                             style={{
@@ -2625,6 +2685,12 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                               borderRadius: 10,
                               borderWidth: 1,
                               borderColor: COLORS.TITLECOLOR,
+                              opacity:
+                                (item?.maxLength ?? item?.maxlength ?? 0) > 0 &&
+                                (Number(item?.value) ?? 0) >=
+                                  (item?.maxLength ?? item?.maxlength)
+                                  ? 0.4
+                                  : 1,
                             }}>
                             <Entypo
                               name={'plus'}
@@ -2634,6 +2700,20 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           </TouchableOpacity>
                         </View>
                       </View>
+                      {(item?.maxLength ?? item?.maxlength ?? 0) > 0 &&
+                        (Number(item?.value) ?? 0) >=
+                          (item?.maxLength ?? item?.maxlength) && (
+                          <Text
+                            style={{
+                              color: COLORS.PRIMARYRED,
+                              fontSize: FONTS.FONTSIZE.SEMIMINI,
+                              fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                              marginTop: 2,
+                            }}>
+                            Maximum {item?.maxLength ?? item?.maxlength}{' '}
+                            allowed.
+                          </Text>
+                        )}
                       {errors[item?.name] && (
                         <Text
                           style={{
@@ -2646,8 +2726,8 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                         </Text>
                       )}
                     </>
-                  ) : item?.name == 'membershipamount' ||
-                    item?.name == 'totalmembershipamount' ? (
+                  ) : item?.name?.toLowerCase() == 'membershipamount' ||
+                    item?.name?.toLowerCase() == 'totalmembershipamount' ? (
                     <View key={item?.name} style={{marginBottom: 8, gap: 4}}>
                       <Text
                         style={{
@@ -2655,7 +2735,7 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
                           color: COLORS.LABELCOLOR,
                         }}>
-                        {item?.name == 'membershipamount'
+                        {item?.name?.toLowerCase() == 'membershipamount'
                           ? 'Membership Amount'
                           : 'Total Membership Amount'}
                         : ${formData[item?.name]?.value || 0}
@@ -2689,12 +2769,13 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                             : COLORS.INPUTBORDER,
                           borderRadius: 10,
                           padding: 10,
-                          height: 38,
+                          height: 44,
                           color: COLORS.PLACEHOLDERCOLOR,
-                          fontSize: FONTS.FONTSIZE.MINI,
+                          fontSize: FONTS.FONTSIZE.SMALL,
                           fontFamily: FONTS.FONT_FAMILY.REGULAR,
                           backgroundColor: COLORS.PRIMARYWHITE,
                           paddingVertical: 0,
+                          includeFontPadding: false,
                         }}
                         value={
                           isPhoneField(item?.name)
@@ -2704,9 +2785,9 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                         maxLength={
                           isPhoneField(item?.name)
                             ? 14
-                            : item?.maxLength == 0
+                            : (item?.maxLength ?? item?.maxlength ?? 0) === 0
                             ? 250
-                            : item?.maxLength
+                            : item?.maxLength ?? item?.maxlength
                         }
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                         keyboardType="numeric"
@@ -2766,15 +2847,15 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                           borderColor: errors[key]
                             ? COLORS.PRIMARYRED
                             : COLORS.INPUTBORDER,
-                          height: 38,
+                          height: 44,
                           paddingVertical: 0,
                           borderRadius: 10,
                           paddingHorizontal: 8,
                           color: COLORS.PRIMARYBLACK,
-                          fontSize: FONTS.FONTSIZE.MINI,
+                          fontSize: FONTS.FONTSIZE.SMALL,
                           fontFamily: FONTS.FONT_FAMILY.REGULAR,
                           backgroundColor: COLORS.PRIMARYWHITE,
-                          paddingVertical: 0,
+                          includeFontPadding: false,
                         }}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                         keyboardType="numeric"
@@ -2787,9 +2868,9 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                         maxLength={
                           isPhoneField(item?.name)
                             ? 14
-                            : item?.maxLength == 0
+                            : (item?.maxLength ?? item?.maxlength ?? 0) === 0
                             ? 250
-                            : item?.maxLength
+                            : item?.maxLength ?? item?.maxlength
                         }
                         onChangeText={text => {
                           const numericValue = isPhoneField(item?.name)
@@ -2849,21 +2930,26 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
                       <TextInput
                         style={{
                           borderWidth: 1,
-                          height: 38,
+                          height: 44,
                           color: COLORS.PRIMARYBLACK,
                           borderRadius: 10,
                           paddingHorizontal: 8,
                           borderColor: errors[key]
                             ? COLORS.PRIMARYRED
                             : COLORS.INPUTBORDER,
-                          fontSize: FONTS.FONTSIZE.MINI,
+                          fontSize: FONTS.FONTSIZE.SMALL,
                           fontFamily: FONTS.FONT_FAMILY.REGULAR,
                           backgroundColor: COLORS.PRIMARYWHITE,
                           paddingVertical: 0,
+                          includeFontPadding: false,
                         }}
                         value={item?.value || ''}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
-                        maxLength={item?.maxLength || 256}
+                        maxLength={
+                          (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                            ? 256
+                            : item?.maxLength ?? item?.maxlength
+                        }
                         placeholder={`${item.label}`}
                         onChangeText={value =>
                           handleEmail(
@@ -2895,10 +2981,16 @@ const AdminEdit = ({editItem, isVideoGallery, isImageGallery}) => {
             })}
             <View style={{alignItems: 'center'}}>
               <ButtonComponent
-                title={isComplete ? 'Please Wait...' : 'Submit'}
+                title={
+                  isAnyUploading
+                    ? 'Uploading...'
+                    : isComplete
+                    ? 'Please Wait...'
+                    : 'Submit'
+                }
                 onPress={submitHandller}
                 width={'45%'}
-                disabled={activeButton || isSubmitting?.current || isComplete}
+                disabled={isAnyUploading || isSubmitting?.current || isComplete}
               />
             </View>
           </ScrollView>

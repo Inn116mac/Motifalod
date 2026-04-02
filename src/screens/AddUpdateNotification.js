@@ -58,15 +58,35 @@ const AddUpdateNotification = ({route}) => {
     isDelete: data?.isDelete || false,
   });
 
+  const stripHtmlTags = str => {
+    if (!str || str === '') return '';
+
+    let cleaned = str.toString();
+
+    cleaned = cleaned
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+
+    cleaned = cleaned.replace(/(<([^>]+)>)/gi, '');
+
+    cleaned = cleaned.replace(/\\n/g, '\n');
+
+    return cleaned.trim();
+  };
+
   const [form, setForm] = useState({
     notificationId: data?.notificationId || 0,
     email: data?.email || false,
     sms: data?.sms || false,
     notifications: data?.notifications || false,
-    emailSubject: data?.emailSubject || '',
-    emailBody: data?.emailBody || '',
-    smsText: data?.smsText || '',
-    notificationText: data?.notificationText || '',
+    emailSubject: stripHtmlTags(data?.emailSubject || ''),
+    emailBody: stripHtmlTags(data?.emailBody || ''),
+    smsText: stripHtmlTags(data?.smsText || ''),
+    notificationText: stripHtmlTags(data?.notificationText || ''),
     isAdd: data?.isAdd || false,
     isEdit: data?.isEdit || false,
     isDelete: data?.isDelete || false,
@@ -238,10 +258,14 @@ const AddUpdateNotification = ({route}) => {
                 email: notificationData.email || false,
                 sms: notificationData.sms || false,
                 notifications: notificationData.notifications || false,
-                emailSubject: notificationData.emailSubject || '',
-                emailBody: notificationData.emailBody || '',
-                smsText: notificationData.smsText || '',
-                notificationText: notificationData.notificationText || '',
+                emailSubject: stripHtmlTags(
+                  notificationData.emailSubject || '',
+                ),
+                emailBody: stripHtmlTags(notificationData.emailBody || ''),
+                smsText: stripHtmlTags(notificationData.smsText || ''),
+                notificationText: stripHtmlTags(
+                  notificationData.notificationText || '',
+                ),
                 isAdd: notificationData.isAdd || false,
                 isEdit: notificationData.isEdit || false,
                 isDelete: notificationData.isDelete || false,
@@ -469,26 +493,6 @@ const AddUpdateNotification = ({route}) => {
     return null;
   };
 
-  const stripHtmlTags = str => {
-    if (!str || str === '') return '';
-
-    let cleaned = str.toString();
-
-    cleaned = cleaned
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'");
-
-    cleaned = cleaned.replace(/(<([^>]+)>)/gi, '');
-
-    cleaned = cleaned.replace(/\\n/g, '\n');
-
-    return cleaned.trim();
-  };
-
   return (
     <KeyboardAvoidingView
       style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}
@@ -653,7 +657,7 @@ const AddUpdateNotification = ({route}) => {
                 {renderRequiredLabel('Email Subject', 'emailSubject')}
 
                 <TextInput
-                  value={stripHtmlTags(form.emailSubject)}
+                  value={form.emailSubject}
                   onChangeText={text => {
                     setForm(prev => ({...prev, emailSubject: text}));
                     setErrors(prev => ({...prev, emailSubject: null}));
@@ -680,7 +684,7 @@ const AddUpdateNotification = ({route}) => {
                 {renderRequiredLabel('Email Body', 'emailBody')}
 
                 <TextInput
-                  value={stripHtmlTags(form.emailBody)}
+                  value={form.emailBody}
                   onChangeText={text => {
                     setForm(prev => ({...prev, emailBody: text}));
                     setErrors(prev => ({...prev, emailBody: null}));
@@ -715,7 +719,7 @@ const AddUpdateNotification = ({route}) => {
               <View style={{padding: 10}}>
                 {renderRequiredLabel('SMS Body', 'smsText')}
                 <TextInput
-                  value={stripHtmlTags(form.smsText)}
+                  value={form.smsText}
                   onChangeText={text => {
                     setForm(prev => ({...prev, smsText: text}));
                     setErrors(prev => ({...prev, smsText: null}));
@@ -750,7 +754,7 @@ const AddUpdateNotification = ({route}) => {
                 {renderRequiredLabel('Notification Body', 'notificationText')}
 
                 <TextInput
-                  value={stripHtmlTags(form.notificationText)}
+                  value={form.notificationText}
                   onChangeText={text => {
                     setForm(prev => ({...prev, notificationText: text}));
                     setErrors(prev => ({...prev, notificationText: null}));

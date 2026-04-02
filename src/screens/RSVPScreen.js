@@ -10,7 +10,7 @@ import {
   TouchableWithoutFeedback,
   BackHandler,
 } from 'react-native';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import {
   heightPercentageToDP,
   widthPercentageToDP,
@@ -25,7 +25,7 @@ import NoDataFound from '../components/root/NoDataFound';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import CustomHeader from '../components/root/CustomHeader';
 import NetInfo from '@react-native-community/netinfo';
-import {AntDesign} from "@react-native-vector-icons/ant-design";
+import {AntDesign} from '@react-native-vector-icons/ant-design';
 import httpClient from '../connection/httpClient';
 
 export default function RsvpList({}) {
@@ -126,7 +126,7 @@ export default function RsvpList({}) {
             const {data} = response;
             const {status, message, result} = data;
 
-            if (status || (status == true && result)) {
+            if (status && result) {
               setFilterLoading(false);
               const newEvent = {
                 id: 0,
@@ -187,7 +187,7 @@ export default function RsvpList({}) {
                 setRsvpList([]);
               }
               const canLoadMore =
-                pageNumber < calculatedTotalPages && newData.length > 0;
+                pageNumber < calculatedTotalPages && newData?.length > 0;
               setHasMore(canLoadMore);
             } else {
               NOTIFY_MESSAGE(
@@ -221,15 +221,35 @@ export default function RsvpList({}) {
     const number1 = (pageNumber - 1) * PAGE_SIZE + index + 1;
     const number = number1 <= 9 ? `0${number1}` : `${number1}`;
 
-    const keys = Array.isArray(rsvpList[0]?.keys)
-      ? rsvpList[0].keys
-      : JSON.parse(rsvpList[0]?.keys || '[]');
+    let keys = [];
+    try {
+      keys = Array.isArray(rsvpList[0]?.keys)
+        ? rsvpList[0].keys
+        : JSON.parse(rsvpList[0]?.keys || '[]');
+    } catch {
+      keys = [];
+    }
 
-    const parsedContent = JSON.parse(item?.content);
+    let parsedContent = {};
+    try {
+      parsedContent = JSON.parse(item?.content ?? '{}');
+    } catch {
+      parsedContent = {};
+    }
+    // ADD — case-insensitive field lookup
+    const findValue = (obj, keyName) => {
+      if (!obj) return undefined;
+      const found = Object.keys(obj).find(
+        k => k.toLowerCase() === keyName.toLowerCase(),
+      );
+      return found ? obj[found]?.value : undefined;
+    };
 
-    const eventEntry = parsedContent?.event?.value;
-    const res = parsedContent?.selectyourResponse?.value;
-    const member = parsedContent?.member?.value;
+    // REPLACE direct access with findValue
+    const eventEntry = findValue(parsedContent, 'event');
+    const res = findValue(parsedContent, 'selectyourresponse');
+    const member = findValue(parsedContent, 'member');
+
     const handleToggle = index => {
       setOpenIndex(openIndex === index ? null : index);
     };
@@ -293,7 +313,9 @@ export default function RsvpList({}) {
                     fontSize: FONTS.FONTSIZE.SEMIMINI,
                     color: COLORS.PLACEHOLDERCOLOR,
                     width:
-                    res?.toLowerCase() == 'may be' ? width / 1.6 : width / 1.45,
+                      res?.toLowerCase() == 'may be'
+                        ? width / 1.6
+                        : width / 1.45,
                   }}>
                   {eventEntry ? eventEntry : null}
                 </Text>
@@ -339,9 +361,9 @@ export default function RsvpList({}) {
                   data && (
                     <View style={styles.textView} key={key}>
                       <Text style={styles.titleText}>
-                        {data.label === 'Select your Response'
+                        {data.label?.toLowerCase() === 'select your response'
                           ? 'Response :'
-                          : data.label === 'Add a comments'
+                          : data.label?.toLowerCase() === 'add a comments'
                           ? 'Comments :'
                           : `${data.label} :`}
                       </Text>
@@ -380,6 +402,7 @@ export default function RsvpList({}) {
       'hardwareBackPress',
       () => {
         navigation.navigate('Dashboard');
+        return true;
       },
     );
 
@@ -397,7 +420,12 @@ export default function RsvpList({}) {
           navigation.navigate('Dashboard');
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
         title={'RSVP'}
       />

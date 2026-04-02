@@ -126,6 +126,7 @@ const VideoGallery = ({route}) => {
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isReresh, setIsRefresh] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [eventData, setEventData] = useState([]);
   const [filterLoading, setFilterLoading] = useState(false);
@@ -573,15 +574,10 @@ const VideoGallery = ({route}) => {
         )}
       </View>
 
-      <Modal
-        transparent={true}
-        visible={modalVisible}
-        animationType="slide">
+      <Modal transparent={true} visible={modalVisible} animationType="slide">
         <View style={styles.modalContainer}>
           <TouchableWithoutFeedback
-            onPress={() => {
-              setModalVisible(false);
-            }}>
+            onPress={isUploading ? undefined : () => setModalVisible(false)}>
             <View style={styles.backdrop} />
           </TouchableWithoutFeedback>
 
@@ -600,6 +596,7 @@ const VideoGallery = ({route}) => {
                     isVideoGallery={true}
                     onChange={onChange}
                     isFromDashboard={true}
+                    onUploadingChange={setIsUploading}
                   />
                 ) : (
                   <View

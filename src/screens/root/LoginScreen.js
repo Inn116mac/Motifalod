@@ -81,12 +81,6 @@ const LoginScreen = ({route}) => {
     },
   });
 
-  useEffect(() => {
-    if (isFromNewPassword) {
-      setPassword('');
-    }
-  }, [isFromNewPassword]);
-
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -114,6 +108,7 @@ const LoginScreen = ({route}) => {
 
   useEffect(() => {
     const loadCred = async () => {
+      if (isFromNewPassword) return;
       const cred = await getData('cred');
 
       if (cred && cred.userName) {
@@ -184,7 +179,7 @@ const LoginScreen = ({route}) => {
     if (isPhoneLike) {
       // Format as phone number
       const formatted = formatPhoneToUS(value);
-      setUserName(formatted);
+      setUserName(formatted.slice(0, 14));
       setInputType('phone');
     } else {
       // Treat as email
@@ -214,6 +209,9 @@ const LoginScreen = ({route}) => {
     if (inputType === 'phone') {
       loginUserName = unformatPhone(userName);
     }
+    if (!loginUserName.trim())
+      return NOTIFY_MESSAGE('Please enter email or phone.');
+    if (!password.trim()) return NOTIFY_MESSAGE('Please enter your password.');
 
     let data = JSON.stringify({
       userName: loginUserName,
@@ -281,6 +279,7 @@ const LoginScreen = ({route}) => {
           });
       } else {
         NOTIFY_MESSAGE('Please check your internet connectivity');
+        setIsLoading(false);
       }
     });
   };
@@ -320,7 +319,8 @@ const LoginScreen = ({route}) => {
   return (
     <KeyboardAvoidingView
       style={{flex: 1}}
-      behavior={Platform.OS === 'ios' ? undefined : 'height'}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+      keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 0}>
       <View
         style={{
           flex: 1,
@@ -369,7 +369,7 @@ const LoginScreen = ({route}) => {
                     text={userName}
                     setText={handleUserNameChange}
                     keyboardType={'email-address'}
-                    maxLength={inputType === 'phone' ? 14 : undefined}
+                    maxLength={undefined}
                   />
                   <InputComponent
                     title={'Password'}
@@ -404,22 +404,20 @@ const LoginScreen = ({route}) => {
                       justifyContent: 'space-between',
                       marginHorizontal: 10,
                     }}>
-                    <View
+                    <TouchableOpacity
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 8,
-                      }}>
-                      <TouchableOpacity
-                        onPress={() => setRememberMe(!rememberMe)}>
-                        <Fontisto
-                          name={
-                            rememberMe ? 'checkbox-active' : 'checkbox-passive'
-                          }
-                          size={18}
-                          color={COLORS.TITLECOLOR}
-                        />
-                      </TouchableOpacity>
+                      }}
+                      onPress={() => setRememberMe(!rememberMe)}>
+                      <Fontisto
+                        name={
+                          rememberMe ? 'checkbox-active' : 'checkbox-passive'
+                        }
+                        size={18}
+                        color={COLORS.TITLECOLOR}
+                      />
                       <Text
                         style={{
                           color: COLORS.TITLECOLOR,
@@ -428,7 +426,7 @@ const LoginScreen = ({route}) => {
                         }}>
                         Remember Me
                       </Text>
-                    </View>
+                    </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => {
                         navigation.navigate('ForgotPass');

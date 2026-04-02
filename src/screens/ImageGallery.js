@@ -164,6 +164,7 @@ export default function ImageGallery({route}) {
   const [isEventDataModal, setIsEventDataModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [hasError, setHasError] = useState({});
+  const [isUploading, setIsUploading] = useState(false);
 
   // 🔥 Batch loading system
   const [visibleImages, setVisibleImages] = useState(new Set());
@@ -918,15 +919,10 @@ export default function ImageGallery({route}) {
           <Offline />
         )}
       </View>
-      <Modal
-        transparent={true}
-        visible={modalVisible}
-        animationType="slide">
+      <Modal transparent={true} visible={modalVisible} animationType="slide">
         <View style={styles.modalContainer}>
           <TouchableWithoutFeedback
-            onPress={() => {
-              setModalVisible(false);
-            }}>
+            onPress={isUploading ? undefined : () => setModalVisible(false)}>
             <View style={styles.backdrop} />
           </TouchableWithoutFeedback>
 
@@ -948,6 +944,7 @@ export default function ImageGallery({route}) {
                     isImageGallery={true}
                     isFromDashboard={true}
                     onChange={onChange}
+                    onUploadingChange={setIsUploading}
                   />
                 ) : (
                   <NoDataFound />

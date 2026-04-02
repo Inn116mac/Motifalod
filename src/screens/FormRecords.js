@@ -17,7 +17,6 @@ import {
 import COLORS from '../theme/Color';
 import FONTS from '../theme/Fonts';
 import NetInfo from '@react-native-community/netinfo';
-import {getData} from '../utils/Storage';
 import {NOTIFY_MESSAGE} from '../constant/Module';
 import Loader from '../components/root/Loader';
 import Offline from '../components/root/Offline';
@@ -63,25 +62,17 @@ const FormRecords = ({route}) => {
   });
   const {item} = route?.params?.data;
   const navigation = useNavigation();
-  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
   const [isReresh, setIsRefresh] = useState(false);
   const {isConnected, networkLoading} = useNetworkStatus();
   const isFocused = useIsFocused();
 
-  const getUser = async () => {
-    const user = await getData('user');
-    setUserData(user);
-  };
-
   useEffect(() => {
-    getUser();
-  }, []);
-
-  useEffect(() => {
-    dashboardApiCall();
-  }, [userData, isFocused]);
+    if (isFocused) {
+      dashboardApiCall();
+    }
+  }, [isFocused]);
 
   const dashboardApiCall = () => {
     NetInfo.fetch().then(state => {
@@ -97,16 +88,16 @@ const FormRecords = ({route}) => {
                 );
                 const newArray = filteredData.filter(
                   item =>
-                    item?.constantName !== 'SCAN QR' &&
-                    item?.constantName !== 'SELF CHECK-IN' &&
-                    item?.constantName !== 'EVENT ADMIN' &&
-                    item?.constantName !== 'EVENT ATTENDEES' &&
-                    item?.constantName !== 'EVENT ATTENDEE' &&
-                    item?.constantName !== 'REPORTS' &&
-                    item?.constantName !== 'MEMBER SUMMARY' &&
-                    item?.constantName !== 'EVENT DASHBOARD' &&
-                    item?.constantName !== 'FB LIVE STREAM' &&
-                    item?.constantName !== 'JOIN FB LIVE',
+                    item?.constantName?.toUpperCase() !== 'SCAN QR' &&
+                    item?.constantName?.toUpperCase() !== 'SELF CHECK-IN' &&
+                    item?.constantName?.toUpperCase() !== 'EVENT ADMIN' &&
+                    item?.constantName?.toUpperCase() !== 'EVENT ATTENDEES' &&
+                    item?.constantName?.toUpperCase() !== 'EVENT ATTENDEE' &&
+                    item?.constantName?.toUpperCase() !== 'REPORTS' &&
+                    item?.constantName?.toUpperCase() !== 'MEMBER SUMMARY' &&
+                    item?.constantName?.toUpperCase() !== 'EVENT DASHBOARD' &&
+                    item?.constantName?.toUpperCase() !== 'FB LIVE STREAM' &&
+                    item?.constantName?.toUpperCase() !== 'JOIN FB LIVE',
                 );
 
                 setData(newArray);
@@ -145,27 +136,29 @@ const FormRecords = ({route}) => {
         onPress={() => {
           let data = {item, isTabView: false, isTable: true, isAdmin: true};
           if (item?.constantName === 'MEMBERSHIP MANAGEMENT') {
-            navigation.navigate('MembershipPrice', (item = {data}));
+            navigation.navigate('MembershipPrice', {data});
           } else if (item?.constantName == 'ROLE MANAGEMENT') {
-            navigation.navigate('RoleManagement', (item = {data}));
+            navigation.navigate('RoleManagement', {data});
           } else if (item?.constantName === 'NOTIFICATION MANAGEMENT') {
-            navigation.navigate('NotificationManagement', (item = {data}));
+            navigation.navigate('NotificationManagement', {data});
           } else if (item?.constantName === 'REMINDER MANAGEMENT') {
-            navigation.navigate('ReminderList', (item = {data}));
+            navigation.navigate('ReminderList', {data});
           } else if (item?.constantName == 'FAMILY MEMBER') {
-            navigation.navigate('FamilyMemberList', (item = {data}));
+            navigation.navigate('FamilyMemberList', {data});
           } else if (item?.constantName == 'TRANSACTIONS') {
-            navigation.navigate('Transactions', (item = {data}));
+            navigation.navigate('Transactions', {data});
           } else if (item?.constantName == 'MODULE MANAGEMENT') {
-            navigation.navigate('ModuleList', (item = {data}));
+            navigation.navigate('ModuleList', {data});
           } else if (item?.constantName == 'APP SETTINGS') {
-            navigation.navigate('AppSettings', (item = {data}));
+            navigation.navigate('AppSettings', {data});
           } else if (item?.constantName == 'PAYMENT CREDENTIALS') {
-            navigation.navigate('PaymentCredList', (item = {data}));
+            navigation.navigate('PaymentCredList', {data});
           } else if (item?.constantName == 'POLL') {
-            navigation.navigate('PollList', (item = {data}));
+            navigation.navigate('PollList', {data});
+          } else if (item?.constantName == 'GALLERY') {
+            navigation.navigate('Gallery', {data});
           } else {
-            navigation.navigate('TableScreen', (item = {data}));
+            navigation.navigate('TableScreen', {data});
           }
         }}>
         <View

@@ -1,10 +1,4 @@
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-} from 'react-native';
+import {View, Text, TextInput, TouchableOpacity} from 'react-native';
 import React from 'react';
 import FONTS from '../../theme/Fonts';
 import COLORS from '../../theme/Color';
@@ -19,11 +13,8 @@ const InputComponent = ({
   icon,
   secureTextEntry,
   keyboardType,
-  givenWidth,
   maxLength,
 }) => {
-  const {width} = useWindowDimensions();
-
   return (
     <View style={{gap: 4}}>
       <Text
@@ -48,7 +39,7 @@ const InputComponent = ({
         }}>
         <View
           style={{
-            width: givenWidth ? givenWidth : width / 1.2,
+            flex: 1,
           }}>
           <TextInput
             keyboardType={keyboardType}
@@ -61,12 +52,13 @@ const InputComponent = ({
             maxLength={maxLength}
             autoCapitalize="none"
             style={{
-              fontSize: FONTS.FONTSIZE.MINI,
+              fontSize: FONTS.FONTSIZE.SMALL,
               fontFamily: FONTS.FONT_FAMILY.REGULAR,
-              height: 38,
+              height: 44,
               paddingVertical: 0,
               color: COLORS.PRIMARYBLACK,
               width: '100%',
+              includeFontPadding: false,
             }}
           />
         </View>

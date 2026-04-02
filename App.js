@@ -1,6 +1,6 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect} from 'react';
 import AppNavigation from './src/navigation/AppNavigation';
-import {LogBox, PermissionsAndroid, Platform, StyleSheet} from 'react-native';
+import {LogBox, PermissionsAndroid, Platform} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 globalThis.RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true;
 import messaging from '@react-native-firebase/messaging';
@@ -115,14 +115,13 @@ const App = () => {
       }
     });
   };
-  const scrollRef = useRef(null);
 
   return (
     <DrawerProvider>
       <GestureHandlerRootView
         style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}>
         {Platform.OS === 'android' ? (
-          <ZoomableView simultaneousHandlers={scrollRef}>
+          <ZoomableView>
             <AppNavigation />
           </ZoomableView>
         ) : (

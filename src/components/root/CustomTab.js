@@ -4,6 +4,7 @@ import {
   FlatList,
   TouchableOpacity,
   Platform,
+  PermissionsAndroid,
   TextInput,
   ScrollView,
   Modal,
@@ -31,7 +32,7 @@ import {
 import NetInfo from '@react-native-community/netinfo';
 import COLORS from '../../theme/Color';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import ImagePicker from 'react-native-image-crop-picker';
+import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import {getData, removeData, storeData} from '../../utils/Storage';
 import moment from 'moment';
 import Video from 'react-native-video';
@@ -49,11 +50,16 @@ import {
 } from 'react-native-fbsdk-next';
 import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import {Feather} from '@react-native-vector-icons/feather';
-import {unformatPhone, isPhoneField} from '../../constant/Module';
+import {
+  unformatPhone,
+  isPhoneField,
+  isNameField,
+  validateNameValue,
+} from '../../constant/Module';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-const APP_ID = '1173536437853030';
-const APP_SECRET = '72e5b8d18e367ca47a066f5d8801e693';
+const APP_ID = '703532215950853';
+const APP_SECRET = '3454f7f726836eee4a25b0b8b623f139';
 
 const TOKEN_STORAGE_KEY = 'fb_user_access_token';
 const USER_INFO_KEY = 'fb_userinfo';
@@ -73,6 +79,7 @@ export default function CustomTab({
   isFromDashboard,
   onChangeEvent,
   isFromEventAdmin,
+  onUploadingChange,
 }) {
   const {width} = useWindowDimensions();
 
@@ -102,9 +109,8 @@ export default function CustomTab({
       fontSize: FONTS.FONTSIZE.SMALL,
     },
     dropdown: {
-      height: 38,
+      height: 44,
       borderWidth: 1,
-      borderRadius: 10,
       borderRadius: 10,
       backgroundColor: COLORS.PRIMARYWHITE,
       paddingHorizontal: 10,
@@ -120,12 +126,12 @@ export default function CustomTab({
       fontSize: FONTS.FONTSIZE.EXTRASMALL,
     },
     placeholderStyle: {
-      fontSize: FONTS.FONTSIZE.MINI,
+      fontSize: FONTS.FONTSIZE.SMALL,
       color: COLORS.PLACEHOLDERCOLOR,
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
     },
     selectedTextStyle: {
-      fontSize: FONTS.FONTSIZE.MINI,
+      fontSize: FONTS.FONTSIZE.SMALL,
       color: COLORS.PRIMARYBLACK,
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
     },
@@ -141,6 +147,14 @@ export default function CustomTab({
     },
     buttonRow: {
       flexDirection: 'row',
+    },
+    select_Button: {
+      padding: 10,
+      borderRadius: 5,
+      backgroundColor: COLORS.TITLECOLOR,
+      marginVertical: 5,
+      width: '100%',
+      alignItems: 'center',
     },
     image: {
       width: 100,
@@ -187,7 +201,7 @@ export default function CustomTab({
   const [uploadComplete, setUploadComplete] = useState({});
 
   const [activeButton, setActiveButton] = useState(false);
-  const [isComplete, setIsCopmlete] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
   const [newData, setNewData] = useState([]);
 
   useEffect(() => {
@@ -204,75 +218,85 @@ export default function CustomTab({
     isImageGallery,
     item,
   }) => {
-    const handleSelectCamera = () => {
-      ImagePicker.openCamera({
-        width: 300,
-        height: 400,
-      })
-        .then(response => {
-          const totalSize = response?.size;
-
-          const fileSizeInMB = totalSize / (1024 * 1024);
-
-          if (fileSizeInMB > 30) {
+    const handleSelectCamera = async () => {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          {
+            title: 'Camera Permission',
+            message: 'This app needs access to your camera to take photos.',
+            buttonPositive: 'Allow',
+            buttonNegative: 'Deny',
+          },
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          NOTIFY_MESSAGE('Camera permission denied');
+          return;
+        }
+      }
+      launchCamera(
+        {mediaType: 'photo', quality: 0.85, saveToPhotos: false},
+        response => {
+          if (response.didCancel) return;
+          if (response.errorCode) {
+            NOTIFY_MESSAGE('Something Went Wrong');
+            return;
+          }
+          const file = response.assets?.[0];
+          if (!file) return;
+          const fileSizeInMB = (file.fileSize || 0) / (1024 * 1024);
+          if (fileSizeInMB > 500) {
             Alert.alert(
               'Invalid File Size',
-              'File size cannot be greater than 30MB. Please choose a smaller file.',
+              'File size cannot be greater than 500MB. Please choose a smaller file.',
               [
                 {
                   text: 'OK',
                   onPress: () =>
-                    setModalVisible(prev => ({
-                      ...prev,
-                      [item?.key]: true,
-                    })),
+                    setModalVisible(prev => ({...prev, [item?.key]: true})),
                 },
               ],
             );
           } else {
             const existingFiles = imageUris[item?.key] || [];
-
-            const updatedFiles = [...existingFiles, response.path];
-
-            setImageUris(prev => ({...prev, [item?.key]: updatedFiles}));
-            onSelect(response);
+            setImageUris(prev => ({
+              ...prev,
+              [item?.key]: [...existingFiles, file.uri],
+            }));
+            onSelect(file);
             onClose();
           }
-        })
-        .catch(err => {
-          if (err.code === 'E_PICKER_CANCELLED') {
-          } else {
-            NOTIFY_MESSAGE(err?.message || err ? 'Something Went Wrong' : null);
-          }
-        });
+        },
+      );
     };
 
     const handleSelectGallery = () => {
-      ImagePicker.openPicker({
-        mediaType: isVideoGallery ? 'video' : 'photo',
-        multiple:
-          (item?.multiple == 'true' || item?.multiple) && isImageGallery
-            ? true
-            : false,
-      })
-        .then(response => {
-          const files = Array.isArray(response) ? response : [response];
-
-          const validFiles = files.filter(file => {
-            const totalSize = file?.size;
-            const fileSizeInMB = totalSize / (1024 * 1024);
-            if (fileSizeInMB > 30) {
+      const isMultipleAllowed =
+        (item?.multiple == 'true' || item?.multiple) && isImageGallery;
+      launchImageLibrary(
+        {
+          mediaType: isVideoGallery ? 'video' : 'photo',
+          selectionLimit: isMultipleAllowed ? 0 : 1,
+          quality: 0.85,
+        },
+        response => {
+          if (response.didCancel) return;
+          if (response.errorCode) {
+            NOTIFY_MESSAGE('Something Went Wrong');
+            return;
+          }
+          const assets = response.assets || [];
+          const validFiles = assets.filter(file => {
+            const fileSizeInMB = (file.fileSize || 0) / (1024 * 1024);
+            if (fileSizeInMB > 500) {
               Alert.alert(
                 'Invalid File Size',
-                'File size cannot be greater than 30MB. Please choose a smaller file.',
+                'File size cannot be greater than 500MB. Please choose a smaller file.',
                 [
                   {
                     text: 'OK',
                     onPress: () =>
-                      setModalVisible(prev => ({
-                        ...prev,
-                        [item?.key]: true,
-                      })),
+                      setModalVisible(prev => ({...prev, [item?.key]: true})),
                   },
                 ],
               );
@@ -280,42 +304,26 @@ export default function CustomTab({
             }
             return true;
           });
-
           if (validFiles.length > 0) {
             const existingFiles = imageUris[item?.key] || [];
-
-            const updatedFiles = [
-              ...existingFiles,
-              ...validFiles.map(file => file.path),
-            ];
-
-            setImageUris(prev => ({...prev, [item?.key]: updatedFiles}));
-
+            setImageUris(prev => ({
+              ...prev,
+              [item?.key]: [...existingFiles, ...validFiles.map(f => f.uri)],
+            }));
             onSelect(validFiles);
             onClose();
           }
-        })
-        .catch(err => {
-          if (err.code === 'E_PICKER_CANCELLED') {
-          } else {
-            NOTIFY_MESSAGE(err?.message || err ? 'Something Went Wrong' : null);
-          }
-        });
+        },
+      );
     };
 
     return (
       <Modal transparent={true} visible={visible} animationType="slide">
-        <TouchableWithoutFeedback onPress={onClose}>
+        <TouchableWithoutFeedback onPress={activeButton ? undefined : onClose}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.buttonRow}>
-                {isImageGallery ? (
-                  <TouchableOpacity
-                    style={styles.roundButton}
-                    onPress={handleSelectCamera}>
-                    <FontAwesome name="camera" size={24} color="#fff" />
-                  </TouchableOpacity>
-                ) : isVideoGallery ? null : (
+                {!isVideoGallery && (
                   <TouchableOpacity
                     style={styles.roundButton}
                     onPress={handleSelectCamera}>
@@ -327,7 +335,10 @@ export default function CustomTab({
                   onPress={handleSelectGallery}>
                   <FontAwesome name="image" size={24} color="#fff" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.roundButton} onPress={onClose}>
+                <TouchableOpacity
+                  style={[styles.roundButton, activeButton && {opacity: 0.4}]}
+                  disabled={activeButton}
+                  onPress={onClose}>
                   <FontAwesome name="close" size={24} color="#fff" />
                 </TouchableOpacity>
               </View>
@@ -408,19 +419,22 @@ export default function CustomTab({
 
         initialFormData[item?.key] = selectedOption
           ? selectedOption.value
-          : isRsvp && item?.name == 'event'
+          : isRsvp && item?.name?.toLowerCase() == 'event'
           ? item1?.eventId
           : '';
 
-        if (item?.name === 'event') {
+        if (item?.name?.toLowerCase() === 'event') {
           const eventId = selectedOption ? selectedOption.value : 0;
           setSelectedEvent(eventId);
         }
-        if (item?.name === 'member') {
+        if (item?.name?.toLowerCase() === 'member') {
           const memberId = selectedOption ? selectedOption.value : 0;
           setSelectedMember(memberId);
         }
-        if (item?.name === 'member' || item?.name === 'eventCoordinator') {
+        if (
+          item?.name?.toLowerCase() === 'member' ||
+          item?.name?.toLowerCase() === 'eventcoordinator'
+        ) {
           originalMemberValues.current = item?.values || [];
         }
       } else if (item.type === 'date') {
@@ -479,17 +493,15 @@ export default function CustomTab({
     className,
   ) => {
     const allowDecimal = className?.toLowerCase().includes('decimal');
+    const nameLower = name?.toLowerCase(); // ← normalize once at top
 
     let numericValue;
 
     if (allowDecimal) {
-      // Allow numbers and ONE decimal point only
       numericValue = value.replace(/[^0-9.]/g, '');
 
-      // Ensure only one decimal point
       const parts = numericValue.split('.');
       if (parts.length > 2) {
-        // Keep first part + decimal + second part, ignore rest
         numericValue = parts[0] + '.' + parts.slice(1).join('');
       }
 
@@ -497,24 +509,24 @@ export default function CustomTab({
         numericValue = parts[0] + '.' + parts[1].substring(0, 2);
       }
     } else {
-      // Only integers for other fields
       numericValue = value.replace(/[^0-9]/g, '');
     }
 
-    // ✅ Store numeric value (with decimal if allowed)
     setFormData(prevData => ({...prevData, [key]: numericValue}));
 
     const isValueEmpty = numericValue.trim() === '';
-    const isAllZeros = /^0+(\.0+)?$/.test(numericValue); // Updated regex to handle decimal zeros
+    const isAllZeros = /^0+(\.0+)?$/.test(numericValue);
     let isLengthInvalid = false;
 
     const isPhone = isPhoneField(name);
 
     if (isPhone) {
       isLengthInvalid = numericValue.length !== 10;
-    } else if (name === 'age') {
+    } else if (nameLower === 'age') {
+      // ← was: name === 'age'
       isLengthInvalid = numericValue.length < 1 || numericValue.length > 3;
-    } else if (name === 'zIP') {
+    } else if (nameLower === 'zip') {
+      // ← was: name === 'zIP'
       isLengthInvalid = numericValue.length !== 5;
     }
 
@@ -527,12 +539,15 @@ export default function CustomTab({
         } else if (isLengthInvalid) {
           if (isPhone) {
             updatedErrors[key] = `${label} must be 10 digits.`;
-          } else if (name === 'age') {
+          } else if (nameLower === 'age') {
+            // ← was: name === 'age'
             updatedErrors[key] = `${label} must be between 1 and 3 digits.`;
-          } else if (name === 'zIP') {
+          } else if (nameLower === 'zip') {
+            // ← was: name === 'zIP'
             updatedErrors[key] = `${label} must be exactly 5 digits.`;
           }
-        } else if (isAllZeros && (isPhone || name === 'age')) {
+        } else if (isAllZeros && (isPhone || nameLower === 'age')) {
+          // ← was: name === 'age'
           updatedErrors[key] = `${label} cannot be all zeros.`;
         } else {
           delete updatedErrors[key];
@@ -540,7 +555,7 @@ export default function CustomTab({
       } else {
         if (
           !isValueEmpty &&
-          (isLengthInvalid || (isAllZeros && (isPhone || name === 'age')))
+          (isLengthInvalid || (isAllZeros && (isPhone || nameLower === 'age'))) // ← was: name === 'age'
         ) {
           if (isPhone) {
             if (isLengthInvalid) {
@@ -548,13 +563,15 @@ export default function CustomTab({
             } else {
               updatedErrors[key] = `${label} cannot be all zeros.`;
             }
-          } else if (name === 'age') {
+          } else if (nameLower === 'age') {
+            // ← was: name === 'age'
             if (isLengthInvalid) {
               updatedErrors[key] = `${label} must be between 1 and 3 digits.`;
             } else {
               updatedErrors[key] = `${label} cannot be all zeros.`;
             }
-          } else if (name === 'zIP') {
+          } else if (nameLower === 'zip') {
+            // ← was: name === 'zIP'
             updatedErrors[key] = `${label} must be exactly 5 digits.`;
           }
         } else {
@@ -572,6 +589,7 @@ export default function CustomTab({
       const newValue = Math.max(0, current + value);
 
       if (isNaN(newValue)) {
+        console.error('Invalid value detected', {key, current, value});
         return prevFormData;
       }
 
@@ -686,30 +704,33 @@ export default function CustomTab({
     }
   };
 
-  const handleInputChange = (key, value, isRequired, label) => {
+  const handleInputChange = (key, value, isRequired, label, name) => {
     setFormData(prevFormData => ({
       ...prevFormData,
       [key]: value,
     }));
 
-    let isValid = false;
+    const trimmed = typeof value === 'string' ? value.trim() : '';
+    const hasValue = Array.isArray(value) ? value.length > 0 : trimmed !== '';
 
-    if (Array.isArray(value)) {
-      isValid = value.length > 0;
-    } else if (typeof value === 'string') {
-      isValid = value.trim() !== '';
-    }
-    if (isRequired) {
-      setErrors(prevErrors => {
-        if (!isValid) {
-          return {...prevErrors, [key]: `${label} is required.`};
+    setErrors(prevErrors => {
+      const updatedErrors = {...prevErrors};
+
+      if (isRequired && !hasValue) {
+        updatedErrors[key] = `${label} is required.`;
+      } else if (hasValue && isNameField(name)) {
+        const nameError = validateNameValue(trimmed, label);
+        if (nameError) {
+          updatedErrors[key] = nameError;
         } else {
-          const updatedErrors = {...prevErrors};
           delete updatedErrors[key];
-          return updatedErrors;
         }
-      });
-    }
+      } else {
+        delete updatedErrors[key];
+      }
+
+      return updatedErrors;
+    });
   };
 
   const handleEmail = (key, value, isRequired, label) => {
@@ -835,12 +856,12 @@ export default function CustomTab({
 
       if (
         (selectedEvent &&
-          name == 'member' &&
+          name?.toLowerCase() == 'member' &&
           value &&
           isRsvp &&
           userData?.role !== 'member') ||
         (selectedEvent &&
-          name == 'member' &&
+          name?.toLowerCase() == 'member' &&
           value &&
           isRsvp &&
           userData?.role == 'member' &&
@@ -913,10 +934,11 @@ export default function CustomTab({
 
     const formData = new FormData();
     validFiles.forEach(file => {
+      const rawUri = file?.uri || file?.path || '';
       const fileUri =
-        Platform.OS === 'ios' ? file?.path?.replace('file://', '') : file?.path;
+        Platform.OS === 'ios' ? rawUri.replace('file://', '') : rawUri;
 
-      const mimeType = file.mime;
+      const mimeType = file?.type || file?.mime;
 
       if (!mimeType) {
         setErrors(prevErrors => ({
@@ -936,7 +958,9 @@ export default function CustomTab({
     });
 
     try {
+      isUploadingRef.current = true;
       setActiveButton(true);
+      onUploadingChange?.(true);
       const response = await httpClient.post(
         'file/single/upload?location=content',
         formData,
@@ -971,7 +995,7 @@ export default function CustomTab({
           const existingUrls = prevFormData[key] || [];
 
           const newUrls =
-            isMultiple && isMultiple == 'true'
+            isMultiple && isMultiple === 'true'
               ? [...existingUrls, ...uploadedImageUrls]
               : [uploadedImageUrls[0]];
 
@@ -1004,7 +1028,9 @@ export default function CustomTab({
         ...prev,
         [key]: 0,
       }));
+      isUploadingRef.current = false;
       setActiveButton(false);
+      onUploadingChange?.(false);
     }
   };
 
@@ -1083,6 +1109,7 @@ export default function CustomTab({
   };
 
   const isSubmitting = useRef(false);
+  const isUploadingRef = useRef(false);
 
   const handleTabClick = index => {
     if (activeTab === index) return;
@@ -1173,7 +1200,7 @@ export default function CustomTab({
     });
   };
 
-  const handlePrivious = () => {
+  const handlePrevious = () => {
     handleTabClick(activeTab - 1);
   };
 
@@ -1194,17 +1221,8 @@ export default function CustomTab({
       'MM-DD-YYYY',
     ];
 
-    const isValidDate = originalFormats.some(format =>
-      moment(dateString, format, true).isValid(),
-    );
-
-    if (isValidDate) {
-      const date = moment(dateString, originalFormats, true).utc();
-      return date.format('YYYY-MM-DDTHH:mm:ss[Z]');
-    } else {
-      const date = moment(dateString, originalFormats, true).utc();
-      return date.format('YYYY-MM-DDTHH:mm:ss[Z]');
-    }
+    const date = moment(dateString, originalFormats, true).utc();
+    return date.format('YYYY-MM-DDTHH:mm:ss[Z]');
   };
 
   const [currentLengths, setCurrentLengths] = useState({});
@@ -1290,10 +1308,13 @@ export default function CustomTab({
   }, []);
 
   const handleSearchChange = async (text, name) => {
-    if (name !== 'member' && name !== 'eventCoordinator') return;
+    if (
+      name?.toLowerCase() !== 'member' &&
+      name?.toLowerCase() !== 'eventcoordinator'
+    )
+      return;
 
     if (!text || text.trim() === '') {
-      // clear search → restore full merged list
       setNewData(prevFields =>
         prevFields.map(field => {
           if (
@@ -1308,7 +1329,7 @@ export default function CustomTab({
       return;
     }
 
-    await fetchData(text); // search via API
+    await fetchData(text);
   };
 
   const [preventModalOpen, setPreventModalOpen] = useState(false);
@@ -1386,13 +1407,6 @@ export default function CustomTab({
         'email',
         'pages_show_list',
         'pages_manage_posts',
-        // 'pages_read_engagement',
-        // 'pages_manage_metadata',
-        // 'business_management',
-
-        // 'openid',
-        // 'user_photos',
-        // 'user_videos',
       ]);
 
       if (result.isCancelled) {
@@ -1402,7 +1416,7 @@ export default function CustomTab({
       const data = await AccessToken.getCurrentAccessToken();
       if (data) {
         const token = data.accessToken.toString();
-        await storeData(TOKEN_STORAGE_KEY, token); // Persist token
+        await storeData(TOKEN_STORAGE_KEY, token);
         setUserToken(token);
         fetchPages(token);
         setSyncWithFacebook(true);
@@ -1472,17 +1486,14 @@ export default function CustomTab({
       if (json.data && json.data.is_valid) {
         const currentTime = Math.floor(Date.now() / 1000);
 
-        // If expires_at is 0, treat as non-expiring token
         if (json.data.expires_at === 0) {
           return true;
         }
 
-        // Otherwise check expires_at timestamp
         if (json.data.expires_at && json.data.expires_at > currentTime) {
           return true;
         }
 
-        // Optionally check data_access_expires_at if needed
         if (
           json.data.data_access_expires_at &&
           json.data.data_access_expires_at > currentTime
@@ -1549,7 +1560,6 @@ export default function CustomTab({
     title = '', // for videos
     description = '', // for videos
   }) => {
-    // Normalize files array
     const fileUris = Array.isArray(files) ? files : [files];
 
     const endpointBase = pageId
@@ -1600,18 +1610,22 @@ export default function CustomTab({
       return json;
     };
 
-    // Upload files sequentially and collect results
     const results = [];
     for (const fileUri of fileUris) {
       const result = await uploadSingle(fileUri);
       results.push(result);
     }
 
-    return results; // Array of upload results
+    return results;
   };
 
+  const isAnyUploading =
+    isUploadingRef.current ||
+    activeButton ||
+    Object.values(uploadProgress).some(p => p > 0);
+
   const submitHandller = () => {
-    if (isSubmitting.current || isComplete) return;
+    if (isSubmitting.current || isComplete || isUploadingRef.current) return;
 
     const requiredFields = data.filter(item => item.required);
 
@@ -1668,7 +1682,7 @@ export default function CustomTab({
     }
 
     isSubmitting.current = true;
-    setIsCopmlete(true);
+    setIsComplete(true);
     const content = {};
 
     data.forEach(item => {
@@ -1686,7 +1700,6 @@ export default function CustomTab({
       content: JSON.stringify(content),
       contentType: response1?.constantName,
     };
-    // return
 
     NetInfo.fetch().then(state => {
       if (state.isConnected) {
@@ -1723,6 +1736,7 @@ export default function CustomTab({
                       });
                     } catch (uploadErr) {
                       NOTIFY_MESSAGE('Failed to upload media to Facebook.');
+                      console.error('Upload failed:', uploadErr);
                     }
                   }
                 }
@@ -1764,16 +1778,16 @@ export default function CustomTab({
           })
           .catch(err => {
             isSubmitting.current = false;
-            setIsCopmlete(false);
-            NOTIFY_MESSAGE(err || err?.message ? 'Something went wrong' : null);
+            setIsComplete(false);
+            NOTIFY_MESSAGE(err?.message || err ? 'Something went wrong' : null);
           })
           .finally(() => {
             isSubmitting.current = false;
-            setIsCopmlete(false);
+            setIsComplete(false);
           });
       } else {
         isSubmitting.current = false;
-        setIsCopmlete(false);
+        setIsComplete(false);
         NOTIFY_MESSAGE('Please check your internet connectivity');
       }
     });
@@ -1989,7 +2003,7 @@ export default function CustomTab({
                       <TextInput
                         style={{
                           borderWidth: 1,
-                          height: 38,
+                          height: 44,
                           paddingVertical: 0,
                           borderRadius: 10,
                           paddingHorizontal: 8,
@@ -1997,12 +2011,17 @@ export default function CustomTab({
                           borderColor: errors[item?.key]
                             ? COLORS.PRIMARYRED
                             : COLORS.INPUTBORDER,
-                          fontSize: FONTS.FONTSIZE.MINI,
+                          fontSize: FONTS.FONTSIZE.SMALL,
                           fontFamily: FONTS.FONT_FAMILY.REGULAR,
                           backgroundColor: COLORS.PRIMARYWHITE,
+                          includeFontPadding: false,
                         }}
                         value={formData[item?.key]}
-                        maxLength={item?.maxLength == 0 ? 250 : item?.maxLength}
+                        maxLength={
+                          (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                            ? 250
+                            : item?.maxLength ?? item?.maxlength
+                        }
                         placeholder={`${item.label}`}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                         onChangeText={value => {
@@ -2016,13 +2035,16 @@ export default function CustomTab({
                             value,
                             item?.required,
                             item?.label,
+                            item?.name,
                           );
                         }}
                         keyboardType="default"
                       />
                       {(() => {
                         const max =
-                          item?.maxLength === 0 ? 250 : item?.maxLength;
+                          (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                            ? 250
+                            : item?.maxLength ?? item?.maxlength;
                         const currentLength = currentLengths[item?.key] || 0;
                         return currentLength > max ? (
                           <Text
@@ -2092,18 +2114,22 @@ export default function CustomTab({
                           backgroundColor: COLORS.PRIMARYWHITE,
                         }}>
                         <TextInput
-                          numberOfLines={4}
                           multiline
+                          numberOfLines={4}
                           style={{
                             color: COLORS.PRIMARYBLACK,
-                            fontSize: FONTS.FONTSIZE.MINI,
+                            fontSize: FONTS.FONTSIZE.SMALL,
                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
                             flex: 1,
                             paddingVertical: 4,
                             textAlignVertical: 'top',
                           }}
                           value={formData[item?.key]}
-                          maxLength={250}
+                          maxLength={
+                            (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                              ? 250
+                              : item?.maxLength ?? item?.maxlength
+                          }
                           placeholder={`${item.label}`}
                           placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                           onChangeText={value =>
@@ -2112,6 +2138,7 @@ export default function CustomTab({
                               value,
                               item?.required,
                               item?.label,
+                              item?.name,
                             )
                           }
                           keyboardType="default"
@@ -2193,7 +2220,8 @@ export default function CustomTab({
                         horizontal={true}
                         contentContainerStyle={{gap: 10}}
                         renderItem={({item: radioItem, index}) =>
-                          isRsvp && item?.name == 'selectyourResponse' ? (
+                          isRsvp &&
+                          item?.name?.toLowerCase() == 'selectyourresponse' ? (
                             <View
                               style={{
                                 flexDirection: 'row',
@@ -2312,7 +2340,8 @@ export default function CustomTab({
                           {errors[item?.key]}
                         </Text>
                       )}
-                      {isRsvp && item?.name == 'selectyourResponse' ? (
+                      {isRsvp &&
+                      item?.name?.toLowerCase() == 'selectyourresponse' ? (
                         <View
                           style={{
                             borderBottomWidth: 1,
@@ -2329,11 +2358,12 @@ export default function CustomTab({
                     'form-control mobile-hide memberid' ||
                     item.className === 'mobile-hide' ||
                     item.className === 'form-control mobile-hide') &&
-                    (((item?.name == 'member' ||
-                      item?.name == 'eventCoordinator') &&
+                    (((item?.name?.toLowerCase() == 'member' ||
+                      item?.name?.toLowerCase() == 'eventcoordinator') &&
                       userData?.role == 'member' &&
                       !isFromEventAdmin) ||
-                      isSignUp) ? null : isRsvp && item?.name === 'event' ? (
+                      isSignUp) ? null : isRsvp &&
+                    item?.name?.toLowerCase() === 'event' ? (
                     <View
                       style={{
                         marginBottom: 10,
@@ -2443,12 +2473,12 @@ export default function CustomTab({
                               item1.value,
                               item.required,
                               item?.label,
-                              item?.name,
+                              item?.name?.toLowerCase(),
                               response1?.constantName?.toLowerCase() === 'rsvp',
                             );
                           }}
                           onChangeText={txt => {
-                            handleSearchChange(txt, item?.name);
+                            handleSearchChange(txt, item?.name?.toLowerCase());
                           }}
                           itemTextStyle={{color: COLORS.PRIMARYBLACK}}
                           placeholder={`Select ${capitalizeFirstLetter(
@@ -2547,7 +2577,7 @@ export default function CustomTab({
                           <View style={{marginTop: 10}}>
                             <Text
                               style={{
-                                fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                fontSize: FONTS.FONTSIZE.SMALL,
                                 fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                                 color: COLORS.TITLECOLOR,
                               }}>
@@ -2727,7 +2757,7 @@ export default function CustomTab({
                       <TouchableOpacity
                         style={{
                           borderWidth: 1,
-                          height: 38,
+                          height: 44,
                           paddingVertical: 0,
                           borderRadius: 10,
                           paddingHorizontal: 8,
@@ -2752,8 +2782,9 @@ export default function CustomTab({
                             color: formData[item?.key]
                               ? COLORS.PRIMARYBLACK
                               : COLORS.PLACEHOLDERCOLOR,
-                            fontSize: FONTS.FONTSIZE.MINI,
+                            fontSize: FONTS.FONTSIZE.SMALL,
                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                            includeFontPadding: false,
                           }}>
                           {formData[item?.key] || 'Select Date'}
                         </Text>
@@ -2829,7 +2860,7 @@ export default function CustomTab({
                       <TouchableOpacity
                         style={{
                           borderWidth: 1,
-                          height: 38,
+                          height: 44,
                           paddingVertical: 0,
                           borderRadius: 10,
                           paddingHorizontal: 8,
@@ -2854,8 +2885,9 @@ export default function CustomTab({
                             color: formData[item?.key]
                               ? COLORS.PRIMARYBLACK
                               : COLORS.PLACEHOLDERCOLOR,
-                            fontSize: FONTS.FONTSIZE.MINI,
+                            fontSize: FONTS.FONTSIZE.SMALL,
                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                            includeFontPadding: false,
                           }}>
                           {formData[item?.key] || 'Select Date-Time'}
                         </Text>
@@ -2906,33 +2938,40 @@ export default function CustomTab({
                 case 'checkbox-group':
                   return (
                     <View key={item?.key} style={{marginBottom: 8, gap: 4}}>
-                      <View
-                        style={{flexDirection: 'row', alignItems: 'center'}}>
-                        <Text
-                          style={{
-                            fontSize: FONTS.FONTSIZE.SMALL,
-                            fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                            color: COLORS.TITLECOLOR,
-                          }}>
-                          {capitalizeFirstLetter(item?.label)}{' '}
-                        </Text>
-                        {item?.required ? (
+                      {!(
+                        (response1?.constantName == 'RSVP' || isRsvp) &&
+                        item?.name?.toLowerCase() === 'members' &&
+                        item?.values?.length > 0 &&
+                        item?.values?.every(v => v.selected)
+                      ) && (
+                        <View
+                          style={{flexDirection: 'row', alignItems: 'center'}}>
                           <Text
                             style={{
                               fontSize: FONTS.FONTSIZE.SMALL,
                               fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                              color: errors[item?.key]
-                                ? COLORS.PRIMARYRED
-                                : COLORS.TITLECOLOR,
+                              color: COLORS.TITLECOLOR,
                             }}>
-                            *
+                            {capitalizeFirstLetter(item?.label)}{' '}
                           </Text>
-                        ) : null}
-                      </View>
+                          {item?.required ? (
+                            <Text
+                              style={{
+                                fontSize: FONTS.FONTSIZE.SMALL,
+                                fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                                color: errors[item?.key]
+                                  ? COLORS.PRIMARYRED
+                                  : COLORS.TITLECOLOR,
+                              }}>
+                              *
+                            </Text>
+                          ) : null}
+                        </View>
+                      )}
 
                       {selectedEvent &&
                         !selectedMember &&
-                        response1?.constantName == 'RSVP' && (
+                        (response1?.constantName == 'RSVP' || isRsvp) && (
                           <Text
                             style={{
                               fontSize: FONTS.FONTSIZE.SMALL,
@@ -2942,50 +2981,355 @@ export default function CustomTab({
                             Please Select Member to get Family Members list.
                           </Text>
                         )}
-                      {item?.values?.length > 0 &&
-                        item?.values?.map((checkboxItem, index) => (
-                          <TouchableOpacity
-                            key={index}
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              gap: 8,
-                            }}
-                            onPress={() => {
-                              Keyboard.dismiss();
-                              handleCheckboxSelect(
-                                item?.key,
-                                checkboxItem.value,
-                                item?.required,
-                                item?.label,
+
+                      {(response1?.constantName == 'RSVP' || isRsvp) &&
+                      item?.name?.toLowerCase() === 'members'
+                        ? (() => {
+                            const rsvpedMembers = item?.values?.filter(
+                              v => v.selected === true,
+                            );
+                            const pendingMembers = item?.values?.filter(
+                              v => v.selected !== true,
+                            );
+
+                            // Helper: get initials from label
+                            const getInitials = label => {
+                              if (!label) return '?';
+                              const parts = label.trim().split(/\s+/);
+                              if (parts.length === 1)
+                                return parts[0][0].toUpperCase();
+                              return (
+                                parts[0][0].toUpperCase() +
+                                parts[parts.length - 1][0].toUpperCase()
                               );
-                            }}>
-                            {formData[item?.key]
-                              ?.split(',')
-                              ?.includes(String(checkboxItem.value)) ? (
-                              <Fontisto
-                                name="checkbox-active"
-                                size={16}
-                                color={COLORS.TITLECOLOR}
-                              />
-                            ) : (
-                              <Fontisto
-                                name="checkbox-passive"
-                                size={16}
-                                color={COLORS.TITLECOLOR}
-                              />
-                            )}
-                            <Text
+                            };
+
+                            return (
+                              <View
+                                style={{
+                                  borderRadius: 12,
+                                  borderWidth: 1,
+                                  borderColor: '#e5e7eb',
+                                  overflow: 'hidden',
+                                  backgroundColor: COLORS.PRIMARYWHITE,
+                                }}>
+                                {/* ── Already RSVPed Section ── */}
+                                {rsvpedMembers?.length > 0 && (
+                                  <>
+                                    {/* Green Header */}
+                                    <View
+                                      style={{
+                                        backgroundColor: '#21a352',
+                                        paddingHorizontal: 14,
+                                        paddingVertical: 10,
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        gap: 8,
+                                      }}>
+                                      <Ionicons
+                                        name="checkmark"
+                                        size={16}
+                                        color={COLORS.PRIMARYWHITE}
+                                      />
+                                      <Text
+                                        style={{
+                                          fontSize: FONTS.FONTSIZE.SEMIMINI,
+                                          fontFamily:
+                                            FONTS.FONT_FAMILY.SEMI_BOLD,
+                                          color: COLORS.PRIMARYWHITE,
+                                          letterSpacing: 0.2,
+                                        }}>
+                                        Already RSVPed ({rsvpedMembers.length})
+                                      </Text>
+                                    </View>
+
+                                    {/* RSVPed rows */}
+                                    {rsvpedMembers.map(
+                                      (checkboxItem, index) => {
+                                        const initials = getInitials(
+                                          checkboxItem.label,
+                                        );
+                                        return (
+                                          <View
+                                            key={`rsvped-${index}`}
+                                            style={{
+                                              flexDirection: 'row',
+                                              alignItems: 'center',
+                                              gap: 12,
+                                              paddingHorizontal: 14,
+                                              paddingVertical: 12,
+                                              borderTopWidth: 1,
+                                              borderTopColor: '#f3f4f6',
+                                              backgroundColor:
+                                                COLORS.PRIMARYWHITE,
+                                            }}>
+                                            {/* Avatar circle */}
+                                            <View
+                                              style={{
+                                                width: 36,
+                                                height: 36,
+                                                borderRadius: 18,
+                                                backgroundColor: '#d5ecdb',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                              }}>
+                                              <Text
+                                                style={{
+                                                  fontSize:
+                                                    FONTS.FONTSIZE.SEMIMINI,
+                                                  fontFamily:
+                                                    FONTS.FONT_FAMILY.SEMI_BOLD,
+                                                  color: COLORS.PRIMARYGREEN,
+                                                  includeFontPadding: false,
+                                                }}>
+                                                {initials}
+                                              </Text>
+                                            </View>
+
+                                            {/* Name */}
+                                            <Text
+                                              style={{
+                                                fontSize: FONTS.FONTSIZE.SMALL,
+                                                fontFamily:
+                                                  FONTS.FONT_FAMILY.SEMI_BOLD,
+                                                color: COLORS.TITLECOLOR,
+                                                flex: 1,
+                                                includeFontPadding: false,
+                                              }}>
+                                              {checkboxItem.label}
+                                            </Text>
+
+                                            {/* RSVPed badge */}
+                                            <View
+                                              style={{
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
+                                                gap: 4,
+                                                backgroundColor: '#d5ecdb',
+                                                borderRadius: 20,
+                                                paddingHorizontal: 10,
+                                                paddingVertical: 4,
+                                              }}>
+                                              <Ionicons
+                                                name="checkmark"
+                                                size={11}
+                                                color={COLORS.PRIMARYGREEN}
+                                              />
+                                              <Text
+                                                style={{
+                                                  fontSize:
+                                                    FONTS.FONTSIZE.TOOSMALL,
+                                                  fontFamily:
+                                                    FONTS.FONT_FAMILY.SEMI_BOLD,
+                                                  color: COLORS.PRIMARYGREEN,
+                                                  includeFontPadding: false,
+                                                }}>
+                                                RSVPed
+                                              </Text>
+                                            </View>
+                                          </View>
+                                        );
+                                      },
+                                    )}
+                                  </>
+                                )}
+
+                                {/* ── Pending RSVP Section ── */}
+                                {pendingMembers?.length > 0 && (
+                                  <>
+                                    {/* Orange Header */}
+                                    <View
+                                      style={{
+                                        backgroundColor: '#e84e00',
+                                        paddingHorizontal: 14,
+                                        paddingVertical: 10,
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        gap: 8,
+                                      }}>
+                                      <Text
+                                        style={{
+                                          fontSize: FONTS.FONTSIZE.SEMIMINI,
+                                          fontFamily:
+                                            FONTS.FONT_FAMILY.SEMI_BOLD,
+                                          color: COLORS.PRIMARYWHITE,
+                                          letterSpacing: 0.2,
+                                        }}>
+                                        — Pending RSVP ({pendingMembers.length})
+                                      </Text>
+                                    </View>
+
+                                    {/* Pending rows */}
+                                    {pendingMembers.map(
+                                      (checkboxItem, index) => {
+                                        const isChecked = formData[item?.key]
+                                          ?.split(',')
+                                          ?.includes(
+                                            String(checkboxItem.value),
+                                          );
+                                        const initials = getInitials(
+                                          checkboxItem.label,
+                                        );
+
+                                        return (
+                                          <TouchableOpacity
+                                            key={`pending-${index}`}
+                                            style={{
+                                              flexDirection: 'row',
+                                              alignItems: 'center',
+                                              gap: 12,
+                                              paddingHorizontal: 14,
+                                              paddingVertical: 12,
+                                              borderTopWidth: 1,
+                                              borderTopColor: '#f3f4f6',
+                                              backgroundColor:
+                                                COLORS.PRIMARYWHITE,
+                                            }}
+                                            onPress={() => {
+                                              Keyboard.dismiss();
+                                              handleCheckboxSelect(
+                                                item?.key,
+                                                checkboxItem.value,
+                                                item?.required,
+                                                item?.label,
+                                              );
+                                            }}>
+                                            {/* Checkbox */}
+                                            <View
+                                              style={{
+                                                width: 22,
+                                                height: 22,
+                                                borderRadius: 5,
+                                                borderWidth: 2,
+                                                borderColor: isChecked
+                                                  ? COLORS.LABELCOLOR
+                                                  : '#d1d5db',
+                                                backgroundColor: isChecked
+                                                  ? COLORS.LABELCOLOR
+                                                  : 'transparent',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                              }}>
+                                              {isChecked && (
+                                                <Ionicons
+                                                  name="checkmark"
+                                                  size={13}
+                                                  color={COLORS.PRIMARYWHITE}
+                                                />
+                                              )}
+                                            </View>
+
+                                            {/* Avatar circle */}
+                                            <View
+                                              style={{
+                                                width: 36,
+                                                height: 36,
+                                                borderRadius: 18,
+                                                backgroundColor: '#fff4cd',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                              }}>
+                                              <Text
+                                                style={{
+                                                  fontSize:
+                                                    FONTS.FONTSIZE.SEMIMINI,
+                                                  fontFamily:
+                                                    FONTS.FONT_FAMILY.SEMI_BOLD,
+                                                  color: '#92400e',
+                                                  includeFontPadding: false,
+                                                }}>
+                                                {initials}
+                                              </Text>
+                                            </View>
+
+                                            {/* Name */}
+                                            <Text
+                                              style={{
+                                                fontSize: FONTS.FONTSIZE.SMALL,
+                                                fontFamily:
+                                                  FONTS.FONT_FAMILY.SEMI_BOLD,
+                                                color: COLORS.TITLECOLOR,
+                                                flex: 1,
+                                                includeFontPadding: false,
+                                              }}>
+                                              {checkboxItem.label}
+                                            </Text>
+
+                                            {/* Pending badge */}
+                                            <View
+                                              style={{
+                                                backgroundColor: '#fff4cd',
+                                                borderRadius: 20,
+                                                paddingHorizontal: 10,
+                                                paddingVertical: 4,
+                                              }}>
+                                              <Text
+                                                style={{
+                                                  fontSize:
+                                                    FONTS.FONTSIZE.TOOSMALL,
+                                                  fontFamily:
+                                                    FONTS.FONT_FAMILY.SEMI_BOLD,
+                                                  color: '#92400e',
+                                                  includeFontPadding: false,
+                                                }}>
+                                                {isChecked
+                                                  ? 'Selected'
+                                                  : 'Pending'}
+                                              </Text>
+                                            </View>
+                                          </TouchableOpacity>
+                                        );
+                                      },
+                                    )}
+                                  </>
+                                )}
+                              </View>
+                            );
+                          })()
+                        : item?.values?.map((checkboxItem, index) => (
+                            <TouchableOpacity
+                              key={index}
                               style={{
-                                fontSize: FONTS.FONTSIZE.SMALL,
-                                fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                                color: COLORS.TITLECOLOR,
-                                includeFontPadding: false,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 8,
+                              }}
+                              onPress={() => {
+                                Keyboard.dismiss();
+                                handleCheckboxSelect(
+                                  item?.key,
+                                  checkboxItem.value,
+                                  item?.required,
+                                  item?.label,
+                                );
                               }}>
-                              {checkboxItem.label}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
+                              {formData[item?.key]
+                                ?.split(',')
+                                ?.includes(String(checkboxItem.value)) ? (
+                                <Fontisto
+                                  name="checkbox-active"
+                                  size={16}
+                                  color={COLORS.TITLECOLOR}
+                                />
+                              ) : (
+                                <Fontisto
+                                  name="checkbox-passive"
+                                  size={16}
+                                  color={COLORS.TITLECOLOR}
+                                />
+                              )}
+                              <Text
+                                style={{
+                                  fontSize: FONTS.FONTSIZE.SMALL,
+                                  fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                                  color: COLORS.TITLECOLOR,
+                                  includeFontPadding: false,
+                                }}>
+                                {checkboxItem.label}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+
                       {errors[item.key] && (
                         <Text
                           style={{
@@ -3025,7 +3369,7 @@ export default function CustomTab({
                       <TouchableOpacity
                         style={{
                           borderWidth: 1,
-                          height: 38,
+                          height: 44,
                           paddingVertical: 0,
                           borderRadius: 10,
                           paddingHorizontal: 8,
@@ -3050,8 +3394,9 @@ export default function CustomTab({
                             color: formData[item?.key]
                               ? COLORS.PRIMARYBLACK
                               : COLORS.PLACEHOLDERCOLOR,
-                            fontSize: FONTS.FONTSIZE.MINI,
+                            fontSize: FONTS.FONTSIZE.SMALL,
                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                            includeFontPadding: false,
                           }}>
                           {formData[item?.key] || 'Select Time'}
                         </Text>
@@ -3133,11 +3478,12 @@ export default function CustomTab({
                             color: COLORS.PRIMARYBLACK,
                             borderRadius: 10,
                             borderColor: COLORS.INPUTBORDER,
-                            fontSize: FONTS.FONTSIZE.MINI,
+                            fontSize: FONTS.FONTSIZE.SMALL,
                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
                             paddingVertical: 0,
+                            includeFontPadding: false,
                             flex: 1,
-                            height: 38,
+                            height: 44,
                           }}
                           secureTextEntry={!passwordVisible[item?.key]}
                           placeholder={`${item?.label}`}
@@ -3156,7 +3502,9 @@ export default function CustomTab({
                             );
                           }}
                           maxLength={
-                            item?.maxLength == 0 ? 250 : item?.maxLength
+                            (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                              ? 250
+                              : item?.maxLength ?? item?.maxlength
                           }
                         />
                         <TouchableOpacity
@@ -3177,7 +3525,9 @@ export default function CustomTab({
                       </View>
                       {(() => {
                         const max =
-                          item?.maxLength === 0 ? 250 : item?.maxLength;
+                          (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                            ? 250
+                            : item?.maxLength ?? item?.maxlength;
                         const currentLength = currentLengths[item?.key] || 0;
                         return currentLength > max ? (
                           <Text
@@ -3236,7 +3586,7 @@ export default function CustomTab({
                           padding: 10,
                           height: 100,
                           textAlignVertical: 'top',
-                          fontSize: FONTS.FONTSIZE.MINI,
+                          fontSize: FONTS.FONTSIZE.SMALL,
                           fontFamily: FONTS.FONT_FAMILY.REGULAR,
                           color: COLORS.PRIMARYBLACK,
                           backgroundColor: COLORS.PRIMARYWHITE,
@@ -3244,7 +3594,9 @@ export default function CustomTab({
                         multiline
                         numberOfLines={4}
                         maxLength={
-                          item?.maxLength == 0 ? 1000 : item?.maxLength
+                          (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                            ? 1000
+                            : item?.maxLength ?? item?.maxlength
                         }
                         placeholder={`${item.label}`}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
@@ -3264,7 +3616,9 @@ export default function CustomTab({
                       />
                       {(() => {
                         const max =
-                          item?.maxLength === 0 ? 1000 : item?.maxLength;
+                          (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                            ? 1000
+                            : item?.maxLength ?? item?.maxlength;
                         const currentLength = currentLengths[item?.key] || 0;
                         return currentLength > max ? (
                           <Text
@@ -3298,11 +3652,12 @@ export default function CustomTab({
                     item.className === 'mobile-hide' ||
                     item.className === 'form-control mobile-hide') &&
                     (isSignUp ||
-                      userData?.role == 'member') ? null : item?.name ==
-                      'numberofGuests' ||
-                    item?.name == 'numberofParticipants' ||
-                    item?.name == 'howManyMinutes' ||
-                    item?.name == 'numberofKids' ? (
+                      userData?.role ==
+                        'member') ? null : item?.name?.toLowerCase() ==
+                      'numberofparticipants' ||
+                    item?.name?.toLowerCase() == 'howmanyminutes' ||
+                    item?.name?.toLowerCase() == 'numberofkids' ||
+                    item?.name?.toLowerCase() == 'numberofguests' ? (
                     <>
                       <View
                         key={item?.key}
@@ -3370,11 +3725,10 @@ export default function CustomTab({
                               borderWidth: 1,
                               borderColor: COLORS.INPUTBORDER,
                               width: 32,
-                              // paddingVertical: 4,
                             }}>
                             <Text
                               style={{
-                                fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                fontSize: FONTS.FONTSIZE.SMALL,
                                 color: COLORS.TITLECOLOR,
                                 fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                                 includeFontPadding: false,
@@ -3383,6 +3737,11 @@ export default function CustomTab({
                             </Text>
                           </TouchableOpacity>
                           <TouchableOpacity
+                            disabled={
+                              (item?.maxLength ?? item?.maxlength ?? 0) > 0 &&
+                              (formData[item?.key] ?? 0) >=
+                                (item?.maxLength ?? item?.maxlength)
+                            }
                             onPress={() =>
                               handleCounterChange(
                                 item?.key,
@@ -3398,6 +3757,12 @@ export default function CustomTab({
                               borderRadius: 10,
                               borderWidth: 1,
                               borderColor: COLORS.TITLECOLOR,
+                              opacity:
+                                (item?.maxLength ?? item?.maxlength ?? 0) > 0 &&
+                                (formData[item?.key] ?? 0) >=
+                                  (item?.maxLength ?? item?.maxlength)
+                                  ? 0.4
+                                  : 1,
                             }}>
                             <Entypo
                               name={'plus'}
@@ -3407,11 +3772,25 @@ export default function CustomTab({
                           </TouchableOpacity>
                         </View>
                       </View>
+                      {(item?.maxLength ?? item?.maxlength ?? 0) > 0 &&
+                        (formData[item?.key] ?? 0) >=
+                          (item?.maxLength ?? item?.maxlength) && (
+                          <Text
+                            style={{
+                              color: COLORS.PRIMARYRED,
+                              fontSize: FONTS.FONTSIZE.SEMIMINI,
+                              fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                              marginTop: 2,
+                            }}>
+                            Maximum {item?.maxLength ?? item?.maxlength}{' '}
+                            allowed.
+                          </Text>
+                        )}
                       {errors[item?.key] && (
                         <Text
                           style={{
                             color: COLORS.PRIMARYRED,
-                            fontSize: FONTS.FONTSIZE.SMALL,
+                            fontSize: FONTS.FONTSIZE.SEMIMINI,
                             fontFamily: FONTS.FONT_FAMILY.REGULAR,
                             marginTop: 4,
                           }}>
@@ -3447,19 +3826,20 @@ export default function CustomTab({
                             : COLORS.INPUTBORDER,
                           borderRadius: 10,
                           padding: 10,
-                          height: 38,
+                          height: 44,
                           color: COLORS.PRIMARYBLACK,
-                          fontSize: FONTS.FONTSIZE.MINI,
+                          fontSize: FONTS.FONTSIZE.SMALL,
                           fontFamily: FONTS.FONT_FAMILY.REGULAR,
                           backgroundColor: COLORS.PRIMARYWHITE,
                           paddingVertical: 0,
+                          includeFontPadding: false,
                         }}
                         maxLength={
                           isPhoneField(item?.name)
                             ? 14
-                            : item?.maxLength == 0
+                            : (item?.maxLength ?? item?.maxlength ?? 0) === 0
                             ? 250
-                            : item?.maxLength
+                            : item?.maxLength ?? item?.maxlength
                         }
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                         keyboardType="numeric"
@@ -3528,15 +3908,15 @@ export default function CustomTab({
                           borderColor: errors[item?.key]
                             ? COLORS.PRIMARYRED
                             : COLORS.INPUTBORDER,
-                          height: 38,
+                          height: 44,
                           paddingVertical: 0,
                           borderRadius: 10,
                           paddingHorizontal: 8,
                           color: COLORS.PRIMARYBLACK,
-                          fontSize: FONTS.FONTSIZE.MINI,
+                          fontSize: FONTS.FONTSIZE.SMALL,
                           fontFamily: FONTS.FONT_FAMILY.REGULAR,
                           backgroundColor: COLORS.PRIMARYWHITE,
-                          paddingVertical: 0,
+                          includeFontPadding: false,
                         }}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                         keyboardType="numeric"
@@ -3549,9 +3929,9 @@ export default function CustomTab({
                         maxLength={
                           isPhoneField(item?.name)
                             ? 14
-                            : item?.maxLength == 0
+                            : (item?.maxLength ?? item?.maxlength ?? 0) === 0
                             ? 250
-                            : item?.maxLength
+                            : item?.maxLength ?? item?.maxlength
                         }
                         onChangeText={value => {
                           const numericValue = isPhoneField(item?.name)
@@ -3616,7 +3996,7 @@ export default function CustomTab({
                       <TextInput
                         style={{
                           borderWidth: 1,
-                          height: 38,
+                          height: 44,
                           paddingVertical: 0,
                           borderRadius: 10,
                           paddingHorizontal: 8,
@@ -3624,14 +4004,17 @@ export default function CustomTab({
                           borderColor: errors[item?.key]
                             ? COLORS.PRIMARYRED
                             : COLORS.INPUTBORDER,
-                          fontSize: FONTS.FONTSIZE.MINI,
+                          fontSize: FONTS.FONTSIZE.SMALL,
                           fontFamily: FONTS.FONT_FAMILY.REGULAR,
                           backgroundColor: COLORS.PRIMARYWHITE,
+                          includeFontPadding: false,
                         }}
                         value={formData[item?.key]}
                         placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                         maxLength={
-                          item?.maxLength === 0 ? 250 : item?.maxLength
+                          (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                            ? 250
+                            : item?.maxLength ?? item?.maxlength
                         }
                         placeholder={`${item.label}`}
                         onChangeText={value => {
@@ -3650,7 +4033,9 @@ export default function CustomTab({
                       />
                       {(() => {
                         const max =
-                          item?.maxLength === 0 ? 250 : item?.maxLength;
+                          (item?.maxLength ?? item?.maxlength ?? 0) === 0
+                            ? 250
+                            : item?.maxLength ?? item?.maxlength;
                         const currentLength = currentLengths[item?.key] || 0;
                         return currentLength > max ? (
                           <Text
@@ -3683,7 +4068,7 @@ export default function CustomTab({
               }
             })}
 
-            {(isImageGallery || isVideoGallery) && (
+            {/* {(isImageGallery || isVideoGallery) && (
               <>
                 <View
                   style={{
@@ -3803,7 +4188,7 @@ export default function CustomTab({
                                 marginLeft: 6,
                                 color:
                                   selectedPageId === page.id ? '#fff' : '#000',
-                                fontSize: FONTS.FONTSIZE.MINI,
+                                fontSize: FONTS.FONTSIZE.SMALL,
                                 fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                               }}>
                               {page.name}
@@ -3815,7 +4200,7 @@ export default function CustomTab({
                   </>
                 )}
               </>
-            )}
+            )} */}
 
             <View style={{alignItems: 'center', marginTop: 'auto'}}>
               {response1?.constantName == 'SIGN UP' &&
@@ -3857,21 +4242,21 @@ export default function CustomTab({
                     <ButtonComponent
                       title="Next"
                       onPress={handleNext}
-                      disabled={activeButton}
+                      disabled={isAnyUploading}
                     />
                   ) : (
                     <>
                       <ButtonComponent
                         title="Previous"
-                        onPress={handlePrivious}
+                        onPress={handlePrevious}
                         width={'45%'}
-                        disabled={activeButton}
+                        disabled={isAnyUploading}
                       />
                       <ButtonComponent
                         title="Next"
                         onPress={handleNext}
                         width={'45%'}
-                        disabled={activeButton}
+                        disabled={isAnyUploading}
                       />
                     </>
                   )}
@@ -3879,7 +4264,9 @@ export default function CustomTab({
               ) : (
                 <ButtonComponent
                   title={
-                    isComplete
+                    isAnyUploading
+                      ? 'Uploading...'
+                      : isComplete
                       ? 'Please Wait...'
                       : response1?.constantName == 'SIGN UP'
                       ? 'Sign Up'
@@ -3887,9 +4274,7 @@ export default function CustomTab({
                   }
                   onPress={submitHandller}
                   disabled={
-                    isSubmitting.current ||
-                    isComplete ||
-                    ((isVideoGallery || isImageGallery) && activeButton)
+                    isSubmitting.current || isComplete || isAnyUploading
                   }
                 />
               )}

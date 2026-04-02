@@ -231,8 +231,6 @@ export default function PollList({route, navigation}) {
         httpClientV3
           .post('polls', payload)
           .then(response => {
-            console.log(response);
-
             if (response?.data?.status) {
               NOTIFY_MESSAGE(
                 response.data.message || 'Poll created successfully.',

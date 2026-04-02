@@ -253,6 +253,9 @@ const AddUpdateModule = ({route}) => {
     description: '',
     mobileVisible: false,
     isForm: false,
+    isPublicWebsite: false,
+    websiteModuleTitle: '',
+    websiteModuleDescription: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -272,6 +275,9 @@ const AddUpdateModule = ({route}) => {
             ? true
             : false,
         isForm: editItem.isForm || false,
+        isPublicWebsite: editItem?.isPublicWebsite || false,
+        websiteModuleTitle: editItem?.websiteModuleTitle || '',
+        websiteModuleDescription: editItem?.websiteModuleDescription || '',
       });
       setUploadedIconUrl(editItem.icon || '');
     }
@@ -516,8 +522,7 @@ const AddUpdateModule = ({route}) => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <CustomHeader
         leftOnPress={() => navigation.goBack()}
         leftIcon={
@@ -773,6 +778,86 @@ const AddUpdateModule = ({route}) => {
               }}>
               Is Form
             </Text>
+          </View>
+          {/* Is Public Website Switch */}
+          <View style={styles.switchContainer}>
+            <Switch
+              value={formData?.isPublicWebsite}
+              trackColor={{true: COLORS.PRIMARYGREEN, false: COLORS.grey500}}
+              thumbColor={COLORS.PRIMARYWHITE}
+              onValueChange={value => toggleSwitch('isPublicWebsite', value)}
+            />
+            <Text
+              style={{
+                fontSize: FONTS.FONTSIZE.SMALL,
+                fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                color: COLORS.TITLECOLOR,
+                includeFontPadding: false,
+              }}>
+              Is Public Website
+            </Text>
+          </View>
+
+          {/* Website Module Title */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Website Module Title</Text>
+            <TextInput
+              style={[
+                styles.input,
+                errors?.websiteModuleTitle && styles.errorInput,
+              ]}
+              placeholder="Enter Website Module Title"
+              placeholderTextColor={COLORS.grey500}
+              value={formData?.websiteModuleTitle}
+              onChangeText={value => {
+                setFormData(prev => ({...prev, websiteModuleTitle: value}));
+                if (errors?.websiteModuleTitle) {
+                  setErrors(prev => {
+                    const newErrors = {...prev};
+                    delete newErrors.websiteModuleTitle;
+                    return newErrors;
+                  });
+                }
+              }}
+            />
+            {errors?.websiteModuleTitle && (
+              <Text style={styles.errorText}>{errors?.websiteModuleTitle}</Text>
+            )}
+          </View>
+
+          {/* Website Module Description */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Website Module Description</Text>
+            <TextInput
+              style={[
+                styles.input,
+                errors?.websiteModuleDescription && styles.errorInput,
+                {height: 100, textAlignVertical: 'top', paddingTop: 10},
+              ]}
+              placeholder="Enter Website Module Description"
+              placeholderTextColor={COLORS.grey500}
+              value={formData?.websiteModuleDescription}
+              multiline
+              numberOfLines={4}
+              onChangeText={value => {
+                setFormData(prev => ({
+                  ...prev,
+                  websiteModuleDescription: value,
+                }));
+                if (errors?.websiteModuleDescription) {
+                  setErrors(prev => {
+                    const newErrors = {...prev};
+                    delete newErrors.websiteModuleDescription;
+                    return newErrors;
+                  });
+                }
+              }}
+            />
+            {errors?.websiteModuleDescription && (
+              <Text style={styles.errorText}>
+                {errors?.websiteModuleDescription}
+              </Text>
+            )}
           </View>
         </ScrollView>
 

@@ -30,6 +30,8 @@ import {
   capitalizeFirstLetter,
   formatPhoneToUS,
   isPhoneField,
+  isNameField,
+  validateNameValue,
   NOTIFY_MESSAGE,
   unformatPhone,
 } from '../constant/Module';
@@ -62,7 +64,7 @@ const Registration1 = ({route}) => {
 
   const styles = StyleSheet.create({
     dropdown: {
-      height: 38,
+      height: 44,
       borderWidth: 1,
       borderRadius: 10,
       backgroundColor: COLORS.PRIMARYWHITE,
@@ -70,12 +72,12 @@ const Registration1 = ({route}) => {
       justifyContent: 'center',
     },
     placeholderStyle: {
-      fontSize: FONTS.FONTSIZE.MINI,
+      fontSize: FONTS.FONTSIZE.SMALL,
       color: COLORS.PLACEHOLDERCOLOR,
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
     },
     selectedTextStyle: {
-      fontSize: FONTS.FONTSIZE.MINI,
+      fontSize: FONTS.FONTSIZE.SMALL,
       color: COLORS.PRIMARYBLACK,
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
     },
@@ -100,14 +102,14 @@ const Registration1 = ({route}) => {
     },
     pkgLbl: {
       fontFamily: FONTS.FONT_FAMILY.REGULAR,
-      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+      fontSize: FONTS.FONTSIZE.SMALL,
       color: COLORS.PRIMARYBLACK,
       textAlign: 'left',
       width: '48%',
     },
     pkgLbl1: {
       fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+      fontSize: FONTS.FONTSIZE.SMALL,
       color: COLORS.PRIMARYBLACK,
       textAlign: 'left',
       width: '52%',
@@ -119,6 +121,14 @@ const Registration1 = ({route}) => {
     },
     buttonRow: {
       flexDirection: 'row',
+      alignItems: 'center',
+    },
+    button: {
+      padding: 8,
+      borderRadius: 5,
+      backgroundColor: COLORS.TITLECOLOR,
+      marginVertical: 6,
+      width: '100%',
       alignItems: 'center',
     },
     image: {
@@ -154,31 +164,22 @@ const Registration1 = ({route}) => {
 
   const [memberShipDetails, setMemberShipDetails] = useState([]);
   const [memberShipLoading, setMemberShipLoading] = useState(true);
-
   const [response, setResponse] = useState(null);
   const [formData, setFormData] = useState([]);
   const [errors, setErrors] = useState({});
   const [errors1, setErrors1] = useState({});
-
   const [modalVisible, setModalVisible] = useState({});
-
   const [activeTab, setActiveTab] = useState(0);
-  const [userData, setuserData] = useState([]);
-
+  const [userData, setUserData] = useState([]);
   const [datePickerVisible, setDatePickerVisible] = useState({});
   const [timePickerVisible, setTimePickerVisible] = useState({});
-
   const [selectedTime, setSelectedTime] = useState({});
   const [selectedDate, setSelectedDate] = useState({});
-
   const [uploadProgress, setUploadProgress] = useState({});
-
   const [activeButton, setActiveButton] = useState(false);
   const [userData1, setUserData1] = useState(null);
-
   const [userValues, setUserValues] = useState([]);
   const [moduleDate1, setModuleData1] = useState(null);
-
   const [openIndex, setOpenIndex] = useState(null);
   const [isAddPerson, setIsAddPerson] = useState(false);
   const [currentLengths, setCurrentLengths] = useState({});
@@ -236,7 +237,7 @@ const Registration1 = ({route}) => {
     const handleSelectGallery = () => {
       ImagePicker.openPicker({
         mediaType: 'photo',
-        multiple: item?.multiple == 'true' || item?.multiple ? true : false,
+        multiple: item?.multiple === 'true' || item?.multiple ? true : false,
       })
         .then(response => {
           const files = Array.isArray(response) ? response : [response];
@@ -307,7 +308,6 @@ const Registration1 = ({route}) => {
 
   const onDateChange = (headerKey, key, date, isRequired, label) => {
     let errorMessage;
-    let isValid = true;
 
     if (date) {
       setDatePickerVisible(prev => ({
@@ -359,11 +359,9 @@ const Registration1 = ({route}) => {
       }));
 
       if (!formattedDate || formattedDate.trim() === '') {
-        isValid = false;
         errorMessage = `${label} is required.`;
       }
     } else {
-      isValid = false;
       if (isRequired) {
         errorMessage = `${label} is required.`;
       }
@@ -396,7 +394,6 @@ const Registration1 = ({route}) => {
 
   const onTimeChange = (headerKey, key, time, isRequired, label) => {
     let errorMessage;
-    let isValid = true;
 
     if (time) {
       setTimePickerVisible(prev => ({
@@ -448,11 +445,9 @@ const Registration1 = ({route}) => {
       }));
 
       if (!formattedTime || formattedTime.trim() === '') {
-        isValid = false;
         errorMessage = `${label} is required.`;
       }
     } else {
-      isValid = false;
       if (isRequired) {
         errorMessage = `${label} is required.`;
       }
@@ -493,7 +488,7 @@ const Registration1 = ({route}) => {
   }, []);
 
   useEffect(() => {
-    if (userValues?.length > 0 && moduleDate1.length > 0) {
+    if (userValues?.length > 0 && moduleDate1?.length > 0) {
       let selfMembershipAmount = null;
 
       const userWithMembership = userValues.find(
@@ -517,7 +512,7 @@ const Registration1 = ({route}) => {
       const initializedData = moduleDate1.map(header => {
         if (header.isMultiple) {
           const relationshipItem = header?.headerConfig?.find(
-            headerItem => headerItem?.name == 'relationship',
+            headerItem => headerItem?.name === 'relationship',
           );
 
           setRelationshipOptions(relationshipItem?.values || []);
@@ -773,7 +768,7 @@ const Registration1 = ({route}) => {
                   },
                   {},
                 );
-                setuserData([combinedObject]);
+                setUserData([combinedObject]);
               }
             } else {
               NOTIFY_MESSAGE(response.data.message);
@@ -820,12 +815,14 @@ const Registration1 = ({route}) => {
           const fieldConfig = item[fieldKey];
           const label = fieldConfig.label || fieldKey;
 
-          if (fieldConfig.required) {
-            const value = fieldConfig.value;
+          const value = fieldConfig.value;
+          const hasValue =
+            value && (typeof value !== 'string' || value.trim() !== '');
 
-            if (!value || (typeof value === 'string' && value.trim() === '')) {
-              newErrors[fieldKey] = `${label} is required.`;
-            } else if (fieldKey === 'emailAddress' || fieldKey === 'email') {
+          if (fieldConfig.required && !hasValue) {
+            newErrors[fieldKey] = `${label} is required.`;
+          } else if (hasValue) {
+            if (fieldKey === 'emailAddress' || fieldKey === 'email') {
               const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               if (!emailRegex.test(value)) {
                 newErrors[fieldKey] = `${label} must be valid.`;
@@ -912,7 +909,7 @@ const Registration1 = ({route}) => {
       prevData.map(section => {
         if (section.headerKey === headerKey) {
           if (section.isMultiple) {
-            setuserData(prevUser =>
+            setUserData(prevUser =>
               prevUser.map(item => {
                 return {
                   ...item,
@@ -939,34 +936,47 @@ const Registration1 = ({route}) => {
       }),
     );
 
-    let isValid = value && value.trim() !== '';
-    let errorMessage;
+    const trimmed = value?.trim() ?? '';
+    let errorMessage = null;
 
-    if (!isValid && isRequired) {
-      errorMessage = `${label} is required.`;
+    if (!trimmed) {
+      if (isRequired) {
+        errorMessage = `${label} is required.`;
+      }
+    } else {
+      if (isNameField(key)) {
+        errorMessage = validateNameValue(trimmed, label);
+      } else if (key?.toLowerCase() === 'zipcode') {
+        if (!/^\d{5}(-\d{4})?$/.test(trimmed)) {
+          errorMessage = `${label} must be a valid zip code.`;
+        }
+      } else if (key?.toLowerCase() === 'age') {
+        const age = Number(trimmed);
+        if (!/^\d+$/.test(trimmed) || age < 1 || age > 120) {
+          errorMessage = `${label} must be a valid age between 1 and 120.`;
+        }
+      }
     }
 
     if (moduleData[activeTab]?.headerKey === 'personalInfo') {
-      if (isRequired && errorMessage) {
-        setErrors1(prevErrors => ({
-          ...prevErrors,
-          [key]: errorMessage,
-        }));
+      if (errorMessage) {
+        setErrors1(prevErrors => ({...prevErrors, [key]: errorMessage}));
       } else {
-        const updatedErrors = {...errors1};
-        delete updatedErrors[key];
-        setErrors1(updatedErrors);
+        setErrors1(prevErrors => {
+          const updated = {...prevErrors};
+          delete updated[key];
+          return updated;
+        });
       }
     } else {
-      if (isRequired && errorMessage) {
-        setErrors(prevErrors => ({
-          ...prevErrors,
-          [key]: errorMessage,
-        }));
+      if (errorMessage) {
+        setErrors(prevErrors => ({...prevErrors, [key]: errorMessage}));
       } else {
-        const updatedErrors = {...errors};
-        delete updatedErrors[key];
-        setErrors(updatedErrors);
+        setErrors(prevErrors => {
+          const updated = {...prevErrors};
+          delete updated[key];
+          return updated;
+        });
       }
     }
   };
@@ -976,7 +986,7 @@ const Registration1 = ({route}) => {
       prevData.map(section => {
         if (section.headerKey === headerKey) {
           if (section.isMultiple) {
-            setuserData(prevUser =>
+            setUserData(prevUser =>
               prevUser.map(item => {
                 const currentSelections = item[key]?.value || [];
                 const updatedSelections = currentSelections.includes(value)
@@ -1084,7 +1094,7 @@ const Registration1 = ({route}) => {
           }
         } else if (section.headerKey === headerKey) {
           if (section.isMultiple) {
-            setuserData(prevUser =>
+            setUserData(prevUser =>
               prevUser.map(item => {
                 if (name === 'relationship') {
                   const selectedMembership = memberShipDetails.find(
@@ -1189,16 +1199,16 @@ const Registration1 = ({route}) => {
       prevData.map(section => {
         if (section.headerKey === headerKey) {
           if (section.isMultiple) {
-            setuserData(prevUser =>
+            setUserData(prevUser =>
               prevUser.map(item => ({
                 ...item,
                 [key]: {
                   ...item[key],
-                  value: numericValue, // ✅ Store unformatted
+                  value: numericValue,
                 },
               })),
             );
-            return section; // ✅ Add this return
+            return section;
           } else {
             return {
               ...section,
@@ -1208,7 +1218,7 @@ const Registration1 = ({route}) => {
                   return {
                     [itemKey]: {
                       ...item[itemKey],
-                      value: numericValue, // ✅ Store unformatted
+                      value: numericValue,
                     },
                   };
                 }
@@ -1221,17 +1231,16 @@ const Registration1 = ({route}) => {
       }),
     );
 
-    // ✅ Fixed validation logic
     let isValid = true;
     let errorMessage = null;
 
-    if (!numericValue.trim() && isRequired) {
-      isValid = false;
-      errorMessage = `${label} is required.`;
-    } else if (
-      numericValue &&
-      numericValue === '0'.repeat(numericValue.length)
-    ) {
+    if (!numericValue) {
+      if (isRequired) {
+        isValid = false;
+        errorMessage = `${label} is required.`;
+      }
+      // non-required empty → clear (no error)
+    } else if (numericValue === '0'.repeat(numericValue.length)) {
       isValid = false;
       errorMessage = `${label} cannot be all zeros.`;
     } else if (isPhone) {
@@ -1240,7 +1249,6 @@ const Registration1 = ({route}) => {
         errorMessage = `${label} must be 10 digits.`;
       }
     } else {
-      // ✅ Apply length check to ALL non-phone fields (not just age)
       if (numericValue.length > length) {
         isValid = false;
         errorMessage = `${label} must not exceed ${length} digits.`;
@@ -1277,7 +1285,7 @@ const Registration1 = ({route}) => {
       prevData.map(section => {
         if (section.headerKey === headerKey) {
           if (section.isMultiple) {
-            setuserData(prevUser =>
+            setUserData(prevUser =>
               prevUser.map(item => ({
                 ...item,
                 [key]: {
@@ -1286,7 +1294,7 @@ const Registration1 = ({route}) => {
                 },
               })),
             );
-            return section; // ✅ Add this return
+            return section;
           } else {
             return {
               ...section,
@@ -1309,7 +1317,6 @@ const Registration1 = ({route}) => {
       }),
     );
 
-    // ✅ Fixed validation logic
     let isValid = true;
     let errorMessage = null;
 
@@ -1321,7 +1328,6 @@ const Registration1 = ({route}) => {
           isValid = false;
         }
       } else {
-        // Email format check
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(trimmedValue)) {
           errorMessage = `${label} must be valid.`;
@@ -1329,7 +1335,6 @@ const Registration1 = ({route}) => {
         }
       }
     } else {
-      // Non-email fields
       const trimmedValue = value?.trim();
       if (!trimmedValue && isRequired) {
         errorMessage = `${label} is required.`;
@@ -1367,7 +1372,7 @@ const Registration1 = ({route}) => {
       prevData.map(section => {
         if (section.headerKey === headerKey) {
           if (section.isMultiple) {
-            setuserData(prevUser =>
+            setUserData(prevUser =>
               prevUser.map(item => ({
                 ...item,
                 [key]: {
@@ -1435,7 +1440,7 @@ const Registration1 = ({route}) => {
       prevData.map(section => {
         if (section.headerKey === headerKey) {
           if (section.isMultiple) {
-            setuserData(prevUser =>
+            setUserData(prevUser =>
               prevUser.map(item => ({
                 ...item,
                 [key]: {
@@ -1444,7 +1449,7 @@ const Registration1 = ({route}) => {
                 },
               })),
             );
-            return section; // ✅ Add this line
+            return section;
           } else {
             return {
               ...section,
@@ -1503,9 +1508,8 @@ const Registration1 = ({route}) => {
     setFormData(prevData =>
       prevData.map(section => {
         if (section.headerKey === headerKey) {
-          // ✅ Handle isMultiple case (like handleTextArea)
           if (section.isMultiple) {
-            setuserData(prevUser =>
+            setUserData(prevUser =>
               prevUser.map(item => ({
                 ...item,
                 [key]: {
@@ -1514,9 +1518,8 @@ const Registration1 = ({route}) => {
                 },
               })),
             );
-            return section; // ✅ Return section unchanged for isMultiple
+            return section;
           } else {
-            // Handle single form case
             return {
               ...section,
               headerConfig: section?.headerConfig.map(item => {
@@ -1538,7 +1541,6 @@ const Registration1 = ({route}) => {
       }),
     );
 
-    // Validation logic
     let isValid = value !== undefined && value !== null && value !== '';
     let errorMessage;
 
@@ -1546,7 +1548,6 @@ const Registration1 = ({route}) => {
       errorMessage = `${label} is required.`;
     }
 
-    // Error handling
     if (moduleData[activeTab]?.headerKey === 'personalInfo') {
       if (isRequired && errorMessage) {
         setErrors1(prevErrors => ({
@@ -1737,55 +1738,80 @@ const Registration1 = ({route}) => {
       const fieldValue = field?.value;
       const label = field?.label;
 
-      if (field?.required) {
-        if (!fieldValue || fieldValue?.trim() === '') {
-          isValid = false;
-          newErrors[fieldKey] = `${label} is required.`;
-        } else {
-          switch (fieldKey) {
-            case 'emailAddress':
-              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-              if (!emailRegex.test(fieldValue)) {
-                isValid = false;
-                newErrors[fieldKey] = `${label} must be valid.`;
-              } else {
-                delete newErrors[fieldKey];
-              }
-              break;
+      const hasValue = fieldValue && fieldValue?.trim() !== '';
 
-            case 'contact':
-              if (
-                fieldValue.length !== 10 ||
-                !/^\d+$/.test(fieldValue) ||
-                /^0+$/.test(fieldValue)
-              ) {
-                isValid = false;
-                newErrors[
-                  fieldKey
-                ] = `${label} must be valid and not all zeros.`;
-              } else {
-                delete newErrors[fieldKey];
-              }
-              break;
-
-            case 'age':
-              const ageValue = fieldValue.trim();
-              const ageLength = ageValue.length;
-              const isValidAgeNumber = /^\d+$/.test(ageValue);
-              const isLengthValid = ageLength > 0 && ageLength <= 3;
-              const isNotAllZeros = !/^0+$/.test(ageValue);
-              if (!isValidAgeNumber || !isLengthValid || !isNotAllZeros) {
-                isValid = false;
-                newErrors[fieldKey] = 'Invalid age. Age cannot be all zeros.';
-              } else {
-                delete newErrors[fieldKey];
-              }
-              break;
-
-            default:
+      if (field?.required && !hasValue) {
+        isValid = false;
+        newErrors[fieldKey] = `${label} is required.`;
+      } else if (hasValue) {
+        switch (fieldKey) {
+          case 'emailAddress':
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(fieldValue)) {
+              isValid = false;
+              newErrors[fieldKey] = `${label} must be valid.`;
+            } else {
               delete newErrors[fieldKey];
-          }
+            }
+            break;
+
+          case 'contact':
+            if (
+              fieldValue.length !== 10 ||
+              !/^\d+$/.test(fieldValue) ||
+              /^0+$/.test(fieldValue)
+            ) {
+              isValid = false;
+              newErrors[fieldKey] = `${label} must be valid and not all zeros.`;
+            } else {
+              delete newErrors[fieldKey];
+            }
+            break;
+
+          case 'age':
+            const ageValue = fieldValue.trim();
+            const ageLength = ageValue.length;
+            const isValidAgeNumber = /^\d+$/.test(ageValue);
+            const isLengthValid = ageLength > 0 && ageLength <= 3;
+            const isNotAllZeros = !/^0+$/.test(ageValue);
+            if (!isValidAgeNumber || !isLengthValid || !isNotAllZeros) {
+              isValid = false;
+              newErrors[fieldKey] =
+                'Age must be a valid number and not all zeros.';
+            } else {
+              delete newErrors[fieldKey];
+            }
+            break;
+
+          default:
+            // ADD — check name fields using existing validators
+            if (isNameField(fieldKey)) {
+              const nameError = validateNameValue(fieldValue.trim(), label);
+              if (nameError) {
+                isValid = false;
+                newErrors[fieldKey] = nameError;
+              } else {
+                delete newErrors[fieldKey];
+              }
+            }
+            // ADD — check zip code
+            else if (fieldKey?.toLowerCase() === 'zipcode') {
+              if (!/^\d{5}(-\d{4})?$/.test(fieldValue.trim())) {
+                isValid = false;
+                newErrors[fieldKey] = `${label} must be a valid zip code.`;
+              } else {
+                delete newErrors[fieldKey];
+              }
+            }
+            break;
         }
+      }
+
+      // ADD — also block save if there are existing errors from handleInputChange
+      // for this field (e.g. user typed invalid name then didn't fix it)
+      if (!newErrors[fieldKey] && errors1[fieldKey]) {
+        isValid = false;
+        newErrors[fieldKey] = errors1[fieldKey];
       }
     });
 
@@ -1847,7 +1873,7 @@ const Registration1 = ({route}) => {
         newMembershipAmount,
       );
 
-      setuserData(prevUser =>
+      setUserData(prevUser =>
         prevUser.map(user =>
           Object.keys(user).reduce((acc, key) => {
             acc[key] = {...user[key], value: null};
@@ -1890,7 +1916,7 @@ const Registration1 = ({route}) => {
         newMembershipAmount,
       );
 
-      setuserData(prevUser =>
+      setUserData(prevUser =>
         prevUser.map(user =>
           Object.keys(user).reduce((acc, key) => {
             acc[key] = {...user[key], value: null};
@@ -1944,7 +1970,7 @@ const Registration1 = ({route}) => {
         }),
       );
     } else {
-      if (userData1.role == 'member') {
+      if (userData1.role === 'member') {
         const personalInfoSection = currentFormData.find(
           section => section.headerKey === 'personalInfo',
         );
@@ -2119,7 +2145,6 @@ const Registration1 = ({route}) => {
     if (aIsPrimary && !bIsPrimary) return -1;
     if (!aIsPrimary && bIsPrimary) return 1;
 
-    // If both are primary or both are family members, maintain order
     return 0;
   });
 
@@ -2193,7 +2218,7 @@ const Registration1 = ({route}) => {
                 numberOfLines={2}
                 style={{
                   fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                  fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                  fontSize: FONTS.FONTSIZE.SMALL,
                   color: COLORS.PLACEHOLDERCOLOR,
                   width: '55%',
                 }}>
@@ -2205,7 +2230,7 @@ const Registration1 = ({route}) => {
                   numberOfLines={1}
                   style={{
                     fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                    fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                    fontSize: FONTS.FONTSIZE.SMALL,
                     color: COLORS.PLACEHOLDERCOLOR,
                     width: '45%',
                     textAlign: 'right',
@@ -2253,7 +2278,7 @@ const Registration1 = ({route}) => {
                   return null;
                 }
 
-                if (fieldData?.type == 'hidden') {
+                if (fieldData?.type === 'hidden') {
                   return null;
                 }
 
@@ -2272,41 +2297,7 @@ const Registration1 = ({route}) => {
                   </View>
                 );
               })}
-              {/* {item?.relationship && !isApproved && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignSelf: 'flex-end',
-                    gap: 20,
-                    marginRight: 4,
-                  }}>
-                  <TouchableOpacity
-                    onPress={() => handleEdit(index)}
-                    style={[styles.itemAction]}>
-                    <Feather
-                      name={'edit-2'}
-                      color={COLORS.PRIMARYBLACK}
-                      size={22}
-                    />
-                  </TouchableOpacity>
-                  {(!item?.membership?.value ||
-                    item?.membership?.value === null ||
-                    item?.membership?.value === undefined ||
-                    item?.membership?.value === '') && (
-                    <TouchableOpacity
-                      onPress={() =>
-                        handleDelete(index, item?.configurationid?.value)
-                      }
-                      style={styles.itemAction}>
-                      <AntDesign
-                        name={'delete'}
-                        color={COLORS.PRIMARYBLACK}
-                        size={22}
-                      />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )} */}
+
               {item?.relationship && (
                 <View
                   style={{
@@ -2327,7 +2318,6 @@ const Registration1 = ({route}) => {
                         />
                       </TouchableOpacity>
 
-                      {/* Show delete icon only if membership value is empty/null/undefined */}
                       {(!item?.membership?.value ||
                         item?.membership?.value === null ||
                         item?.membership?.value === undefined ||
@@ -2358,7 +2348,7 @@ const Registration1 = ({route}) => {
   const handleEdit = index => {
     const userToEdit = formData[activeTab].headerConfig[index];
     setEditedUserIndex(index);
-    setuserData([userToEdit]);
+    setUserData([userToEdit]);
     setIsAddPerson(!isAddPerson);
   };
 
@@ -2373,10 +2363,13 @@ const Registration1 = ({route}) => {
         .find(section => section.headerKey === group.headerKey)
         ?.headerConfig.find(item => item[fieldKey])?.[fieldKey]?.value;
 
-      if (fieldConfig.required) {
-        if (!value || (typeof value === 'string' && value.trim() === '')) {
-          errors[fieldKey] = `${label} is required.`;
-        } else if (fieldKey === 'emailAddress' || fieldKey === 'email') {
+      const hasValue =
+        value && (typeof value !== 'string' || value.trim() !== '');
+
+      if (fieldConfig.required && !hasValue) {
+        errors[fieldKey] = `${label} is required.`;
+      } else if (hasValue) {
+        if (fieldKey === 'emailAddress' || fieldKey === 'email') {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(value)) {
             errors[fieldKey] = 'Invalid email address.';
@@ -2420,13 +2413,11 @@ const Registration1 = ({route}) => {
       .map(member => member?.relationship?.value?.trim()?.toLowerCase())
       .filter(Boolean);
 
-    // Check for conflicts
     const hasFather = relationships.includes('father');
     const hasMother = relationships.includes('mother');
     const hasFatherInLaw = relationships.includes('father-in-law');
     const hasMotherInLaw = relationships.includes('mother-in-law');
 
-    // Invalid combinations
     if (
       (hasFather && hasFatherInLaw) || // father + father-in-law
       (hasMother && hasMotherInLaw) || // mother + mother-in-law
@@ -2467,13 +2458,11 @@ const Registration1 = ({route}) => {
     }
 
     if (index > activeTab + 1) {
-      // Check if all tabs between current and target are already filled
       let allPreviousTabsValid = true;
 
       for (let i = activeTab; i < index; i++) {
         const tabGroup = formData[i];
 
-        // Special check for personalInfo tab
         if (moduleData[i]?.headerKey === 'personalInfo') {
           const tabConfigLength = formData[i]?.headerConfig?.length;
           if (tabConfigLength === 0) {
@@ -2481,15 +2470,13 @@ const Registration1 = ({route}) => {
             break;
           }
 
-          // Validate relationships
           const relationshipValidation = validateRelationships();
           if (!relationshipValidation.isValid) {
-            alert(relationshipValidation.message);
+            Alert.alert('Error', relationshipValidation.message);
             return;
           }
         }
 
-        // Validate the tab
         const tabErrors = validateFieldsInGroup(tabGroup, formData);
         if (Object.keys(tabErrors).length > 0) {
           allPreviousTabsValid = false;
@@ -2505,7 +2492,6 @@ const Registration1 = ({route}) => {
         return;
       }
 
-      // All previous tabs are valid, allow jump
       setActiveTab(index);
       return;
     }
@@ -2520,10 +2506,9 @@ const Registration1 = ({route}) => {
         );
       }
 
-      // Validate relationships before moving forward
       const relationshipValidation = validateRelationships();
       if (!relationshipValidation.isValid) {
-        alert(relationshipValidation.message);
+        Alert.alert('Error', relationshipValidation.message);
         return;
       }
 
@@ -2551,7 +2536,10 @@ const Registration1 = ({route}) => {
     const group = formData[activeTab];
 
     if (!group?.headerConfig?.length) {
-      alert('Please fill all required fields before proceeding.');
+      Alert.alert(
+        'Error',
+        'Please fill all required fields before proceeding.',
+      );
       return;
     }
 
@@ -2559,15 +2547,17 @@ const Registration1 = ({route}) => {
     setErrors(errors);
 
     if (Object.keys(errors).length > 0) {
-      alert('Please correct the highlighted fields before proceeding.');
+      Alert.alert(
+        'Error',
+        'Please correct the highlighted fields before proceeding.',
+      );
       return;
     }
 
-    // Validate relationships if on personalInfo tab
     if (moduleData[activeTab]?.headerKey === 'personalInfo') {
       const relationshipValidation = validateRelationships();
       if (!relationshipValidation.isValid) {
-        alert(relationshipValidation.message);
+        Alert.alert('Error', relationshipValidation.message);
         return;
       }
     }
@@ -2619,7 +2609,7 @@ const Registration1 = ({route}) => {
   };
 
   const handleCancel = () => {
-    setuserData(prevUserData =>
+    setUserData(prevUserData =>
       prevUserData.map(user => {
         return Object.keys(user).reduce((acc, key) => {
           acc[key] = {
@@ -2641,7 +2631,7 @@ const Registration1 = ({route}) => {
       prevData.map(section => {
         if (section.headerKey === headerKey) {
           if (section.isMultiple) {
-            setuserData(prevUser =>
+            setUserData(prevUser =>
               prevUser.map(item => {
                 const updatedValue = item[key]?.value
                   ? JSON.parse(item[key].value)
@@ -2819,10 +2809,8 @@ const Registration1 = ({route}) => {
 
     const familyMembers = formData[personalInfoIndex]?.headerConfig || [];
 
-    // Get all selected relationships except the current item being edited
     const selectedRelationships = familyMembers
       .map((member, index) => {
-        // Skip the current item being edited
         if (currentItemIndex !== null && index === currentItemIndex) {
           return null;
         }
@@ -2837,20 +2825,16 @@ const Registration1 = ({route}) => {
     const hasHusband = selectedRelationships.includes('husband');
     const hasWife = selectedRelationships.includes('wife');
 
-    // Determine which options to disable
     const disabledOptions = [];
 
     if (hasFather || hasMother) {
-      // If parent exists, disable in-laws
       disabledOptions.push('father-in-law', 'mother-in-law');
     }
 
     if (hasFatherInLaw || hasMotherInLaw) {
-      // If in-law exists, disable parents
       disabledOptions.push('father', 'mother');
     }
 
-    // NEW: Disable unique relationships once selected
     if (hasFather) {
       disabledOptions.push('father');
     }
@@ -2875,7 +2859,6 @@ const Registration1 = ({route}) => {
       disabledOptions.push('wife');
     }
 
-    // Remove duplicates from disabled options
     return [...new Set(disabledOptions)];
   };
 
@@ -2960,18 +2943,16 @@ const Registration1 = ({route}) => {
           const isPaid =
             paidValue && paidValue.toString()?.toLowerCase().trim() === 'yes';
 
-          // Only add if NOT paid
           return !isPaid && amount > 0 ? sum + amount : sum;
         },
         0,
       );
 
       if (unpaidTotalAmount === 0) {
-        return null; // Hide button - nothing to pay
+        return null;
       }
 
       if (hasNewMember) {
-        // New member exists + amount > 0 → Save and Pay
         return {
           disabled: false,
           label: 'Save and Pay',
@@ -2979,7 +2960,6 @@ const Registration1 = ({route}) => {
           requiresSave: true,
         };
       } else {
-        // Only existing members + amount > 0 → Pay Now
         return {
           disabled: false,
           label: 'Pay Now',
@@ -3000,6 +2980,8 @@ const Registration1 = ({route}) => {
 
     const totalAmount = personalInfoSection.headerConfig.reduce(
       (sum, member) => {
+        const configId = parseInt(member?.configurationid?.value || '0', 10);
+        // if (configId === 0) return sum; // Skip new members
         const amount = parseFloat(member?.membershipamount?.value || '0');
         const approved = isMemberApproved(member);
         const paid = isMemberPaid(member);
@@ -3201,7 +3183,7 @@ const Registration1 = ({route}) => {
               <ScrollView
                 contentContainerStyle={{
                   paddingBottom:
-                    keyboardOpen && Platform.OS == 'android' ? 34 : 0,
+                    keyboardOpen && Platform.OS === 'android' ? 34 : 0,
                   flexGrow: 1,
                 }}
                 keyboardShouldPersistTaps="handled"
@@ -3273,32 +3255,34 @@ const Registration1 = ({route}) => {
 
                     const hasMembershipValue = userData[0]?.membership?.value;
 
-                    const hasIsApprovedKey = item.name == 'isApproved';
+                    const hasIsApprovedKey = item.name === 'isApproved';
 
                     const hasEmailField =
                       moduleData[activeTab]?.headerKey === 'personalInfo' &&
-                      item?.name == 'emailAddress' &&
+                      item?.name === 'emailAddress' &&
                       moduleData[activeTab].isMultiple;
 
                     const hasPhoneField =
                       moduleData[activeTab]?.headerKey === 'personalInfo' &&
-                      item?.name == 'contact' &&
+                      item?.name === 'contact' &&
                       moduleData[activeTab].isMultiple;
 
                     const isEmailDisable = hasMembershipValue && hasEmailField;
-                    // const isPhoneDisable = hasMembershipValue && hasPhoneField;
-                    const phoneValue = moduleData[activeTab].isMultiple
-                      ? userData[0]?.contact?.value || ''
-                      : '';
+
+                    const savedContactValue =
+                      editedUserIndex !== null
+                        ? formData[activeTab]?.headerConfig[editedUserIndex]
+                            ?.contact?.value || ''
+                        : '';
 
                     const isPhoneDisable =
                       hasMembershipValue &&
                       hasPhoneField &&
-                      phoneValue?.length > 0;
+                      savedContactValue?.replace(/\D/g, '')?.length >= 10;
 
                     if (
                       moduleData[activeTab]?.headerKey === 'personalInfo' &&
-                      item?.name == 'relationship' &&
+                      item?.name === 'relationship' &&
                       moduleData[activeTab].isMultiple &&
                       hasMembershipValue
                     ) {
@@ -3308,7 +3292,7 @@ const Registration1 = ({route}) => {
                     if (hasIsApprovedKey) {
                       return null;
                     }
-                    if (item?.className == 'row Disabled') {
+                    if (item?.className === 'row Disabled') {
                       return null;
                     }
                     switch (itemType) {
@@ -3349,7 +3333,7 @@ const Registration1 = ({route}) => {
                                 style={{
                                   backgroundColor: COLORS.PRIMARYWHITE,
                                   borderWidth: 1,
-                                  height: 38,
+                                  height: 44,
                                   paddingVertical: 0,
                                   borderRadius: 10,
                                   paddingHorizontal: 8,
@@ -3357,9 +3341,10 @@ const Registration1 = ({route}) => {
                                     errors[item?.key] || errors1[item?.key]
                                       ? COLORS.PRIMARYRED
                                       : COLORS.INPUTBORDER,
-                                  fontSize: FONTS.FONTSIZE.MINI,
+                                  fontSize: FONTS.FONTSIZE.SMALL,
                                   fontFamily: FONTS.FONT_FAMILY.REGULAR,
                                   color: COLORS.PRIMARYBLACK,
+                                  includeFontPadding: false,
                                 }}
                                 value={
                                   moduleData[activeTab].isMultiple
@@ -3369,7 +3354,9 @@ const Registration1 = ({route}) => {
                                       )?.[item?.key]?.value || null
                                 }
                                 maxLength={
-                                  item?.maxLength == 0 ? 250 : item?.maxLength
+                                  (item?.maxLength ?? item?.maxlength ?? 0) == 0
+                                    ? 250
+                                    : item?.maxLength ?? item?.maxlength
                                 }
                                 placeholder={`${item.label}`}
                                 placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
@@ -3390,7 +3377,10 @@ const Registration1 = ({route}) => {
                               />
                               {(() => {
                                 const max =
-                                  item?.maxLength === 0 ? 250 : item?.maxLength;
+                                  (item?.maxLength ?? item?.maxlength ?? 0) ===
+                                  0
+                                    ? 250
+                                    : item?.maxLength ?? item?.maxlength;
                                 const currentLength =
                                   currentLengths[item?.key] || 0;
                                 return currentLength > max ? (
@@ -3560,7 +3550,6 @@ const Registration1 = ({route}) => {
                               ? getFilteredRelationshipOptions(editedUserIndex)
                               : [];
 
-                          // Filter out disabled relationships from dropdown data
                           const filteredData =
                             moduleData[activeTab]?.headerKey ===
                               'personalInfo' &&
@@ -3615,7 +3604,7 @@ const Registration1 = ({route}) => {
                                 }}>
                                 <Dropdown
                                   dropdownPosition={
-                                    Platform.OS == 'android'
+                                    Platform.OS === 'android'
                                       ? dropdownPosition
                                       : 'auto'
                                   }
@@ -4069,7 +4058,7 @@ const Registration1 = ({route}) => {
 
                               <TouchableOpacity
                                 style={{
-                                  height: 38,
+                                  height: 44,
                                   paddingVertical: 0,
                                   borderRadius: 10,
                                   borderWidth: 1,
@@ -4177,7 +4166,7 @@ const Registration1 = ({route}) => {
                               <TouchableOpacity
                                 style={{
                                   borderWidth: 1,
-                                  height: 38,
+                                  height: 44,
                                   paddingVertical: 0,
                                   borderRadius: 10,
                                   justifyContent: 'center',
@@ -4389,20 +4378,24 @@ const Registration1 = ({route}) => {
                                 }}>
                                 <TextInput
                                   style={{
-                                    height: 38,
+                                    height: 44,
                                     paddingVertical: 0,
                                     borderRadius: 10,
                                     borderColor: COLORS.INPUTBORDER,
-                                    fontSize: FONTS.FONTSIZE.MINI,
+                                    fontSize: FONTS.FONTSIZE.SMALL,
                                     fontFamily: FONTS.FONT_FAMILY.REGULAR,
                                     color: COLORS.PRIMARYBLACK,
                                     backgroundColor: COLORS.PRIMARYWHITE,
+                                    includeFontPadding: false,
                                   }}
                                   secureTextEntry={!passwordVisible}
                                   placeholder={`${item?.label}`}
                                   placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                                   maxLength={
-                                    item?.maxLength == 0 ? 250 : item?.maxLength
+                                    (item?.maxLength ?? item?.maxlength ?? 0) ==
+                                    0
+                                      ? 250
+                                      : item?.maxLength ?? item?.maxlength
                                   }
                                   value={
                                     moduleData[activeTab].isMultiple
@@ -4438,7 +4431,10 @@ const Registration1 = ({route}) => {
                               </View>
                               {(() => {
                                 const max =
-                                  item?.maxLength === 0 ? 250 : item?.maxLength;
+                                  (item?.maxLength ?? item?.maxlength ?? 0) ===
+                                  0
+                                    ? 250
+                                    : item?.maxLength ?? item?.maxlength;
                                 const currentLength =
                                   currentLengths[item?.key] || 0;
                                 return currentLength > max ? (
@@ -4516,7 +4512,7 @@ const Registration1 = ({route}) => {
                                   padding: 10,
                                   height: 100,
                                   textAlignVertical: 'top',
-                                  fontSize: FONTS.FONTSIZE.MINI,
+                                  fontSize: FONTS.FONTSIZE.SMALL,
                                   fontFamily: FONTS.FONT_FAMILY.REGULAR,
                                   color: COLORS.PRIMARYBLACK,
                                   backgroundColor: COLORS.PRIMARYWHITE,
@@ -4524,7 +4520,10 @@ const Registration1 = ({route}) => {
                                 multiline
                                 numberOfLines={4}
                                 maxLength={
-                                  item?.maxLength == 0 ? 1000 : item?.maxLength
+                                  (item?.maxLength ?? item?.maxlength ?? 0) ===
+                                  0
+                                    ? 1000
+                                    : item?.maxLength ?? item?.maxlength
                                 }
                                 placeholder={`${item.label}`}
                                 placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
@@ -4551,9 +4550,10 @@ const Registration1 = ({route}) => {
                               />
                               {(() => {
                                 const max =
-                                  item?.maxLength === 0
+                                  (item?.maxLength ?? item?.maxlength ?? 0) ===
+                                  0
                                     ? 1000
-                                    : item?.maxLength;
+                                    : item?.maxLength ?? item?.maxlength;
                                 const currentLength =
                                   currentLengths[item?.key] || 0;
                                 return currentLength > max ? (
@@ -4603,8 +4603,7 @@ const Registration1 = ({route}) => {
                                 field => field?.[item?.key],
                               )?.[item?.key]?.value || '';
 
-                          // Check if this is for membership amounts in a multiple entry section
-                          if (item?.name == 'membershipamount') {
+                          if (item?.name === 'membershipamount') {
                             return (
                               <View
                                 key={item?.key}
@@ -4615,7 +4614,7 @@ const Registration1 = ({route}) => {
                                     fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
                                     color: COLORS.LABELCOLOR,
                                   }}>
-                                  {item?.name == 'membershipamount'
+                                  {item?.name === 'membershipamount'
                                     ? 'Membership Amount'
                                     : 'Total Membership Amount'}
                                   : $
@@ -4629,7 +4628,7 @@ const Registration1 = ({route}) => {
                             );
                           }
 
-                          if (item?.name == 'totalmembershipamount') {
+                          if (item?.name === 'totalmembershipamount') {
                             const personalInfoSection = formData.find(
                               section =>
                                 section.headerKey === 'personalInfo' &&
@@ -4707,7 +4706,7 @@ const Registration1 = ({route}) => {
                                   }}>
                                   <Text
                                     style={{
-                                      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                      fontSize: FONTS.FONTSIZE.SMALL,
                                       fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
                                       color: COLORS.LABELCOLOR,
                                     }}>
@@ -4715,7 +4714,7 @@ const Registration1 = ({route}) => {
                                   </Text>
                                   <Text
                                     style={{
-                                      fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                      fontSize: FONTS.FONTSIZE.SMALL,
                                       fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
                                       color: COLORS.LABELCOLOR,
                                     }}>
@@ -4952,7 +4951,7 @@ const Registration1 = ({route}) => {
                               </Text>
                               <TextInput
                                 editable={
-                                  item?.className == 'form-control disabled'
+                                  item?.className === 'form-control disabled'
                                     ? false
                                     : true
                                 }
@@ -4962,22 +4961,25 @@ const Registration1 = ({route}) => {
                                       ? COLORS.PRIMARYRED
                                       : COLORS.INPUTBORDER,
                                   color: COLORS.PRIMARYBLACK,
-                                  fontSize: FONTS.FONTSIZE.MINI,
+                                  fontSize: FONTS.FONTSIZE.SMALL,
                                   fontFamily: FONTS.FONT_FAMILY.REGULAR,
                                   borderWidth: 1,
-                                  height: 38,
+                                  height: 44,
                                   paddingVertical: 0,
                                   borderRadius: 10,
                                   paddingHorizontal: 8,
                                   backgroundColor: COLORS.PRIMARYWHITE,
+                                  includeFontPadding: false,
                                 }}
                                 placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                                 maxLength={
                                   isPhoneField(item?.name)
                                     ? 14
-                                    : item?.maxLength == 0
+                                    : (item?.maxLength ??
+                                        item?.maxlength ??
+                                        0) === 0
                                     ? 250
-                                    : item?.maxLength
+                                    : item?.maxLength ?? item?.maxlength
                                 }
                                 keyboardType="number-pad"
                                 placeholder={`${item.label}`}
@@ -4999,7 +5001,7 @@ const Registration1 = ({route}) => {
                                     item.key,
                                     numericValue,
                                     item?.name,
-                                    item?.maxLength,
+                                    item?.maxLength ?? item?.maxlength,
                                     item?.required,
                                     item?.label,
                                   );
@@ -5038,6 +5040,7 @@ const Registration1 = ({route}) => {
                             : formData[activeTab]?.headerConfig?.find(
                                 field => field?.[item?.key],
                               )?.[item?.key]?.value || '';
+
                           return (
                             <View
                               key={item?.key}
@@ -5069,24 +5072,27 @@ const Registration1 = ({route}) => {
                                       ? COLORS.PRIMARYRED
                                       : COLORS.INPUTBORDER,
                                   color: COLORS.PRIMARYBLACK,
-                                  fontSize: FONTS.FONTSIZE.MINI,
+                                  fontSize: FONTS.FONTSIZE.SMALL,
                                   fontFamily: FONTS.FONT_FAMILY.REGULAR,
                                   borderWidth: 1,
-                                  height: 38,
+                                  height: 44,
                                   paddingVertical: 0,
                                   borderRadius: 10,
                                   paddingHorizontal: 8,
                                   backgroundColor: isPhoneDisable
                                     ? COLORS.TABLEROWCOLOR
                                     : COLORS.PRIMARYWHITE,
+                                  includeFontPadding: false,
                                 }}
                                 placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                                 maxLength={
                                   isPhoneField(item?.name)
                                     ? 14
-                                    : item?.maxLength == 0
+                                    : (item?.maxLength ??
+                                        item?.maxlength ??
+                                        0) === 0
                                     ? 250
-                                    : item?.maxLength
+                                    : item?.maxLength ?? item?.maxlength
                                 }
                                 keyboardType="number-pad"
                                 placeholder={`${item.label}`}
@@ -5108,7 +5114,7 @@ const Registration1 = ({route}) => {
                                     item.key,
                                     numericValue,
                                     item?.name,
-                                    item?.maxLength,
+                                    item?.maxLength ?? item?.maxlength,
                                     item?.required,
                                     item?.label,
                                   );
@@ -5178,7 +5184,7 @@ const Registration1 = ({route}) => {
                                 editable={!isEmailDisable}
                                 style={{
                                   borderWidth: 1,
-                                  height: 38,
+                                  height: 44,
 
                                   paddingVertical: 0,
                                   borderRadius: 10,
@@ -5187,12 +5193,13 @@ const Registration1 = ({route}) => {
                                     errors[item?.key] || errors1[item?.key]
                                       ? COLORS.PRIMARYRED
                                       : COLORS.INPUTBORDER,
-                                  fontSize: FONTS.FONTSIZE.MINI,
+                                  fontSize: FONTS.FONTSIZE.SMALL,
                                   fontFamily: FONTS.FONT_FAMILY.REGULAR,
                                   color: COLORS.PRIMARYBLACK,
                                   backgroundColor: isEmailDisable
                                     ? COLORS.TABLEROWCOLOR
                                     : COLORS.PRIMARYWHITE,
+                                  includeFontPadding: false,
                                 }}
                                 value={
                                   moduleData[activeTab].isMultiple
@@ -5203,7 +5210,9 @@ const Registration1 = ({route}) => {
                                 }
                                 placeholderTextColor={COLORS.PLACEHOLDERCOLOR}
                                 maxLength={
-                                  item?.maxLength == 0 ? 250 : item?.maxLength
+                                  (item?.maxLength ?? item?.maxlength ?? 0) == 0
+                                    ? 250
+                                    : item?.maxLength ?? item?.maxlength
                                 }
                                 placeholder={`${item.label}`}
                                 onChangeText={value => {
@@ -5224,7 +5233,10 @@ const Registration1 = ({route}) => {
                               />
                               {(() => {
                                 const max =
-                                  item?.maxLength === 0 ? 250 : item?.maxLength;
+                                  (item?.maxLength ?? item?.maxlength ?? 0) ===
+                                  0
+                                    ? 250
+                                    : item?.maxLength ?? item?.maxlength;
                                 const currentLength =
                                   currentLengths[item?.key] || 0;
                                 return currentLength > max ? (
@@ -5360,7 +5372,7 @@ const Registration1 = ({route}) => {
                             }}>
                             <Text
                               style={{
-                                fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                                fontSize: FONTS.FONTSIZE.SMALL,
                                 fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                                 textAlign: 'center',
                                 color: COLORS.PRIMARYWHITE,
@@ -5441,7 +5453,7 @@ const Registration1 = ({route}) => {
             </View>
 
             {(moduleData[activeTab]?.headerKey === 'personalInfo' &&
-              !moduleData.some(item => item.headerKey == 'memberDetails') &&
+              !moduleData.some(item => item.headerKey === 'memberDetails') &&
               !isAddPerson &&
               formData[activeTab]?.headerConfig?.length !== 0) ||
             moduleData[activeTab]?.headerKey === 'memberDetails' ? (
@@ -5471,7 +5483,7 @@ const Registration1 = ({route}) => {
                 <Text
                   style={{
                     color: COLORS.PRIMARYWHITE,
-                    fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                    fontSize: FONTS.FONTSIZE.SMALL,
                     fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                     textAlign: 'center',
                   }}>

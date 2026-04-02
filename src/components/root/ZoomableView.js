@@ -1,7 +1,7 @@
 // ----------    formated both finger and double tap handler -------------
 
 import React, {useRef, useState, useEffect} from 'react';
-import {Dimensions, StyleSheet} from 'react-native';
+import {Dimensions, StyleSheet, View} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedGestureHandler,
@@ -11,7 +11,6 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import {
-  GestureHandlerRootView,
   PanGestureHandler,
   PinchGestureHandler,
   TapGestureHandler,
@@ -27,7 +26,11 @@ const clamp = (value, min, max) => {
 };
 
 export default function ZoomableView({children, simultaneousHandlers}) {
-  // Track screen dimensions dynamically to handle orientation changes
+  const externalRefs = simultaneousHandlers
+    ? Array.isArray(simultaneousHandlers)
+      ? simultaneousHandlers.filter(r => r != null && r.current != null)
+      : [simultaneousHandlers].filter(r => r != null && r.current != null)
+    : [];
   const [screenDimensions, setScreenDimensions] = useState(
     Dimensions.get('window'),
   );
@@ -163,13 +166,15 @@ export default function ZoomableView({children, simultaneousHandlers}) {
   }));
 
   return (
-    <GestureHandlerRootView style={styles.container}>
+    <View style={styles.container}>
       <TapGestureHandler
         onGestureEvent={doubleTapHandler}
         numberOfTaps={2}
         maxDelayMs={250}
         ref={doubleTapRef}
-        simultaneousHandlers={simultaneousHandlers}>
+        simultaneousHandlers={
+          externalRefs.length > 0 ? externalRefs : undefined
+        }>
         <Animated.View style={{flex: 1}}>
           <PanGestureHandler
             enabled={isZoomed}
@@ -177,20 +182,12 @@ export default function ZoomableView({children, simultaneousHandlers}) {
             minPointers={1}
             maxPointers={2}
             ref={panRef}
-            simultaneousHandlers={[
-              pinchRef,
-              doubleTapRef,
-              simultaneousHandlers,
-            ]}>
+            simultaneousHandlers={[pinchRef, doubleTapRef, ...externalRefs]}>
             <Animated.View style={{flex: 1}}>
               <PinchGestureHandler
                 onGestureEvent={pinchHandler}
                 ref={pinchRef}
-                simultaneousHandlers={[
-                  panRef,
-                  doubleTapRef,
-                  simultaneousHandlers,
-                ]}>
+                simultaneousHandlers={[panRef, doubleTapRef, ...externalRefs]}>
                 <Animated.View style={[{flex: 1}, animatedStyle]}>
                   {children}
                 </Animated.View>
@@ -199,7 +196,7 @@ export default function ZoomableView({children, simultaneousHandlers}) {
           </PanGestureHandler>
         </Animated.View>
       </TapGestureHandler>
-    </GestureHandlerRootView>
+    </View>
   );
 }
 

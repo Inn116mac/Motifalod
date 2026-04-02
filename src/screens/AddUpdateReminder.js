@@ -77,22 +77,42 @@ const AddUpdateReminder = ({route}) => {
     }
   }, [isEdit, data]);
 
+  //remove html
+  const stripHtmlTags = str => {
+    if (!str || str === '') return '';
+
+    let cleaned = str.toString();
+
+    cleaned = cleaned
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+
+    cleaned = cleaned.replace(/(<([^>]+)>)/gi, '');
+
+    cleaned = cleaned.replace(/\\n/g, '\n');
+
+    return cleaned.trim();
+  };
+
   const [form, setForm] = useState({
     configurationId: data?.configurationId || 0,
     isEmail: data?.isEmail || false,
     isSMS: data?.isSMS || false,
     isNotification: data?.isNotification || false,
-    emailSubject: data?.emailSubject || '',
-    emailBody: data?.emailBody || '',
-    smsText: data?.smsText || '',
-    notificationText: data?.notificationText || '',
+    emailSubject: stripHtmlTags(data?.emailSubject || ''),
+    emailBody: stripHtmlTags(data?.emailBody || ''),
+    smsText: stripHtmlTags(data?.smsText || ''),
+    notificationText: stripHtmlTags(data?.notificationText || ''),
     isRecur: data?.isRecur || false,
     roles: data?.roles || '',
     moduleId: data?.moduleId || null,
     rsvp: 0,
     reminderType: data?.reminderType || null,
     reminderBefore: data?.reminderBefore || 0,
-    eventDate: data?.eventDate || new Date(),
     eventDate: data?.eventDate ? new Date(data.eventDate) : new Date(),
     recurReminderStartDate: data?.recurReminderStartDate
       ? new Date(data.recurReminderStartDate)
@@ -533,27 +553,6 @@ const AddUpdateReminder = ({route}) => {
     return null;
   };
 
-  //remove html
-  const stripHtmlTags = str => {
-    if (!str || str === '') return '';
-
-    let cleaned = str.toString();
-
-    cleaned = cleaned
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'");
-
-    cleaned = cleaned.replace(/(<([^>]+)>)/gi, '');
-
-    cleaned = cleaned.replace(/\\n/g, '\n');
-
-    return cleaned.trim();
-  };
-
   return (
     <KeyboardAvoidingView
       style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}
@@ -885,7 +884,7 @@ const AddUpdateReminder = ({route}) => {
                 {renderRequiredLabel('Email Subject', 'emailSubject')}
 
                 <TextInput
-                  value={stripHtmlTags(form.emailSubject)}
+                  value={form.emailSubject}
                   onChangeText={text => {
                     setForm(prev => ({...prev, emailSubject: text}));
                     setErrors(prev => ({...prev, emailSubject: null}));
@@ -909,7 +908,7 @@ const AddUpdateReminder = ({route}) => {
                 {renderRequiredLabel('Email Body', 'emailBody')}
 
                 <TextInput
-                  value={stripHtmlTags(form.emailBody)}
+                  value={form.emailBody}
                   onChangeText={text => {
                     setForm(prev => ({...prev, emailBody: text}));
                     setErrors(prev => ({...prev, emailBody: null}));
@@ -941,7 +940,7 @@ const AddUpdateReminder = ({route}) => {
               <View style={{padding: 10}}>
                 {renderRequiredLabel('SMS Body', 'smsText')}
                 <TextInput
-                  value={stripHtmlTags(form.smsText)}
+                  value={form.smsText}
                   onChangeText={text => {
                     setForm(prev => ({...prev, smsText: text}));
                     setErrors(prev => ({...prev, smsText: null}));
@@ -973,7 +972,7 @@ const AddUpdateReminder = ({route}) => {
                 {renderRequiredLabel('Notification Body', 'notificationText')}
 
                 <TextInput
-                  value={stripHtmlTags(form.notificationText)}
+                  value={form.notificationText}
                   onChangeText={text => {
                     setForm(prev => ({...prev, notificationText: text}));
                     setErrors(prev => ({...prev, notificationText: null}));

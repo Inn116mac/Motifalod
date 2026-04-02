@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {View, ActivityIndicator} from 'react-native';
-import {FontAwesome6} from "@react-native-vector-icons/fontawesome6";
+import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import Video from 'react-native-video';
 import {heightPercentageToDP} from 'react-native-responsive-screen';
 import COLORS from '../theme/Color';
@@ -9,6 +9,8 @@ import {IMAGE_URL} from '../connection/Config';
 import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
+import {downloadFile} from '../utils/CustomDowenload'; // ADD — same as FullImageScreen
+import {Feather} from '@react-native-vector-icons/feather';
 
 const VideoGalleryVideoScreen = ({route}) => {
   const navigation = useNavigation();
@@ -16,6 +18,9 @@ const VideoGalleryVideoScreen = ({route}) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [isBuffering, setIsBuffering] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState({}); // ADD
+
+  const videoUri = IMAGE_URL + route?.params?.videoData;
 
   useEffect(() => {
     return () => {
@@ -30,6 +35,13 @@ const VideoGalleryVideoScreen = ({route}) => {
 
   const showLoader = isLoading || isBuffering;
 
+  const handleDownload = () => {
+    downloadFile(videoUri, videoUri, setDownloadProgress);
+  };
+
+  const isDownloading =
+    downloadProgress[videoUri] > 0 && downloadProgress[videoUri] < 1;
+
   return (
     <View
       style={{
@@ -41,8 +53,23 @@ const VideoGalleryVideoScreen = ({route}) => {
           navigation.goBack();
         }}
         leftIcon={
-          <FontAwesome6 name="angle-left" iconStyle='solid' size={26} color={COLORS.LABELCOLOR} />
+          <FontAwesome6
+            name="angle-left"
+            iconStyle="solid"
+            size={26}
+            color={COLORS.LABELCOLOR}
+          />
         }
+        rightIcon={
+          route?.params?.videoData ? (
+            isDownloading ? (
+              <ActivityIndicator size="small" color={COLORS.LABELCOLOR} />
+            ) : (
+              <Feather name="download" size={22} color={COLORS.LABELCOLOR} />
+            )
+          ) : null
+        }
+        rightOnPress={isDownloading ? undefined : handleDownload}
       />
 
       {isConnected ? (
@@ -52,9 +79,9 @@ const VideoGalleryVideoScreen = ({route}) => {
             padding: heightPercentageToDP(2),
           }}>
           <Video
-            source={{uri: IMAGE_URL + route?.params?.videoData}}
+            source={{uri: videoUri}}
             controls={true}
-            resizeMode="cover"
+            resizeMode="contain"
             ref={player}
             onLoad={() => {
               setIsLoading(false);

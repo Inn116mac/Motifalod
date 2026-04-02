@@ -80,7 +80,8 @@ const RoleManagement = ({route}) => {
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
   const [pageNumber, setPageNumber] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isLoading1, setIsLoading1] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -209,8 +210,8 @@ const RoleManagement = ({route}) => {
           .then(response => {
             if (response.data.status) {
               const newData = response?.data?.result?.data;
-              const totalRecords = response.data.result.totalRecord || 0;
-              const calculatedTotalPages = Math.ceil(totalRecords / PAGE_SIZE);
+              const totalCount = response.data.result.totalRecord || 0;
+              const calculatedTotalPages = Math.ceil(totalCount / PAGE_SIZE);
 
               if (newData?.length > 0) {
                 setAllUserData(newData);
@@ -220,9 +221,8 @@ const RoleManagement = ({route}) => {
                 setFilteredData([]);
               }
 
-              const canLoadMore =
-                pageNumber < calculatedTotalPages && newData.length > 0;
-              setHasMore(canLoadMore);
+              setTotalPages(calculatedTotalPages);
+              setTotalRecords(totalCount);
             } else {
               NOTIFY_MESSAGE(response.data.message);
             }
@@ -329,12 +329,6 @@ const RoleManagement = ({route}) => {
     );
   };
 
-  const loadMore = () => {
-    if (hasMore && !isLoading) {
-      setPageNumber(prevPage => prevPage + 1);
-    }
-  };
-
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setSearchKeyword('');
@@ -432,29 +426,122 @@ const RoleManagement = ({route}) => {
           ) : (
             <NoDataFound />
           )}
-          {!searchKeyword && (
+          {totalPages > 1 && !searchKeyword && (
             <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
                 paddingVertical: heightPercentageToDP('1%'),
-                paddingHorizontal: widthPercentageToDP('5%'),
-                gap: 30,
+                paddingHorizontal: widthPercentageToDP('4%'),
+                backgroundColor: COLORS.PRIMARYWHITE,
               }}>
-              {pageNumber > 1 && (
+              <Text
+                style={{
+                  textAlign: 'center',
+                  fontSize: FONTS.FONTSIZE.MINI,
+                  fontFamily: FONTS.FONT_FAMILY.REGULAR,
+                  color: COLORS.PLACEHOLDERCOLOR,
+                  marginBottom: 8,
+                }}>
+                Page {pageNumber} of {totalPages} • {totalRecords} records
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexWrap: 'wrap',
+                  gap: 6,
+                }}>
                 <TouchableOpacity
-                  onPress={() => {
-                    setPageNumber(prevPage => Math.max(prevPage - 1, 1));
+                  disabled={pageNumber === 1}
+                  onPress={() => setPageNumber(p => Math.max(p - 1, 1))}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 17,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor:
+                      pageNumber === 1 ? COLORS.LIGHTGREY : COLORS.LABELCOLOR,
                   }}>
-                  <Text style={styles.paginationText}>Previous</Text>
+                  <AntDesign name="left" size={14} color={COLORS.PRIMARYWHITE} />
                 </TouchableOpacity>
-              )}
-              {hasMore && (
-                <TouchableOpacity onPress={loadMore}>
-                  <Text style={styles.paginationText}>Load More</Text>
+                {Array.from({length: totalPages}, (_, i) => i + 1)
+                  .filter(p => {
+                    if (totalPages <= 5) return true;
+                    return (
+                      p === 1 ||
+                      p === totalPages ||
+                      Math.abs(p - pageNumber) <= 1
+                    );
+                  })
+                  .reduce((acc, p, idx, arr) => {
+                    if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, idx) =>
+                    p === '...' ? (
+                      <Text
+                        key={`ellipsis-${idx}`}
+                        style={{
+                          fontSize: FONTS.FONTSIZE.SMALL,
+                          color: COLORS.PLACEHOLDERCOLOR,
+                          paddingHorizontal: 2,
+                        }}>
+                        ...
+                      </Text>
+                    ) : (
+                      <TouchableOpacity
+                        key={p}
+                        onPress={() => setPageNumber(p)}
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 17,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          backgroundColor:
+                            p === pageNumber
+                              ? COLORS.LABELCOLOR
+                              : COLORS.PRIMARYWHITE,
+                          borderWidth: 1,
+                          borderColor: COLORS.LABELCOLOR,
+                        }}>
+                        <Text
+                          style={{
+                            fontSize: FONTS.FONTSIZE.MINI,
+                            fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                            color:
+                              p === pageNumber
+                                ? COLORS.PRIMARYWHITE
+                                : COLORS.LABELCOLOR,
+                          }}>
+                          {p}
+                        </Text>
+                      </TouchableOpacity>
+                    ),
+                  )}
+                <TouchableOpacity
+                  disabled={pageNumber === totalPages}
+                  onPress={() => setPageNumber(p => Math.min(p + 1, totalPages))}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 17,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor:
+                      pageNumber === totalPages
+                        ? COLORS.LIGHTGREY
+                        : COLORS.LABELCOLOR,
+                  }}>
+                  <AntDesign
+                    name="right"
+                    size={14}
+                    color={COLORS.PRIMARYWHITE}
+                  />
                 </TouchableOpacity>
-              )}
+              </View>
             </View>
           )}
         </View>

@@ -9,7 +9,7 @@ import {
   Linking,
   TouchableOpacity,
   useWindowDimensions,
-  ImageBackground,
+  ActivityIndicator,
 } from 'react-native';
 import {FontAwesome6} from '@react-native-vector-icons/fontawesome6';
 import moment from 'moment';
@@ -32,7 +32,7 @@ import FastImage from 'react-native-fast-image';
 
 const EventDetails = ({route}) => {
   const {width, height} = useWindowDimensions();
-
+  const PAGE_SIZE = 10;
   const styles = StyleSheet.create({
     txtLabel: {
       fontFamily: FONTS.FONT_FAMILY.MEDIUM,
@@ -78,12 +78,92 @@ const EventDetails = ({route}) => {
       width: '42%',
       textAlign: 'left',
     },
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    },
+    card: {
+      width: '32%',
+      paddingVertical: 16,
+      borderWidth: 1,
+      borderColor: COLORS.LABELCOLOR,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginBottom: 10,
+      shadowColor: COLORS.PRIMARYBLACK,
+      shadowOffset: {width: 0, height: 2},
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 3,
+      backgroundColor: COLORS.PRIMARYWHITE,
+      marginTop: 4,
+      overflow: 'hidden',
+    },
+    fullWidthCard: {
+      width: '100%',
+      borderWidth: 1,
+      borderColor: COLORS.LABELCOLOR,
+      borderRadius: 8,
+      alignItems: 'center',
+      backgroundColor: COLORS.PRIMARYWHITE,
+      shadowColor: COLORS.PRIMARYBLACK,
+      shadowOffset: {width: 0, height: 2},
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 3,
+      marginVertical: 4,
+      overflow: 'hidden',
+    },
+    topHalf: {
+      paddingVertical: 4,
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '100%',
+    },
+    divider: {
+      height: 1,
+      backgroundColor: COLORS.LABELCOLOR,
+      width: '100%',
+      alignSelf: 'center',
+    },
+    verticalDivider: {
+      width: 1,
+      backgroundColor: COLORS.LABELCOLOR,
+      height: '100%',
+    },
+    bottomHalf: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'stretch',
+    },
+    rsvpColumn: {
+      alignItems: 'center',
+      flex: 1,
+      paddingVertical: 4,
+    },
+    cardValue: {
+      fontSize: FONTS.FONTSIZE.SEMI,
+      color: COLORS.TITLECOLOR,
+      fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+    },
+    cardLabel: {
+      fontSize: FONTS.FONTSIZE.SEMIMINI,
+      color: COLORS.PRIMARYBLACK,
+      fontFamily: FONTS.FONT_FAMILY.REGULAR,
+      textAlign: 'center',
+      marginTop: 4,
+    },
   });
   const {evnentObj, isUpcommingEvent, item} = route.params;
 
   const navigation = useNavigation();
   const [qrImageUri, setQrImageUri] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pageNumber] = useState(1);
+  const [eventDashData, setEventDashData] = useState(null);
+  const [dashLoading, setDashLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
 
   useEffect(() => {
     if (isUpcommingEvent && evnentObj && evnentObj?.eventId) {
@@ -92,6 +172,46 @@ const EventDetails = ({route}) => {
       setLoading(false);
     }
   }, [evnentObj, isUpcommingEvent]);
+
+  useEffect(() => {
+    if (evnentObj?.eventId) {
+      setDashLoading(true);
+      httpClient
+        .get(
+          `event/dashboard?pageNumber=${pageNumber}&pageSize=${PAGE_SIZE}&eventId=${evnentObj.eventId}`,
+        )
+        .then(response => {
+          if (response.data.status) {
+            const totalRecords = response?.data?.result?.totalRecord || 0;
+            const calculatedTotalPages = Math.ceil(totalRecords / PAGE_SIZE);
+            const newData =
+              response?.data?.result?.data || response?.data?.result;
+
+            if (newData?.length > 0) {
+              setEventDashData(newData[0]); // single event object
+            } else {
+              setEventDashData(null);
+            }
+
+            const canLoadMore =
+              pageNumber < calculatedTotalPages && newData?.length > 0;
+            setHasMore(canLoadMore);
+          } else {
+            NOTIFY_MESSAGE(
+              response?.data?.message
+                ? response?.data?.message
+                : 'Something Went Wrong',
+            );
+          }
+        })
+        .catch(err => {
+          NOTIFY_MESSAGE(err || err?.message ? 'Something Went Wrong' : null);
+        })
+        .finally(() => {
+          setDashLoading(false);
+        });
+    }
+  }, [evnentObj?.eventId, pageNumber]);
 
   const getQrCode = async () => {
     const state = await NetInfo.fetch();
@@ -561,280 +681,281 @@ const EventDetails = ({route}) => {
                   </View>
                 )}
               </View>
-              <View style={{marginBottom: 0}}>
-                <View>
-                  <Text style={styles.label}>Total Guests</Text>
-                  <View
-                    style={{
-                      marginBottom: 10,
-                      borderRadius: 10,
-                    }}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 4,
-                        justifyContent: 'space-between',
-                      }}>
-                      <TouchableOpacity
-                        disabled={!item?.write}
-                        onPress={() => {
-                          navigation.navigate('NameListScreen', {
-                            title: 'Total Number Of Adults',
-                            item1: evnentObj,
-                            type: 'TotalNumberOfAdults',
-                          });
-                        }}
-                        style={styles.tabContianer1}>
-                        <Text
-                          numberOfLines={1}
-                          style={{
-                            fontSize: FONTS.FONTSIZE.SEMI,
-                            fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                            textAlign: 'center',
-                            color: COLORS.TITLECOLOR,
-                          }}>
-                          {evnentObj?.TotalNumberofGuests
-                            ? evnentObj?.TotalNumberofGuests
-                            : 0}
-                        </Text>
-                        <Text
-                          numberOfLines={3}
-                          style={{
-                            fontSize: FONTS.FONTSIZE.MINI,
-                            fontFamily: FONTS.FONT_FAMILY.EXTRA_LIGHT,
-                            textAlign: 'center',
-                            color: COLORS.PRIMARYBLACK,
-                          }}>
-                          Total Number Of Adults
-                        </Text>
-                      </TouchableOpacity>
+              <View style={{marginBottom: 10}}>
+                <Text style={[styles.label]}>Total Guests</Text>
 
-                      <TouchableOpacity
-                        disabled={!item?.write}
-                        onPress={() => {
-                          navigation.navigate('NameListScreen', {
-                            title: 'Total Number Of Kids',
-                            item1: evnentObj,
-                            type: 'TotalNumberOfKids',
-                          });
-                        }}
-                        style={styles.tabContianer1}>
-                        <Text
-                          numberOfLines={1}
-                          style={{
-                            fontSize: FONTS.FONTSIZE.SEMI,
-                            fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                            textAlign: 'center',
-                            color: COLORS.TITLECOLOR,
-                          }}>
-                          {evnentObj?.TotalNumberofKids
-                            ? evnentObj?.TotalNumberofKids
-                            : 0}
-                        </Text>
-                        <Text
-                          numberOfLines={3}
-                          style={{
-                            fontSize: FONTS.FONTSIZE.MINI,
-                            fontFamily: FONTS.FONT_FAMILY.EXTRA_LIGHT,
-                            textAlign: 'center',
-                            color: COLORS.PRIMARYBLACK,
-                          }}>
-                          Total Number Of Kids
-                        </Text>
-                      </TouchableOpacity>
+                {dashLoading ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={COLORS.LABELCOLOR}
+                    style={{marginVertical: 10}}
+                  />
+                ) : eventDashData ? (
+                  <>
+                    {/* Yes Responses */}
+                    {eventDashData?.totalYesResponseGuest != null && (
+                      <View style={styles.fullWidthCard}>
+                        <TouchableOpacity
+                          onPress={() =>
+                            navigation.navigate('NameListScreen', {
+                              title: 'Total Yes Responses',
+                              item1: evnentObj,
+                              type: 'TotalYesResponseGuest',
+                            })
+                          }
+                          style={styles.topHalf}>
+                          <Text style={styles.cardValue}>
+                            {eventDashData.totalYesResponseGuest}
+                          </Text>
+                          <Text style={styles.cardLabel}>
+                            Total Yes Responses
+                          </Text>
+                        </TouchableOpacity>
 
-                      <TouchableOpacity
-                        disabled={!item?.write}
-                        onPress={() => {
-                          navigation.navigate('NameListScreen', {
-                            title: 'Total Guests',
-                            item1: evnentObj,
-                            type: 'TotalRsvpGuest',
-                          });
-                        }}
-                        style={styles.tabContianer1}>
-                        <Text
-                          numberOfLines={1}
-                          style={{
-                            fontSize: FONTS.FONTSIZE.SEMI,
-                            fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                            textAlign: 'center',
-                            color: COLORS.TITLECOLOR,
-                          }}>
-                          {evnentObj?.TotalGuests ? evnentObj?.TotalGuests : 0}
-                        </Text>
-                        <Text
-                          numberOfLines={3}
-                          style={{
-                            fontSize: FONTS.FONTSIZE.MINI,
-                            fontFamily: FONTS.FONT_FAMILY.EXTRA_LIGHT,
-                            textAlign: 'center',
-                            color: COLORS.PRIMARYBLACK,
-                          }}>
-                          Total Guests
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                  <View
-                    style={{
-                      borderRadius: 10,
-                      marginTop: 0,
-                    }}>
-                    <TouchableOpacity
-                      disabled={!item?.write}
-                      onPress={() => {
-                        navigation.navigate('NameListScreen', {
-                          title: 'Total RSVP Count',
-                          item1: evnentObj,
-                          type: 'TotalRsvpGuest',
-                        });
-                      }}
-                      style={{
-                        paddingHorizontal: 15,
-                        paddingVertical: 10,
-                        backgroundColor: COLORS.PRIMARYWHITE,
-                        borderRadius: 10,
-                        overflow: 'hidden',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: 10,
-                      }}>
-                      <Text
-                        numberOfLines={2}
-                        style={{
-                          fontSize: FONTS.FONTSIZE.SEMI,
-                          fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                          textAlign: 'center',
-                          color: COLORS.TITLECOLOR,
-                        }}>
-                        {evnentObj?.TotalRSVPCount
-                          ? evnentObj?.TotalRSVPCount
-                          : 0}
-                      </Text>
-                      <Text
-                        numberOfLines={3}
-                        style={{
-                          fontSize: FONTS.FONTSIZE.MINI,
-                          fontFamily: FONTS.FONT_FAMILY.EXTRA_LIGHT,
-                          color: COLORS.PRIMARYBLACK,
-                          textAlign: 'center',
-                        }}>
-                        Total RSVP Count
-                      </Text>
-                    </TouchableOpacity>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 4,
-                        justifyContent: 'space-between',
-                      }}>
-                      <TouchableOpacity
-                        disabled={!item?.write}
-                        onPress={() => {
-                          navigation.navigate('NameListScreen', {
-                            title: 'Total Yes Responses',
-                            item1: evnentObj,
-                            type: 'TotalYesResponseGuest',
-                          });
-                        }}
-                        style={styles.tabContianer1}>
-                        <Text
-                          numberOfLines={2}
-                          style={{
-                            fontSize: FONTS.FONTSIZE.SEMI,
-                            fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                            textAlign: 'center',
-                            color: COLORS.TITLECOLOR,
-                          }}>
-                          {evnentObj?.TotalPositiveResponses
-                            ? evnentObj?.TotalPositiveResponses
-                            : 0}
-                        </Text>
-                        <Text
-                          numberOfLines={3}
-                          style={{
-                            fontSize: FONTS.FONTSIZE.MINI,
-                            fontFamily: FONTS.FONT_FAMILY.EXTRA_LIGHT,
-                            textAlign: 'center',
-                            color: COLORS.PRIMARYBLACK,
-                          }}>
-                          Total Yes Responses
-                        </Text>
-                      </TouchableOpacity>
+                        {(eventDashData?.totalYesNumberOfAdults != null ||
+                          eventDashData?.totalYesNumberOfKids != null) && (
+                          <>
+                            <View style={styles.divider} />
+                            <View style={styles.bottomHalf}>
+                              {eventDashData?.totalYesNumberOfAdults !=
+                                null && (
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    navigation.navigate('NameListScreen', {
+                                      title: 'Total Adults with Yes Responses',
+                                      item1: evnentObj,
+                                      type: 'TotalYesNumberOfAdults',
+                                    })
+                                  }
+                                  style={styles.rsvpColumn}>
+                                  <Text style={styles.cardValue}>
+                                    {eventDashData.totalYesNumberOfAdults}
+                                  </Text>
+                                  <Text style={styles.cardLabel}>Adults</Text>
+                                </TouchableOpacity>
+                              )}
+                              {eventDashData?.totalYesNumberOfAdults != null &&
+                                eventDashData?.totalYesNumberOfKids != null && (
+                                  <View style={styles.verticalDivider} />
+                                )}
+                              {eventDashData?.totalYesNumberOfKids != null && (
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    navigation.navigate('NameListScreen', {
+                                      title: 'Total Kids with Yes Responses',
+                                      item1: evnentObj,
+                                      type: 'TotalYesNumberOfKids',
+                                    })
+                                  }
+                                  style={styles.rsvpColumn}>
+                                  <Text style={styles.cardValue}>
+                                    {eventDashData.totalYesNumberOfKids}
+                                  </Text>
+                                  <Text style={styles.cardLabel}>Kids</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          </>
+                        )}
+                      </View>
+                    )}
 
-                      <TouchableOpacity
-                        disabled={!item?.write}
-                        onPress={() => {
-                          navigation.navigate('NameListScreen', {
-                            title: 'Total No Responses',
-                            item1: evnentObj,
-                            type: 'TotalNoResponseGuest',
-                          });
-                        }}
-                        style={styles.tabContianer1}>
-                        <Text
-                          numberOfLines={2}
-                          style={{
-                            fontSize: FONTS.FONTSIZE.SEMI,
-                            fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                            textAlign: 'center',
-                            color: COLORS.TITLECOLOR,
-                          }}>
-                          {evnentObj?.TotalNegativeResponses
-                            ? evnentObj?.TotalNegativeResponses
-                            : 0}
-                        </Text>
-                        <Text
-                          numberOfLines={3}
-                          style={{
-                            fontSize: FONTS.FONTSIZE.MINI,
-                            fontFamily: FONTS.FONT_FAMILY.EXTRA_LIGHT,
-                            color: COLORS.PRIMARYBLACK,
-                            textAlign: 'center',
-                          }}>
-                          Total No Responses
-                        </Text>
-                      </TouchableOpacity>
+                    {/* No Responses */}
+                    {eventDashData?.totalNoResponseGuest != null && (
+                      <View style={styles.fullWidthCard}>
+                        <TouchableOpacity
+                          onPress={() =>
+                            navigation.navigate('NameListScreen', {
+                              title: 'Total No Responses',
+                              item1: evnentObj,
+                              type: 'TotalNoResponseGuest',
+                            })
+                          }
+                          style={styles.topHalf}>
+                          <Text style={styles.cardValue}>
+                            {eventDashData.totalNoResponseGuest}
+                          </Text>
+                          <Text style={styles.cardLabel}>
+                            Total No Responses
+                          </Text>
+                        </TouchableOpacity>
 
-                      <TouchableOpacity
-                        disabled={!item?.write}
-                        onPress={() => {
-                          navigation.navigate('NameListScreen', {
-                            title: 'Total Maybe Responses',
-                            item1: evnentObj,
-                            type: 'TotalMaybeResponseGuest',
-                          });
-                        }}
-                        style={styles.tabContianer1}>
-                        <Text
-                          numberOfLines={3}
-                          style={{
-                            fontSize: FONTS.FONTSIZE.SEMI,
-                            fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                            textAlign: 'center',
-                            color: COLORS.TITLECOLOR,
-                          }}>
-                          {evnentObj?.TotalMaybeResponses
-                            ? evnentObj?.TotalMaybeResponses
-                            : 0}
-                        </Text>
-                        <Text
-                          numberOfLines={2}
-                          style={{
-                            fontSize: FONTS.FONTSIZE.MINI,
-                            fontFamily: FONTS.FONT_FAMILY.EXTRA_LIGHT,
-                            textAlign: 'center',
-                            color: COLORS.PRIMARYBLACK,
-                          }}>
-                          Total Maybe Responses
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
+                        {(eventDashData?.totalNoNumberOfAdults != null ||
+                          eventDashData?.totalNoNumberOfKids != null) && (
+                          <>
+                            <View style={styles.divider} />
+                            <View style={styles.bottomHalf}>
+                              {eventDashData?.totalNoNumberOfAdults != null && (
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    navigation.navigate('NameListScreen', {
+                                      title: 'Total Adults with No Responses',
+                                      item1: evnentObj,
+                                      type: 'TotalNoNumberOfAdults',
+                                    })
+                                  }
+                                  style={styles.rsvpColumn}>
+                                  <Text style={styles.cardValue}>
+                                    {eventDashData.totalNoNumberOfAdults}
+                                  </Text>
+                                  <Text style={styles.cardLabel}>Adults</Text>
+                                </TouchableOpacity>
+                              )}
+                              {eventDashData?.totalNoNumberOfAdults != null &&
+                                eventDashData?.totalNoNumberOfKids != null && (
+                                  <View style={styles.verticalDivider} />
+                                )}
+                              {eventDashData?.totalNoNumberOfKids != null && (
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    navigation.navigate('NameListScreen', {
+                                      title: 'Total Kids with No Responses',
+                                      item1: evnentObj,
+                                      type: 'TotalNoNumberOfKids',
+                                    })
+                                  }
+                                  style={styles.rsvpColumn}>
+                                  <Text style={styles.cardValue}>
+                                    {eventDashData.totalNoNumberOfKids}
+                                  </Text>
+                                  <Text style={styles.cardLabel}>Kids</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          </>
+                        )}
+                      </View>
+                    )}
+
+                    {/* Maybe Responses */}
+                    {eventDashData?.totalMaybeResponseGuest != null && (
+                      <View style={styles.fullWidthCard}>
+                        <TouchableOpacity
+                          onPress={() =>
+                            navigation.navigate('NameListScreen', {
+                              title: 'Total Maybe Responses',
+                              item1: evnentObj,
+                              type: 'TotalMaybeResponseGuest',
+                            })
+                          }
+                          style={styles.topHalf}>
+                          <Text style={styles.cardValue}>
+                            {eventDashData.totalMaybeResponseGuest}
+                          </Text>
+                          <Text style={styles.cardLabel}>
+                            Total Maybe Responses
+                          </Text>
+                        </TouchableOpacity>
+
+                        {(eventDashData?.totalMaybeNumberOfAdults != null ||
+                          eventDashData?.totalMaybeNumberOfKids != null) && (
+                          <>
+                            <View style={styles.divider} />
+                            <View style={styles.bottomHalf}>
+                              {eventDashData?.totalMaybeNumberOfAdults !=
+                                null && (
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    navigation.navigate('NameListScreen', {
+                                      title:
+                                        'Total Adults with Maybe Responses',
+                                      item1: evnentObj,
+                                      type: 'TotalMaybeNumberOfAdults',
+                                    })
+                                  }
+                                  style={styles.rsvpColumn}>
+                                  <Text style={styles.cardValue}>
+                                    {eventDashData.totalMaybeNumberOfAdults}
+                                  </Text>
+                                  <Text style={styles.cardLabel}>Adults</Text>
+                                </TouchableOpacity>
+                              )}
+                              {eventDashData?.totalMaybeNumberOfAdults !=
+                                null &&
+                                eventDashData?.totalMaybeNumberOfKids !=
+                                  null && (
+                                  <View style={styles.verticalDivider} />
+                                )}
+                              {eventDashData?.totalMaybeNumberOfKids !=
+                                null && (
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    navigation.navigate('NameListScreen', {
+                                      title: 'Total Kids with Maybe Responses',
+                                      item1: evnentObj,
+                                      type: 'TotalMaybeNumberOfKids',
+                                    })
+                                  }
+                                  style={styles.rsvpColumn}>
+                                  <Text style={styles.cardValue}>
+                                    {eventDashData.totalMaybeNumberOfKids}
+                                  </Text>
+                                  <Text style={styles.cardLabel}>Kids</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          </>
+                        )}
+                      </View>
+                    )}
+
+                    {/* Bottom 3 stat cards */}
+                    {(eventDashData?.totalRsvpGuest != null ||
+                      eventDashData?.totalRSVPPendingGuest != null ||
+                      eventDashData?.totalCheckInGuest != null) && (
+                      <View style={styles.grid}>
+                        {eventDashData?.totalRsvpGuest != null && (
+                          <TouchableOpacity
+                            onPress={() =>
+                              navigation.navigate('NameListScreen', {
+                                title: 'Total RSVP',
+                                item1: evnentObj,
+                                type: 'TotalRsvpGuest',
+                              })
+                            }
+                            style={styles.card}>
+                            <Text style={styles.cardValue}>
+                              {eventDashData.totalRsvpGuest}
+                            </Text>
+                            <Text style={styles.cardLabel}>Total RSVP</Text>
+                          </TouchableOpacity>
+                        )}
+                        {eventDashData?.totalRSVPPendingGuest != null && (
+                          <TouchableOpacity
+                            onPress={() =>
+                              navigation.navigate('NameListScreen', {
+                                title: 'Not Yet RSVP',
+                                item1: evnentObj,
+                                type: 'TotalRSVPPendingGuest',
+                              })
+                            }
+                            style={styles.card}>
+                            <Text style={styles.cardValue}>
+                              {eventDashData.totalRSVPPendingGuest}
+                            </Text>
+                            <Text style={styles.cardLabel}>Not Yet RSVP</Text>
+                          </TouchableOpacity>
+                        )}
+                        {eventDashData?.totalCheckInGuest != null && (
+                          <TouchableOpacity
+                            onPress={() =>
+                              navigation.navigate('NameListScreen', {
+                                title: 'Total Attendee',
+                                item1: evnentObj,
+                                type: 'TotalCheckInGuest',
+                              })
+                            }
+                            style={styles.card}>
+                            <Text style={styles.cardValue}>
+                              {eventDashData.totalCheckInGuest}
+                            </Text>
+                            <Text style={styles.cardLabel}>Total Attendee</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    )}
+                  </>
+                ) : null}
               </View>
             </View>
           </ScrollView>

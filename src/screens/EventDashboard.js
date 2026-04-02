@@ -295,14 +295,14 @@ const EventDashboard = ({route}) => {
   };
 
   const renderStatisticCard = (label, value, item, type) => {
+    if (value == null) return null;
     return (
       <TouchableOpacity
-        disabled={!item1?.write}
         style={styles.card}
         onPress={() => {
           navigateToNameList(label, item, type);
         }}>
-        <Text style={styles.value}>{value || 0}</Text>
+        <Text style={styles.value}>{value ?? 0}</Text>
         <Text style={styles.label}>{label}</Text>
       </TouchableOpacity>
     );
@@ -383,172 +383,198 @@ const EventDashboard = ({route}) => {
                     </Text>
 
                     {/* for positive responses */}
-                    <View style={styles.fullWidthCard}>
-                      {/* Top Half: Total RSVP Count */}
-                      <TouchableOpacity
-                        disabled={!item1?.write}
-                        onPress={() => {
-                          navigateToNameList(
-                            'Total Yes Responses',
-                            item,
-                            'TotalYesResponseGuest',
-                          );
-                        }}
-                        style={styles.topHalf}>
-                        <Text style={styles.value}>
-                          {item?.totalYesResponseGuest || 0}
-                        </Text>
-                        <Text style={styles.label}>Total Yes Responses</Text>
-                      </TouchableOpacity>
-                      {/* Divider Line */}
-                      <View style={styles.divider} />
-                      {/* Bottom Half: Adults & Kids RSVP */}
-                      <View style={styles.bottomHalf}>
+                    {item?.totalYesResponseGuest != null && (
+                      <View style={styles.fullWidthCard}>
                         <TouchableOpacity
-                          disabled={!item1?.write}
                           onPress={() => {
                             navigateToNameList(
-                              'Total Adults with Yes Responses',
+                              'Total Yes Responses',
                               item,
-                              'TotalYesNumberOfAdults',
+                              'TotalYesResponseGuest',
                             );
                           }}
-                          style={styles.rsvpColumn}>
+                          style={styles.topHalf}>
                           <Text style={styles.value}>
-                            {item?.totalYesNumberOfAdults || 0}
+                            {item?.totalYesResponseGuest ?? 0}
                           </Text>
-                          <Text style={styles.label}>Adults</Text>
+                          <Text style={styles.label}>Total Yes Responses</Text>
                         </TouchableOpacity>
-                        <View style={styles.verticalDivider} />
-                        <TouchableOpacity
-                          disabled={!item1?.write}
-                          onPress={() => {
-                            navigateToNameList(
-                              'Total Kids with Yes Responses',
-                              item,
-                              'TotalYesNumberOfKids',
-                            );
-                          }}
-                          style={styles.rsvpColumn}>
-                          <Text style={styles.value}>
-                            {item?.totalYesNumberOfKids || 0}
-                          </Text>
-                          <Text style={styles.label}>Kids</Text>
-                        </TouchableOpacity>
+                        {(item?.totalYesNumberOfAdults != null ||
+                          item?.totalYesNumberOfKids != null) && (
+                          <>
+                            <View style={styles.divider} />
+                            <View style={styles.bottomHalf}>
+                              {item?.totalYesNumberOfAdults != null && (
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    navigateToNameList(
+                                      'Total Adults with Yes Responses',
+                                      item,
+                                      'TotalYesNumberOfAdults',
+                                    );
+                                  }}
+                                  style={styles.rsvpColumn}>
+                                  <Text style={styles.value}>
+                                    {item?.totalYesNumberOfAdults ?? 0}
+                                  </Text>
+                                  <Text style={styles.label}>Adults</Text>
+                                </TouchableOpacity>
+                              )}
+                              {item?.totalYesNumberOfAdults != null &&
+                                item?.totalYesNumberOfKids != null && (
+                                  <View style={styles.verticalDivider} />
+                                )}
+                              {item?.totalYesNumberOfKids != null && (
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    navigateToNameList(
+                                      'Total Kids with Yes Responses',
+                                      item,
+                                      'TotalYesNumberOfKids',
+                                    );
+                                  }}
+                                  style={styles.rsvpColumn}>
+                                  <Text style={styles.value}>
+                                    {item?.totalYesNumberOfKids ?? 0}
+                                  </Text>
+                                  <Text style={styles.label}>Kids</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          </>
+                        )}
                       </View>
-                    </View>
+                    )}
 
-                    {/* for nagative responses */}
-                    <View style={styles.fullWidthCard}>
-                      {/* Top Half: Total RSVP Count */}
-                      <TouchableOpacity
-                        disabled={!item1?.write}
-                        onPress={() => {
-                          navigateToNameList(
-                            'Total No Responses',
-                            item,
-                            'TotalNoResponseGuest',
-                          );
-                        }}
-                        style={styles.topHalf}>
-                        <Text style={styles.value}>
-                          {item?.totalNoResponseGuest || 0}
-                        </Text>
-                        <Text style={styles.label}>Total No Responses</Text>
-                      </TouchableOpacity>
-                      {/* Divider Line */}
-                      <View style={styles.divider} />
-                      {/* Bottom Half: Adults & Kids RSVP */}
-                      <View style={styles.bottomHalf}>
+                    {/* for negative responses */}
+                    {item?.totalNoResponseGuest != null && (
+                      <View style={styles.fullWidthCard}>
                         <TouchableOpacity
-                          disabled={!item1?.write}
                           onPress={() => {
                             navigateToNameList(
-                              'Total Adults with No Responses',
+                              'Total No Responses',
                               item,
-                              'TotalNoNumberOfAdults',
+                              'TotalNoResponseGuest',
                             );
                           }}
-                          style={styles.rsvpColumn}>
+                          style={styles.topHalf}>
                           <Text style={styles.value}>
-                            {item?.totalNoNumberOfAdults || 0}
+                            {item?.totalNoResponseGuest ?? 0}
                           </Text>
-                          <Text style={styles.label}>Adults</Text>
+                          <Text style={styles.label}>Total No Responses</Text>
                         </TouchableOpacity>
-                        <View style={styles.verticalDivider} />
-                        <TouchableOpacity
-                          disabled={!item1?.write}
-                          onPress={() => {
-                            navigateToNameList(
-                              'Total Kids with No Responses',
-                              item,
-                              'TotalNoNumberOfKids',
-                            );
-                          }}
-                          style={styles.rsvpColumn}>
-                          <Text style={styles.value}>
-                            {item?.totalNoNumberOfKids || 0}
-                          </Text>
-                          <Text style={styles.label}>Kids</Text>
-                        </TouchableOpacity>
+                        {(item?.totalNoNumberOfAdults != null ||
+                          item?.totalNoNumberOfKids != null) && (
+                          <>
+                            <View style={styles.divider} />
+                            <View style={styles.bottomHalf}>
+                              {item?.totalNoNumberOfAdults != null && (
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    navigateToNameList(
+                                      'Total Adults with No Responses',
+                                      item,
+                                      'TotalNoNumberOfAdults',
+                                    );
+                                  }}
+                                  style={styles.rsvpColumn}>
+                                  <Text style={styles.value}>
+                                    {item?.totalNoNumberOfAdults ?? 0}
+                                  </Text>
+                                  <Text style={styles.label}>Adults</Text>
+                                </TouchableOpacity>
+                              )}
+                              {item?.totalNoNumberOfAdults != null &&
+                                item?.totalNoNumberOfKids != null && (
+                                  <View style={styles.verticalDivider} />
+                                )}
+                              {item?.totalNoNumberOfKids != null && (
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    navigateToNameList(
+                                      'Total Kids with No Responses',
+                                      item,
+                                      'TotalNoNumberOfKids',
+                                    );
+                                  }}
+                                  style={styles.rsvpColumn}>
+                                  <Text style={styles.value}>
+                                    {item?.totalNoNumberOfKids ?? 0}
+                                  </Text>
+                                  <Text style={styles.label}>Kids</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          </>
+                        )}
                       </View>
-                    </View>
+                    )}
 
                     {/* for Maybe responses */}
-                    <View style={styles.fullWidthCard}>
-                      {/* Top Half: Total RSVP Count */}
-                      <TouchableOpacity
-                        disabled={!item1?.write}
-                        onPress={() => {
-                          navigateToNameList(
-                            'Total Maybe Responses',
-                            item,
-                            'TotalMaybeResponseGuest',
-                          );
-                        }}
-                        style={styles.topHalf}>
-                        <Text style={styles.value}>
-                          {item?.totalMaybeResponseGuest || 0}
-                        </Text>
-                        <Text style={styles.label}>Total Maybe Responses</Text>
-                      </TouchableOpacity>
-                      {/* Divider Line */}
-                      <View style={styles.divider} />
-                      {/* Bottom Half: Adults & Kids RSVP */}
-                      <View style={styles.bottomHalf}>
+                    {item?.totalMaybeResponseGuest != null && (
+                      <View style={styles.fullWidthCard}>
                         <TouchableOpacity
-                          disabled={!item1?.write}
                           onPress={() => {
                             navigateToNameList(
-                              'Total Adults with Maybe Responses',
+                              'Total Maybe Responses',
                               item,
-                              'TotalMaybeNumberOfAdults',
+                              'TotalMaybeResponseGuest',
                             );
                           }}
-                          style={styles.rsvpColumn}>
+                          style={styles.topHalf}>
                           <Text style={styles.value}>
-                            {item?.totalMaybeNumberOfAdults || 0}
+                            {item?.totalMaybeResponseGuest ?? 0}
                           </Text>
-                          <Text style={styles.label}>Adults</Text>
-                        </TouchableOpacity>
-                        <View style={styles.verticalDivider} />
-                        <TouchableOpacity
-                          disabled={!item1?.write}
-                          onPress={() => {
-                            navigateToNameList(
-                              'Total Kids with Maybe Responses',
-                              item,
-                              'TotalMaybeNumberOfKids',
-                            );
-                          }}
-                          style={styles.rsvpColumn}>
-                          <Text style={styles.value}>
-                            {item?.totalMaybeNumberOfKids || 0}
+                          <Text style={styles.label}>
+                            Total Maybe Responses
                           </Text>
-                          <Text style={styles.label}>Kids</Text>
                         </TouchableOpacity>
+                        {(item?.totalMaybeNumberOfAdults != null ||
+                          item?.totalMaybeNumberOfKids != null) && (
+                          <>
+                            <View style={styles.divider} />
+                            <View style={styles.bottomHalf}>
+                              {item?.totalMaybeNumberOfAdults != null && (
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    navigateToNameList(
+                                      'Total Adults with Maybe Responses',
+                                      item,
+                                      'TotalMaybeNumberOfAdults',
+                                    );
+                                  }}
+                                  style={styles.rsvpColumn}>
+                                  <Text style={styles.value}>
+                                    {item?.totalMaybeNumberOfAdults ?? 0}
+                                  </Text>
+                                  <Text style={styles.label}>Adults</Text>
+                                </TouchableOpacity>
+                              )}
+                              {item?.totalMaybeNumberOfAdults != null &&
+                                item?.totalMaybeNumberOfKids != null && (
+                                  <View style={styles.verticalDivider} />
+                                )}
+                              {item?.totalMaybeNumberOfKids != null && (
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    navigateToNameList(
+                                      'Total Kids with Maybe Responses',
+                                      item,
+                                      'TotalMaybeNumberOfKids',
+                                    );
+                                  }}
+                                  style={styles.rsvpColumn}>
+                                  <Text style={styles.value}>
+                                    {item?.totalMaybeNumberOfKids ?? 0}
+                                  </Text>
+                                  <Text style={styles.label}>Kids</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          </>
+                        )}
                       </View>
-                    </View>
+                    )}
 
                     <View style={styles.grid}>
                       {renderStatisticCard(
