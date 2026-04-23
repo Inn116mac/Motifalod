@@ -42,11 +42,12 @@ import {
 import FONTS from '../theme/Fonts';
 import {AntDesign} from '@react-native-vector-icons/ant-design';
 import SadDemises from '../components/root/SadDemises';
+import SponserLayout from '../components/root/Layout/SponserLayout';
 
 const ViewScreen = ({route}) => {
   const {item} = route.params.data;
   const {width, height} = useWindowDimensions();
-
+  const layout = String(item?.layout ?? '');
   const styles = StyleSheet.create({
     plusButton: {
       height: 40,
@@ -338,20 +339,22 @@ const ViewScreen = ({route}) => {
         flex: 1,
         backgroundColor: COLORS.BACKGROUNDCOLOR,
       }}>
-      <CustomHeader
-        leftOnPress={() => {
-          navigation.goBack();
-        }}
-        leftIcon={
-          <FontAwesome6
-            name="angle-left"
-            size={26}
-            color={COLORS.LABELCOLOR}
-            iconStyle="solid"
-          />
-        }
-        title={item?.name}
-      />
+      {(layout !== '9' || data.length === 0) && (
+        <CustomHeader
+          leftOnPress={() => {
+            navigation.goBack();
+          }}
+          leftIcon={
+            <FontAwesome6
+              name="angle-left"
+              size={26}
+              color={COLORS.LABELCOLOR}
+              iconStyle="solid"
+            />
+          }
+          title={item?.name}
+        />
+      )}
       {combinedLoading ? (
         <Loader />
       ) : isConnected ? (
@@ -461,6 +464,8 @@ const ViewScreen = ({route}) => {
                   pageNumber={pageNumber}
                   PAGE_SIZE={PAGE_SIZE}
                 />
+              ) : layout === '9' ? (
+                <SponserLayout data={data} item={item} />
               ) : null
             ) : (
               <NoDataFound />

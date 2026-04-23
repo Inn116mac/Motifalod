@@ -79,7 +79,6 @@ const EMOJIS = [
   '🔬',
 ];
 
-// ─── Inline picker ────────────────────────────────────────────────────────────
 function SheetPicker({
   label,
   items,
@@ -214,7 +213,6 @@ function CategoryFormModal({visible, category, onClose, onSaved}) {
         <View style={ups.catFormSheet}>
           <View style={ups.pickHandle} />
           <ScrollView contentContainerStyle={{paddingBottom: 20}}>
-            {/* ── Name ── */}
             <Text style={ups.catFormFieldLabel}>CATEGORY NAME *</Text>
             <TextInput
               style={ups.catFormInput}
@@ -225,7 +223,6 @@ function CategoryFormModal({visible, category, onClose, onSaved}) {
               maxLength={60}
             />
 
-            {/* ── Icon grid ── */}
             <Text style={[ups.catFormFieldLabel, {marginTop: 14}]}>
               CHOOSE ICON
             </Text>
@@ -241,7 +238,6 @@ function CategoryFormModal({visible, category, onClose, onSaved}) {
               ))}
             </View>
 
-            {/* ── Preview ── */}
             {name.trim() || icon ? (
               <View style={ups.catPreviewRow}>
                 <Text style={ups.catPreviewEmoji}>{icon || '📁'}</Text>
@@ -252,7 +248,6 @@ function CategoryFormModal({visible, category, onClose, onSaved}) {
               </View>
             ) : null}
           </ScrollView>
-          {/* ── Actions ── */}
           <View style={[ups.actions]}>
             <TouchableOpacity
               style={ups.cancelBtn}
@@ -339,7 +334,6 @@ function ManageCategoriesModal({
       <View style={ups.manageSheet}>
         <View style={ups.pickHandle} />
 
-        {/* Header */}
         <View style={ups.manageHeaderRow}>
           <View>
             <Text style={ups.manageTitle}>Manage Categories</Text>
@@ -353,7 +347,6 @@ function ManageCategoriesModal({
         </View>
         <View style={ups.divider} />
 
-        {/* List */}
         {loading ? (
           <View style={ups.centred}>
             <ActivityIndicator color={COLORS.TITLECOLOR} />
@@ -399,7 +392,6 @@ function ManageCategoriesModal({
         )}
       </View>
 
-      {/* Edit form layered on top */}
       <CategoryFormModal
         visible={formOpen}
         category={editTarget}
@@ -427,7 +419,6 @@ function CategoryGrid({
   isAdmin,
   canWrite,
 }) {
-  // 3 columns, account for 16px horizontal padding on each side + 10px gap
   const COLS = 3;
   const TILE = (SW - 35 - (COLS - 1) * 10) / COLS;
 
@@ -436,7 +427,6 @@ function CategoryGrid({
 
   return (
     <View>
-      {/* Section header row: label left, Manage button right */}
       <View style={ups.catGridHeaderRow}>
         <Text style={ups.label}>CATEGORY</Text>
         {(isAdmin || canWrite) && (
@@ -460,7 +450,6 @@ function CategoryGrid({
           {categories.length === 0 && (
             <Text style={ups.catEmptyTxt}>No categories found</Text>
           )}
-          {/* Existing category tiles */}
           {categories.map(cat => {
             const active = String(selected) === String(cat.categoryId);
             return (
@@ -483,7 +472,6 @@ function CategoryGrid({
             );
           })}
 
-          {/* "+ New" tile — only for admin or canWrite */}
           {(isAdmin || canWrite) && (
             <TouchableOpacity
               style={[
@@ -513,7 +501,6 @@ const FileTile = React.memo(
     useEffect(() => {
       if (!isVideo || !asset.uri) return;
 
-      // Check cache first
       const cached = videoThumbCache.get(asset.uri);
       if (cached && cached !== 'loading' && cached !== 'error') {
         setThumbUri(cached);
@@ -521,7 +508,6 @@ const FileTile = React.memo(
       }
       if (cached === 'loading' || cached === 'error') return;
 
-      // Queue thumbnail generation
       videoThumbCache.set(asset.uri, 'loading');
       const capturedUri = asset.uri;
 
@@ -547,7 +533,6 @@ const FileTile = React.memo(
       <View style={ups.fileTile}>
         {isVideo ? (
           thumbUri ? (
-            // Show generated thumbnail
             <Image
               source={{uri: thumbUri}}
               style={ups.fileTileImg}
@@ -555,7 +540,6 @@ const FileTile = React.memo(
               resizeMethod="resize"
             />
           ) : (
-            // Still generating — dark placeholder
             <View style={ups.fileTileVideo}>
               <Text style={{fontSize: 20}}>🎬</Text>
             </View>
@@ -583,7 +567,6 @@ const FileTile = React.memo(
             </View>
           )}
         </View>
-        {/* Play icon overlay for videos */}
         {isVideo && (
           <View style={ups.fileTilePlayOverlay}>
             <Text style={ups.fileTilePlayTxt}>▶</Text>
@@ -615,7 +598,6 @@ function showCameraChoice(openCamera) {
   ]);
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function GalleryUploadSheet({
   visible,
   onClose,
@@ -701,7 +683,6 @@ export default function GalleryUploadSheet({
     onClose();
   }, [onClose]);
 
-  // ── Pick from library — MERGES with existing ─────────────────────────────
   const MAX_PICK = 200; // keep individual pick sessions reasonable
   const ABSOLUTE_MAX = 200; // total files we can safely hold
 
@@ -855,11 +836,9 @@ export default function GalleryUploadSheet({
       return;
     }
 
-    // ── Size summary log ──────────────────────────────────────────────────
     const totalBytes = assets.reduce((sum, a) => sum + (a.fileSize || 0), 0);
     const totalMB = (totalBytes / (1024 * 1024)).toFixed(2);
     const totalGB = (totalBytes / (1024 * 1024 * 1024)).toFixed(3);
-    // console.log(`   Total  : ${totalMB} MB (${totalGB} GB)`);
 
     const selEvent = events?.find(
       e => String(e.id) === String(selectedEventId),
@@ -875,7 +854,6 @@ export default function GalleryUploadSheet({
       onAllDone,
     });
 
-    // Close sheet immediately — upload continues in background
     resetAndClose();
   }, [
     assets,
@@ -1054,10 +1032,6 @@ export default function GalleryUploadSheet({
 }
 
 const ups = StyleSheet.create({
-  safeAreaWrapper: {
-    flex: 1,
-    backgroundColor: 'red',
-  },
   kavWrapper: {
     flex: 1,
     justifyContent: 'flex-end',

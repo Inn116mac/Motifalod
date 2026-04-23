@@ -17,7 +17,11 @@ import Offline from '../components/root/Offline';
 import CustomHeader from '../components/root/CustomHeader';
 import Loader from '../components/root/Loader';
 import FONTS from '../theme/Fonts';
-import {formatPhoneToUS, isPhoneField, NOTIFY_MESSAGE} from '../constant/Module';
+import {
+  formatPhoneToUS,
+  isPhoneField,
+  NOTIFY_MESSAGE,
+} from '../constant/Module';
 import NetInfo from '@react-native-community/netinfo';
 import httpClient from '../connection/httpClient';
 import NoDataFound from '../components/root/NoDataFound';
@@ -28,6 +32,7 @@ import {
 import {AntDesign} from '@react-native-vector-icons/ant-design';
 import {IMAGE_URL} from '../connection/Config';
 import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
+import {getFileType} from '../utils/fileType';
 
 const ReportsData = ({route}) => {
   const {width, height} = useWindowDimensions();
@@ -298,13 +303,35 @@ const ReportsData = ({route}) => {
         ? item['event']
         : item['Member'] || item['member'] || '-';
 
-
     const total = item['Total'];
 
     const keys = Object.keys(item);
 
     const handleToggle = index => {
       setOpenIndex(openIndex === index ? null : index);
+    };
+
+    const isFileField = key => {
+      const lower = key?.toLowerCase();
+      return (
+        lower?.includes('slip') ||
+        lower?.includes('image') ||
+        lower?.includes('photo') ||
+        lower?.includes('file') ||
+        lower?.includes('attachment') ||
+        lower?.includes('document') ||
+        lower?.includes('receipt')
+      );
+    };
+
+    const handleFilePress = filePath => {
+      if (!filePath) return;
+      const type = getFileType(filePath);
+      if (type === 'image') {
+        navigation.navigate('FullImageScreen', {image: filePath});
+      } else if (type === 'video') {
+        navigation.navigate('VideoGalleryVideoScreen', {videoData: filePath});
+      }
     };
 
     return (
@@ -389,6 +416,7 @@ const ReportsData = ({route}) => {
                 let finalKey = key == 'FamilyMembers' ? 'Members' : key;
 
                 const isPhone = isPhoneField(key);
+                const isFile = isFileField(key);
 
                 return (
                   <View
@@ -481,10 +509,21 @@ const ReportsData = ({route}) => {
                         )}
                       </View>
                     ) : (
-                      <Text style={styles.text}>
+                      <Text
+                        onPress={() => {
+                          if (isFile && value) {
+                            handleFilePress(value);
+                          }
+                        }}
+                        style={[
+                          styles.text,
+                          isFile && value && {color: COLORS.TITLECOLOR},
+                        ]}>
                         {value !== null && value !== undefined && value !== ''
                           ? isPhone && value
                             ? formatPhoneToUS(value.toString()) // ✅ Format phone for non-array values
+                            : isFile && value
+                            ? value?.split('/')?.pop()
                             : value.toString()
                           : '-'}
                       </Text>

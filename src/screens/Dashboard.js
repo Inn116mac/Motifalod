@@ -11,7 +11,7 @@ import {
   Platform,
   Linking,
 } from 'react-native';
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, {useCallback, useContext, useEffect, useRef, useState} from 'react';
 import COLORS from '../theme/Color';
 import FONTS from '../theme/Fonts';
 import {getData} from '../utils/Storage';
@@ -30,8 +30,6 @@ import FastImage from 'react-native-fast-image';
 import {MaterialDesignIcons} from '@react-native-vector-icons/material-design-icons';
 import RNExitApp from 'react-native-exit-app';
 import Carousel from 'react-native-reanimated-carousel';
-import {Feather} from '@react-native-vector-icons/feather';
-import {FontAwesome5} from '@react-native-vector-icons/fontawesome5';
 
 const Dashboard = ({route}) => {
   const [userData, setUserData] = useState(null);
@@ -44,6 +42,18 @@ const Dashboard = ({route}) => {
   const {width} = useWindowDimensions();
   const {isConnected, networkLoading} = useNetworkStatus();
   const [drawerItems, setDrawerItems] = useState([]);
+
+  const [hasRsvpPermission, setHasRsvpPermission] = useState(false);
+  const [hasEventDashboardPermission, setHasEventDashboardPermission] =
+    useState(false);
+  const [hasScanQrPermission, setHasScanQrPermission] = useState(false);
+  const [activeSponsorIndex, setActiveSponsorIndex] = useState(0);
+  const [sponsors, setSponsors] = useState([]);
+  const isMounted = useRef(true);
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -108,6 +118,28 @@ const Dashboard = ({route}) => {
                 item?.constantName?.toUpperCase() == 'EVENT ADMIN',
             );
             setDrawerItems(storeItems);
+            // ADD THESE
+            const rsvpPerm = filteredData.some(
+              item => item?.constantName?.toUpperCase() === 'RSVP',
+            );
+            const eventDashPerm = filteredData.some(
+              item => item?.constantName?.toUpperCase() === 'EVENT DASHBOARD',
+            );
+            const scanQrPerm = filteredData.some(
+              item => item?.constantName?.toUpperCase() === 'SCAN QR',
+            );
+            setHasRsvpPermission(rsvpPerm);
+            setHasEventDashboardPermission(eventDashPerm);
+            setHasScanQrPermission(scanQrPerm);
+
+            const sponsorModule = filteredData.find(
+              item => item?.constantName?.toUpperCase() === 'SPONSORS',
+            );
+
+            if (sponsorModule?.moduleId) {
+              fetchSponsors(sponsorModule);
+            }
+
             const newArray = filteredData.filter(
               item =>
                 item?.constantName?.toUpperCase() !== 'SCAN QR' &&
@@ -121,7 +153,10 @@ const Dashboard = ({route}) => {
                 item?.constantName?.toUpperCase() !== 'TRANSACTIONS' &&
                 item?.constantName?.toUpperCase() !== 'MODULE MANAGEMENT' &&
                 item?.constantName?.toUpperCase() !== 'APP SETTINGS' &&
-                item?.constantName?.toUpperCase() !== 'PAYMENT CREDENTIALS',
+                item?.constantName?.toUpperCase() !== 'PAYMENT CREDENTIALS' &&
+                item?.constantName?.toUpperCase() !== 'APP VERSION SETTING' &&
+                item?.constantName?.toUpperCase() !== 'CONTACT US' &&
+                item?.constantName?.toUpperCase() !== 'HOME SLIDER',
             );
             if (newArray?.length > 0) {
               setData(newArray);
@@ -168,6 +203,73 @@ const Dashboard = ({route}) => {
     }
   }, [userData]);
 
+  const fetchSponsors = async sponsorModule => {
+    if (!sponsorModule?.moduleId) return;
+    const state = await NetInfo.fetch();
+    if (!state.isConnected) return;
+    try {
+      const payload = {
+        pageNumber: 1,
+        pageSize: 100,
+        keyword: '',
+        orderBy: 'order',
+        orderType: -1,
+        type: sponsorModule?.constantName,
+        eventId: 0,
+      };
+      const response = await httpClient.post(
+        'module/mobile/configuration/pagination',
+        payload,
+      );
+      if (response.data.status && response.data.result?.data?.length > 0) {
+        const raw = response.data.result.data;
+        const parsed = raw.map(record => {
+          let content = {};
+          try {
+            content = JSON.parse(record.content);
+          } catch {}
+
+          const businessName = content?.businessName?.value || '';
+          const tier = content?.grandSponsors?.value || '';
+          const description = content?.shortBusinessDescription?.value || null;
+          const website = content?.websiteLink?.value || null;
+
+          // picture value is a JSON string array e.g. "[\"content/xyz.png\"]"
+          let logoPath = null;
+          try {
+            const picRaw = content?.picture?.value;
+            if (picRaw && picRaw !== '[]') {
+              const picArr = JSON.parse(picRaw);
+              if (picArr?.length > 0) {
+                logoPath = picArr[0];
+              }
+            }
+          } catch {}
+
+          return {
+            id: record.configurationId,
+            name: businessName,
+            description: description || null,
+            tier,
+            logo: logoPath,
+            website,
+            initials: businessName
+              .split(' ')
+              .map(w => w[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 3),
+          };
+        });
+        if (isMounted.current) setSponsors(parsed);
+      } else {
+        if (isMounted.current) setSponsors([]);
+      }
+    } catch (err) {
+      console.log('Sponsors fetch error:', err);
+    }
+  };
+
   const renderItem = ({item, index}) => {
     return (
       <TouchableOpacity
@@ -202,7 +304,12 @@ const Dashboard = ({route}) => {
             }
           } else {
             if (constantName?.trim() === 'EVENT') {
-              navigation.navigate('EventScreen', {data: data});
+              navigation.navigate('EventScreen', {
+                data: data,
+                hasRsvpPermission,
+                hasEventDashboardPermission,
+                hasScanQrPermission,
+              });
             } else if (constantName === 'SCAN QR') {
               navigation.navigate('QRcode Scanner', {
                 data: data,
@@ -285,35 +392,50 @@ const Dashboard = ({route}) => {
     navigation.openDrawer();
   };
 
-  const sponsorBanners = [
-    {
-      id: '1',
-      title: 'Technology Sponsor - PSMTECH LLC',
-      name: ' Low Voltage & Inngenius Software Services',
-      phone: '(336) 805-6626',
-      url: 'https://www.psmtech.com',
-      bg: '#174880c9',
-      icon: 'zap',
+  const TIER_CONFIG = {
+    'Grand Sponsor': {
+      emoji: '💎',
+      cardTopBorder: '#E8F4FF',
+      badgeBg: '#f4a6201b',
+      badgeBorder: '#F4A820',
+      badgeText: '#8B6914',
     },
-    {
-      id: '2',
-      title: 'PSMTECH LLC - Low Voltage Services',
-      name: 'Professional Installation & Support',
-      phone: '(336) 805-6626',
-      url: 'https://www.psmtech.com',
-      bg: '#059669',
-      icon: 'phone',
+    'Platinum Sponsor': {
+      emoji: '🥇',
+      cardTopBorder: '#9c5fcb',
+      badgeBg: '#F0F0F0',
+      badgeBorder: '#C0C0C0',
+      badgeText: '#4A4A4A',
     },
-    {
-      id: '3',
-      title: 'Inngenius Software Services',
-      name: 'Web Development & Review Management',
-      phone: '(336) 805-6626',
-      url: 'https://www.inngenius.com',
-      bg: '#d55b09be',
-      icon: 'globe',
+    'Gold Sponsor': {
+      emoji: '🏅',
+      cardTopBorder: '#FFF8DC',
+      badgeBg: '#FFF8DC',
+      badgeBorder: '#F0C040',
+      badgeText: '#8B6914',
     },
-  ];
+    'Silver Sponsor': {
+      emoji: '🥈',
+      cardTopBorder: '#E8F4FF',
+      badgeBg: '#E8F4FF',
+      badgeBorder: '#c0c0c0',
+      badgeText: '#555555',
+    },
+    'Community Partner': {
+      emoji: '🤝',
+      cardTopBorder: '#43a047',
+      badgeBg: '#f0f8f0',
+      badgeBorder: '#a8d5a8',
+      badgeText: '#2e7d32',
+    },
+  };
+
+  const DEFAULT_TIER = {
+    cardTopBorder: '#eb9e2c',
+    badgeBg: COLORS.NEWBG,
+    badgeBorder: '#d4a96a',
+    badgeText: COLORS.LABELCOLOR,
+  };
 
   return (
     <View
@@ -430,9 +552,184 @@ const Dashboard = ({route}) => {
               }
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{
-                paddingBottom: 10,
+                paddingBottom: 20,
                 flexGrow: 1,
               }}
+              ListFooterComponent={
+                sponsors.length > 0 && (
+                  <View style={{paddingBottom: 10}}>
+                    <Text
+                      style={{
+                        fontSize: FONTS.FONTSIZE.EXTRASMALL,
+                        fontFamily: FONTS.FONT_FAMILY.BOLD,
+                        color: COLORS.PLACEHOLDERCOLOR,
+                        margin: 10,
+                      }}>
+                      Our Sponsors
+                    </Text>
+
+                    <Carousel
+                      width={width / 1.05}
+                      height={140}
+                      loop
+                      autoPlay
+                      autoPlayInterval={3000}
+                      scrollAnimationDuration={600}
+                      style={{marginHorizontal: 6}}
+                      panGestureHandlerProps={{activeOffsetX: [-10, 10]}}
+                      onSnapToItem={index => setActiveSponsorIndex(index)}
+                      data={sponsors}
+                      renderItem={({item}) => {
+                        const handlePress = () => {
+                          if (item.website) {
+                            const url = item.website.startsWith('http')
+                              ? item.website
+                              : `https://${item.website}`;
+                            Linking.openURL(url).catch(() =>
+                              NOTIFY_MESSAGE('Could not open URL'),
+                            );
+                          }
+                        };
+
+                        const tierStyle =
+                          TIER_CONFIG[item.tier] ?? DEFAULT_TIER;
+                        return (
+                          <TouchableOpacity
+                            onPress={handlePress}
+                            disabled={!item.website}
+                            style={{flex: 1}}>
+                            <View
+                              style={{
+                                flex: 1,
+                                backgroundColor: COLORS.PRIMARYWHITE,
+                                borderRadius: 12,
+                                padding: 14,
+                                borderLeftWidth: 1.5,
+                                borderColor: '#e0b23f',
+                                borderTopWidth: 4,
+                                borderRightWidth: 1.5,
+                                borderBottomWidth: 1.5,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 12,
+                                marginHorizontal: 3,
+                              }}>
+                              {item.logo ? (
+                                <View
+                                  style={{
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                    overflow: 'hidden',
+                                  }}>
+                                  <Image
+                                    source={{uri: `${IMAGE_URL}${item.logo}`}}
+                                    style={{width: 100, height: 100}}
+                                    resizeMode="contain"
+                                  />
+                                </View>
+                              ) : (
+                                <View
+                                  style={{
+                                    width: 80,
+                                    height: 80,
+                                    borderRadius: 10,
+                                    backgroundColor: tierStyle.badgeBg,
+                                    borderWidth: 1,
+                                    borderColor: tierStyle.badgeBorder,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                    overflow: 'hidden',
+                                  }}>
+                                  <Text
+                                    style={{
+                                      fontSize: FONTS.FONTSIZE.SMALL,
+                                      fontFamily: FONTS.FONT_FAMILY.BOLD,
+                                      color: tierStyle.badgeText,
+                                      includeFontPadding: false,
+                                    }}>
+                                    {item.initials}
+                                  </Text>
+                                </View>
+                              )}
+
+                              <View style={{flex: 1, gap: 8}}>
+                                <Text
+                                  numberOfLines={2}
+                                  style={{
+                                    fontSize: FONTS.FONTSIZE.SMALL,
+                                    fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                                    color: COLORS.TITLECOLOR,
+                                  }}>
+                                  {item.name}
+                                </Text>
+                                {!!item.description && (
+                                  <Text
+                                    numberOfLines={1}
+                                    style={{
+                                      fontSize: FONTS.FONTSIZE.EXTRAMINI,
+                                      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                                      color: COLORS.LABELCOLOR,
+                                    }}>
+                                    {item.description}
+                                  </Text>
+                                )}
+
+                                <View
+                                  style={{
+                                    alignSelf: 'flex-start',
+                                    backgroundColor: tierStyle.badgeBg,
+                                    borderRadius: 20,
+                                    paddingHorizontal: 10,
+                                    paddingVertical: 6,
+                                    borderWidth: 1,
+                                    borderColor: tierStyle.badgeBorder,
+                                  }}>
+                                  <Text
+                                    numberOfLines={1}
+                                    style={{
+                                      fontSize: FONTS.FONTSIZE.MINI,
+                                      fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
+                                      color: tierStyle.badgeText,
+                                      includeFontPadding: false,
+                                    }}>
+                                    {tierStyle.emoji
+                                      ? `${tierStyle.emoji} `
+                                      : ''}
+                                    {item.tier}
+                                  </Text>
+                                </View>
+                              </View>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      }}
+                    />
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: 6,
+                        marginTop: 8,
+                      }}>
+                      {sponsors.map((_, i) => (
+                        <View
+                          key={i}
+                          style={{
+                            width: i === activeSponsorIndex ? 16 : 6,
+                            height: 6,
+                            borderRadius: 3,
+                            backgroundColor:
+                              i === activeSponsorIndex ? '#814517' : '#e0c498',
+                          }}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                )
+              }
               removeClippedSubviews={true}
               maxToRenderPerBatch={30}
               updateCellsBatchingPeriod={200}
@@ -449,113 +746,6 @@ const Dashboard = ({route}) => {
         )
       ) : (
         <Offline />
-      )}
-      {!networkLoading && !userDataLoading && !loading && (
-        <Carousel
-          width={width}
-          height={70}
-          data={sponsorBanners}
-          loop
-          autoPlay
-          autoPlayInterval={3000}
-          scrollAnimationDuration={600}
-          panGestureHandlerProps={{
-            activeOffsetX: [-10, 10],
-          }}
-          renderItem={({item}) => (
-            <TouchableOpacity
-              activeOpacity={0.35}
-              onPress={() => Linking.openURL(item.url)}
-              style={{
-                flex: 1,
-                backgroundColor: item.bg,
-                justifyContent: 'center',
-                paddingHorizontal: 18,
-              }}>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                <View
-                  style={{
-                    marginRight: 8,
-                  }}>
-                  <Feather
-                    name={item.icon}
-                    size={17}
-                    color={COLORS.PRIMARYWHITE}
-                  />
-                </View>
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    color: COLORS.PRIMARYWHITE,
-                    fontSize: FONTS.FONTSIZE.MINI,
-                    fontFamily: FONTS.FONT_FAMILY.BOLD,
-                  }}>
-                  {item.title}
-                </Text>
-              </View>
-              <View
-                style={{
-                  marginLeft: 25,
-                }}>
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    color: COLORS.PRIMARYWHITE,
-                    fontSize: FONTS.FONTSIZE.MICRO,
-                    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                  }}>
-                  {item.name}
-                </Text>
-              </View>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                <TouchableOpacity
-                  onPress={() => {
-                    if (item?.phone) {
-                      const phoneUrl =
-                        Platform.OS === 'ios'
-                          ? `telprompt:${item.phone}`
-                          : `tel:${item.phone}`;
-                      Linking.openURL(phoneUrl);
-                    }
-                  }}
-                  hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 8,
-                    marginLeft: 2,
-                  }}>
-                  <FontAwesome5
-                    name={'phone-alt'}
-                    size={14}
-                    color={'white'}
-                    style={{marginTop: -3, marginLeft: 2}}
-                    iconStyle="solid"
-                  />
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      color: COLORS.PRIMARYWHITE,
-                      fontSize: FONTS.FONTSIZE.EXTRAMINI,
-                      fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                    }}>
-                    {item?.phone}
-                  </Text>
-                </TouchableOpacity>
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    color: COLORS.PRIMARYWHITE,
-                    fontSize: FONTS.FONTSIZE.EXTRAMINI,
-                    fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-                    marginLeft: 5,
-                  }}>
-                  • {item.url.replace('https://', '')}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
       )}
     </View>
   );

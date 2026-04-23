@@ -273,7 +273,6 @@ const RegistrationPreview = ({route}) => {
                             mediaUris = parsedValue ? [parsedValue] : [];
                           }
                         } catch (error) {
-                          console.log('JSON Parse Error:', error, item.value);
                           mediaUris = item.value ? [item.value] : [];
                         }
 

@@ -237,6 +237,7 @@ const AddUpdateModule = ({route}) => {
     {label: 'Profile Layout', value: '6'},
     {label: 'Order View Layout', value: '7'},
     {label: 'Table with Group', value: '8'},
+    {label: 'Sponsors Layout', value: '9'},
   ];
 
   const [isLoading, setIsLoading] = useState(false);

@@ -28,7 +28,6 @@ const AddUpdateNotification = ({route}) => {
   const {data, isEdit = false} = route.params || {};
   const navigation = useNavigation();
   const {width} = useWindowDimensions();
-
   const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notifyLoader, setNotifyLoader] = useState(false);
@@ -604,7 +603,6 @@ const AddUpdateNotification = ({route}) => {
               )}
             </View>
 
-            {/* Roles Selection */}
             {allUserData?.length > 0 && (
               <View
                 style={[
@@ -626,7 +624,6 @@ const AddUpdateNotification = ({route}) => {
               </View>
             )}
 
-            {/* Actions */}
             <View style={styles.commonBox}>
               <Text style={styles.commonTitle}>Actions</Text>
               <View style={styles.bottomBorder} />
@@ -649,7 +646,6 @@ const AddUpdateNotification = ({route}) => {
               </View>
             </View>
 
-            {/* Email */}
             <View style={styles.commonBox}>
               <Text style={styles.commonTitle}>Email</Text>
               <View style={styles.bottomBorder} />
@@ -712,7 +708,6 @@ const AddUpdateNotification = ({route}) => {
               </View>
             </View>
 
-            {/* SMS */}
             <View style={styles.commonBox}>
               <Text style={styles.commonTitle}>SMS</Text>
               <View style={styles.bottomBorder} />
@@ -746,7 +741,6 @@ const AddUpdateNotification = ({route}) => {
               </View>
             </View>
 
-            {/* Notification */}
             <View style={styles.commonBox}>
               <Text style={styles.commonTitle}>Notification</Text>
               <View style={styles.bottomBorder} />

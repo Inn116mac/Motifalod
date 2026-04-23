@@ -86,7 +86,6 @@ const PLACEHOLDER_IMG = require('../../assets/images/Image_placeholder.png');
 const loadedMediaIds = new Set();
 const videoThumbCache = new Map();
 
-// Thumbnail queue — max 3 generating at once to prevent OOM
 let thumbGenerating = 0;
 const MAX_THUMB_CONCURRENT = 3;
 const thumbQueue = [];
@@ -148,11 +147,9 @@ const MediaTile = React.memo(
       }
       if (cached === 'loading') return;
 
-      // Generate thumbnail — queued, max 3 concurrent
       videoThumbCache.set(item.mediaId, 'loading');
       setImgState('loading');
 
-      // Capture mediaId/uri in closure so stale effect doesn't corrupt cache
       const capturedId = item.mediaId;
       const capturedUri = uri;
 
@@ -305,7 +302,6 @@ const CategoryBubble = React.memo(({cat, selected, onPress}) => (
   </TouchableOpacity>
 ));
 
-// ─── Stats pill ───────────────────────────────────────────────────────────────
 const StatPill = React.memo(({icon, label, value}) => (
   <View style={[gs.statPill]} activeOpacity={0.8}>
     <Text style={gs.statPillIcon}>{icon}</Text>
@@ -316,7 +312,6 @@ const StatPill = React.memo(({icon, label, value}) => (
   </View>
 ));
 
-// ─── Event picker bottom sheet ────────────────────────────────────────────────
 function EventPickerModal({visible, events, selected, onSelect, onClose}) {
   return (
     <Modal
@@ -324,13 +319,11 @@ function EventPickerModal({visible, events, selected, onSelect, onClose}) {
       transparent
       animationType="slide"
       onRequestClose={onClose}>
-      {/* Backdrop — tapping closes */}
       <TouchableOpacity
         style={gs.modalBackdrop}
         activeOpacity={1}
         onPress={onClose}
       />
-      {/* Sheet sticks to bottom, above nav, respects safe area */}
       <SafeAreaView style={gs.eventSheetSafeArea} edges={['bottom']}>
         <View style={gs.eventPickerSheet}>
           <View style={gs.sheetHandle} />
@@ -423,7 +416,6 @@ function AlbumsOverlay({
         </View>
       </View>
 
-      {/* Info row */}
       <View style={gs2.albumInfoRow}>
         <View style={{flex: 1}}>
           <Text style={gs2.albumName} numberOfLines={1}>
@@ -431,7 +423,6 @@ function AlbumsOverlay({
           </Text>
         </View>
       </View>
-      {/* Action buttons */}
       {(isAdmin ||
         (canWrite &&
           String(album.configurationId) === String(currentUserId))) && (
@@ -466,7 +457,6 @@ function AlbumsOverlay({
       modalcontent={
         <SafeAreaProvider style={gs2.albumsRoot}>
           <SafeAreaView style={{flex: 1}}>
-            {/* Header */}
             <View style={gs2.albumsHeader}>
               <TouchableOpacity onPress={onClose} style={{padding: 6}}>
                 <FontAwesome6

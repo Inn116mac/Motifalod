@@ -77,7 +77,6 @@ const AddUpdateReminder = ({route}) => {
     }
   }, [isEdit, data]);
 
-  //remove html
   const stripHtmlTags = str => {
     if (!str || str === '') return '';
 
@@ -260,7 +259,6 @@ const AddUpdateReminder = ({route}) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  //get role data
   const getViewData = useCallback(() => {
     setIsLoading(true);
     let data = {
@@ -314,7 +312,6 @@ const AddUpdateReminder = ({route}) => {
     });
   }, [navigation, selectedRoleIds]);
 
-  // get event info data
   const getEventInfoData = useCallback(constantName => {
     if (!constantName) return;
 
@@ -374,7 +371,6 @@ const AddUpdateReminder = ({route}) => {
       name: item.constantName,
     }));
 
-  // get all module name
   const getModules = () => {
     setLoading(true);
     NetInfo.fetch().then(state => {
@@ -405,7 +401,6 @@ const AddUpdateReminder = ({route}) => {
     });
   };
 
-  // display data
   const renderItem = ({item}) => {
     return (
       <TouchableOpacity
@@ -446,7 +441,6 @@ const AddUpdateReminder = ({route}) => {
     );
   };
 
-  // check role
   const toggleRole = roleId => {
     setAllUserData(prev =>
       prev.map(r => (r.roleId === roleId ? {...r, checked: !r.checked} : r)),
@@ -462,7 +456,6 @@ const AddUpdateReminder = ({route}) => {
     setForm(prev => ({...prev, roles: rolesString}));
   };
 
-  // create reminder
   const callCreateApi = payload => {
     NetInfo.fetch().then(state => {
       if (state.isConnected) {
@@ -490,7 +483,6 @@ const AddUpdateReminder = ({route}) => {
     });
   };
 
-  //updtae reminder
   const callUpdateApi = payload => {
     const ReminderId = data?.reminderId;
     const updatedPayload = {
@@ -964,7 +956,6 @@ const AddUpdateReminder = ({route}) => {
               </View>
             </View>
 
-            {/* Notification */}
             <View style={styles.commonBox}>
               <Text style={styles.commonTitle}>Notification</Text>
               <View style={styles.bottomBorder} />

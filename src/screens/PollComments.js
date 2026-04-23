@@ -23,7 +23,6 @@ import {NOTIFY_MESSAGE} from '../constant/Module';
 import {timeAgo, timeLeft} from '../utils/dateUtils';
 import {getData} from '../utils/Storage';
 
-// ── Constants ──────────────────────────────────────────
 const AVATAR_COLORS = [
   '#f06a1a',
   '#1a5fbf',
@@ -35,9 +34,8 @@ const AVATAR_COLORS = [
   '#e5386e',
 ];
 const PAGE_SIZE = 20;
-const POLL_INTERVAL_MS = 10000; // refresh every 10 seconds silently
+const POLL_INTERVAL_MS = 10000; 
 
-// ── Helpers ─────────────────────────────────────────────
 function avatarColor(id) {
   const safeId = typeof id === 'number' ? id : 0;
   return AVATAR_COLORS[safeId % AVATAR_COLORS.length];
@@ -54,7 +52,6 @@ function initials(name) {
     .toUpperCase();
 }
 
-// ── CommentItem ─────────────────────────────────────────
 function CommentItem({comment, isAdmin, currentUserId, onDelete}) {
   const name = comment.author?.username || 'Community';
   const authorId = comment.author?.configurationId ?? comment.author?.userId;
@@ -100,7 +97,6 @@ function CommentItem({comment, isAdmin, currentUserId, onDelete}) {
   );
 }
 
-// ── Main screen ─────────────────────────────────────────
 export default function PollComments({route, navigation}) {
   const {poll, isAdmin, dashItem} = route?.params?.data;
 
@@ -156,13 +152,10 @@ export default function PollComments({route, navigation}) {
     [poll.pollId],
   );
 
-  // Initial load
   useEffect(() => {
     fetchComments(1);
   }, [fetchComments]);
 
-  // ── Real-time: silently poll page 1 every 10s ──────────
-  // New comments prepended by comparing commentId
   useEffect(() => {
     pollingRef.current = setInterval(() => {
       httpClientV3
@@ -184,13 +177,10 @@ export default function PollComments({route, navigation}) {
               const freshIds = new Set(freshItems.map(c => c.commentId));
               const existingIds = new Set(prev.map(c => c.commentId));
 
-              // New comments to prepend
               const newOnes = freshItems.filter(
                 c => !existingIds.has(c.commentId),
               );
 
-              // Remove deleted ones (exist locally but not in fresh fetch)
-              // Only remove from the first PAGE_SIZE comments since that's what we fetched
               const prevFirstPage = prev.slice(0, PAGE_SIZE);
               const restPages = prev.slice(PAGE_SIZE);
               const surviving = prevFirstPage.filter(c =>
@@ -201,7 +191,7 @@ export default function PollComments({route, navigation}) {
                 newOnes.length === 0 &&
                 surviving.length === prevFirstPage.length
               ) {
-                return prev; // nothing changed
+                return prev; 
               }
 
               return [...newOnes, ...surviving, ...restPages];
@@ -215,13 +205,11 @@ export default function PollComments({route, navigation}) {
     return () => clearInterval(pollingRef.current);
   }, [poll.pollId]);
 
-  // ── Infinite scroll ────────────────────────────────────
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
     fetchComments(pageNumber + 1);
   }, [loadingMore, hasMore, pageNumber, fetchComments]);
 
-  // ── Post comment ───────────────────────────────────────
   const handlePost = useCallback(() => {
     const trimmed = body.trim();
     if (!trimmed || posting) return;
@@ -237,7 +225,6 @@ export default function PollComments({route, navigation}) {
         .then(response => {
           if (response?.data?.status) {
             const newComment = response.data.result;
-            // Prepend — newest first
             setComments(prev => [newComment, ...prev]);
             setTotalCount(prev => prev + 1);
             setBody('');
@@ -251,7 +238,6 @@ export default function PollComments({route, navigation}) {
     });
   }, [body, posting, poll.pollId]);
 
-  // ── Delete comment ─────────────────────────────────────
   const handleDelete = useCallback(
     commentId => {
       NetInfo.fetch().then(state => {
@@ -279,7 +265,6 @@ export default function PollComments({route, navigation}) {
     [poll.pollId],
   );
 
-  // ── Poll summary mini-card ─────────────────────────────
   const PollSummary = () => (
     <View style={styles.pollSummary}>
       <View style={styles.pollSummaryRow}>
@@ -304,110 +289,6 @@ export default function PollComments({route, navigation}) {
       </Text>
     </View>
   );
-
-  //   const PollSummary = () => {
-  //     const maxVotes =
-  //       poll.options?.length > 0
-  //         ? Math.max(...poll.options.map(o => o.votes ?? 0), 0)
-  //         : 0;
-
-  //     return (
-  //       <View style={styles.pollSummary}>
-  //         {/* Header row */}
-  //         <View style={styles.pollSummaryRow}>
-  //           <View style={styles.pollStatusRow}>
-  //             <View
-  //               style={[
-  //                 styles.pollStatusDot,
-  //                 {
-  //                   backgroundColor:
-  //                     poll.status === 'active' ? '#1d8a55' : '#9a948e',
-  //                 },
-  //               ]}
-  //             />
-  //             <Text style={styles.pollStatusTxt}>
-  //               {poll.status === 'active' ? 'LIVE' : 'CLOSED'}
-  //             </Text>
-  //           </View>
-  //           <Text style={styles.pollVotesTxt}>{poll.totalVotes ?? 0} votes</Text>
-  //         </View>
-
-  //         {/* Title */}
-  //         <Text style={styles.pollTitle} numberOfLines={3}>
-  //           {poll.title}
-  //         </Text>
-
-  //         {/* Options with progress bars */}
-  //         {poll.options?.length > 0 && (
-  //           <View style={styles.optionsWrap}>
-  //             {poll.options.map((opt, i) => {
-  //               const pct = opt.percentage ?? 0;
-  //               const isWinner = opt.votes === maxVotes && maxVotes > 0;
-  //               const isVoted = poll.userVotedOptionIds?.includes(opt.optionId);
-  //               return (
-  //                 <View key={opt.optionId ?? i} style={styles.optRow}>
-  //                   {/* Label */}
-  //                   <Text style={styles.optText} numberOfLines={1}>
-  //                     {opt.text}
-  //                   </Text>
-  //                   {/* Bar + percentage */}
-  //                   <View style={styles.optBarRow}>
-  //                     <View style={styles.optBarBg}>
-  //                       <View
-  //                         style={[
-  //                           styles.optBarFill,
-  //                           {
-  //                             width: `${pct}%`,
-  //                             backgroundColor: isVoted
-  //                               ? '#1a5fbf'
-  //                               : isWinner
-  //                               ? COLORS.LABELCOLOR
-  //                               : '#d0ccc8',
-  //                           },
-  //                         ]}
-  //                       />
-  //                     </View>
-  //                     <Text
-  //                       style={[
-  //                         styles.optPct,
-  //                         isWinner && {color: COLORS.LABELCOLOR},
-  //                         isVoted && {color: '#1a5fbf'},
-  //                       ]}>
-  //                       {Math.round(pct)}%
-  //                     </Text>
-  //                   </View>
-  //                 </View>
-  //               );
-  //             })}
-  //           </View>
-  //         )}
-
-  //         {/* Footer */}
-  //         <View style={styles.pollSummaryFoot}>
-  //           <Text style={styles.pollVotesTxt}>
-  //             <Text
-  //               style={{
-  //                 fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-  //                 color: '#5a5550',
-  //               }}>
-  //               {poll.totalVotes ?? 0}
-  //             </Text>
-  //             {' votes'}
-  //           </Text>
-  //           {poll.endsAt && poll.status === 'active' && (
-  //             <Text style={styles.pollVotesTxt}>{timeLeft(poll.endsAt)}</Text>
-  //           )}
-  //           {poll.userVotedOptionIds?.length > 0 && (
-  //             <View style={styles.youVotedBadge}>
-  //               <Text style={styles.youVotedTxt}>✓ You voted</Text>
-  //             </View>
-  //           )}
-  //         </View>
-  //       </View>
-  //     );
-  //   };
-
-  // ── Comments section header ────────────────────────────
 
   const SectionHeader = () => (
     <View style={styles.sectionHead}>
@@ -444,7 +325,6 @@ export default function PollComments({route, navigation}) {
     };
   }, []);
 
-  // ── Render ─────────────────────────────────────────────
   return (
     <KeyboardAvoidingView
       style={styles.root}
@@ -513,7 +393,6 @@ export default function PollComments({route, navigation}) {
         />
       )}
 
-      {/* ── Input bar ────────────────────────────────────── */}
       <View
         style={[
           styles.inputBar,
@@ -558,66 +437,6 @@ const styles = StyleSheet.create({
   root: {flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR},
   centerLoader: {flex: 1, justifyContent: 'center', alignItems: 'center'},
   listContent: {paddingBottom: 8},
-  optionsWrap: {
-    marginTop: 12,
-    gap: 8,
-  },
-  optRow: {
-    gap: 4,
-  },
-  optText: {
-    fontSize: FONTS.FONTSIZE.MICRO,
-    fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-    color: COLORS.PRIMARYBLACK,
-    includeFontPadding: false,
-  },
-  optBarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  optBarBg: {
-    flex: 1,
-    height: 6,
-    borderRadius: 99,
-    backgroundColor: '#f0ece6',
-    overflow: 'hidden',
-  },
-  optBarFill: {
-    height: '100%',
-    borderRadius: 99,
-  },
-  optPct: {
-    fontSize: FONTS.FONTSIZE.MICRO,
-    fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-    color: '#9a948e',
-    minWidth: 32,
-    textAlign: 'right',
-    includeFontPadding: false,
-  },
-  pollSummaryFoot: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.TABLEBORDER,
-  },
-  youVotedBadge: {
-    backgroundColor: '#e8f0fc',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  youVotedTxt: {
-    fontSize: FONTS.FONTSIZE.MICRO,
-    fontFamily: FONTS.FONT_FAMILY.SEMI_BOLD,
-    color: '#1a5fbf',
-    includeFontPadding: false,
-  },
-
-  // ── Poll summary ──
   pollSummary: {
     backgroundColor: COLORS.PRIMARYWHITE,
     marginHorizontal: 16,
@@ -654,8 +473,6 @@ const styles = StyleSheet.create({
     color: COLORS.PRIMARYBLACK,
     lineHeight: 20,
   },
-
-  // ── Section header ──
   sectionHead: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -683,8 +500,6 @@ const styles = StyleSheet.create({
     color: COLORS.PRIMARYWHITE,
     includeFontPadding: false,
   },
-
-  // ── Comment row ──
   commentRow: {
     flexDirection: 'row',
     paddingHorizontal: 16,
@@ -754,8 +569,6 @@ const styles = StyleSheet.create({
     color: COLORS.PRIMARYRED,
     includeFontPadding: false,
   },
-
-  // ── Empty ──
   emptyWrap: {alignItems: 'center', paddingTop: 50, paddingBottom: 20},
   emptyIcon: {fontSize: 36, marginBottom: 8},
   emptyTxt: {
@@ -769,10 +582,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.FONT_FAMILY.MEDIUM,
     marginTop: 4,
   },
-
   loaderWrap: {paddingVertical: 16, alignItems: 'center'},
-
-  // ── Input bar ──
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',

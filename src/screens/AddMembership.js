@@ -58,7 +58,6 @@ const AddMembership = ({route}) => {
 
   const handleInputChange = (field, value) => {
     if (field !== 'price') {
-      // Handle non-price fields normally
       setFormData(prev => ({
         ...prev,
         [field]: value,
@@ -90,7 +89,6 @@ const AddMembership = ({route}) => {
 
     const parts = numericValue.split('.');
     if (parts.length > 2) {
-      // Keep first part + decimal + second part, ignore rest
       numericValue = parts[0] + '.' + parts.slice(1).join('');
     }
 
@@ -100,7 +98,6 @@ const AddMembership = ({route}) => {
 
     setFormData(prev => ({...prev, price: numericValue}));
 
-    // Clear price error
     if (errors.price) {
       setErrors(prev => {
         const newErrors = {...prev};

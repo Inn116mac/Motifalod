@@ -27,6 +27,7 @@ import httpClient from '../connection/httpClient';
 import {useNetworkStatus} from '../connection/UseNetworkStatus';
 import NoDataFound from '../components/root/NoDataFound';
 import {IMAGE_URL} from '../connection/Config';
+import {getData} from '../utils/Storage';
 
 const FormRecords = ({route}) => {
   const styles = StyleSheet.create({
@@ -65,6 +66,7 @@ const FormRecords = ({route}) => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
   const [isReresh, setIsRefresh] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const {isConnected, networkLoading} = useNetworkStatus();
   const isFocused = useIsFocused();
 
@@ -73,6 +75,22 @@ const FormRecords = ({route}) => {
       dashboardApiCall();
     }
   }, [isFocused]);
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const userData = await getData('user');
+
+        const user =
+          typeof userData === 'string' ? JSON.parse(userData) : userData;
+        const role = user?.role?.toLowerCase?.() || '';
+        setIsSuperAdmin(role === 'super admin');
+      } catch (_) {
+        setIsSuperAdmin(false);
+      }
+    };
+    checkUserRole();
+  }, []);
 
   const dashboardApiCall = () => {
     NetInfo.fetch().then(state => {
@@ -127,6 +145,13 @@ const FormRecords = ({route}) => {
     setIsRefresh(false);
   };
 
+  const visibleData = data.filter(d => {
+    if (d?.constantName?.toUpperCase() === 'APP VERSION SETTING') {
+      return isSuperAdmin;
+    }
+    return true;
+  });
+
   const renderItem = ({item, index}) => {
     return (
       <TouchableOpacity
@@ -157,6 +182,8 @@ const FormRecords = ({route}) => {
             navigation.navigate('PollList', {data});
           } else if (item?.constantName == 'GALLERY') {
             navigation.navigate('Gallery', {data});
+          } else if (item?.constantName === 'APP VERSION SETTING') {
+            navigation.navigate('VersionList', {data});
           } else {
             navigation.navigate('TableScreen', {data});
           }
@@ -239,7 +266,7 @@ const FormRecords = ({route}) => {
                 refreshing={isReresh}
               />
             }
-            data={data}
+            data={visibleData}
             renderItem={renderItem}
             keyExtractor={(item, index) => index?.toString()}
             contentContainerStyle={{paddingBottom: 20}}

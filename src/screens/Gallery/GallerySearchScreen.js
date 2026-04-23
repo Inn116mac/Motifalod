@@ -20,7 +20,6 @@ import {IMAGE_URL} from '../../connection/Config';
 const {width: SW} = Dimensions.get('window');
 const PHOTO_TILE = (SW - 4) / 3.26;
 
-// Max 4 recent searches, persisted in module memory
 let _recentSearches = [];
 
 const FILTER_TABS = [
@@ -42,7 +41,6 @@ const PhotoTile = React.memo(({item, onPress}) => {
 
     if (!isVideo || !uri) return;
 
-    // Check cache
     try {
       const {createThumbnail} = require('react-native-create-thumbnail');
       createThumbnail({url: uri, timeStamp: 0})
@@ -139,16 +137,13 @@ export default function GallerySearchScreen({
 }) {
   const inputRef = useRef(null);
   const searchTimer = useRef(null);
-
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [searching, setSearching] = useState(false);
   const [recents, setRecents] = useState([..._recentSearches]);
-
   const [photoResults, setPhotoResults] = useState([]);
   const [photoTotal, setPhotoTotal] = useState(0);
   const [allCategories, setAllCategories] = useState([]);
-
   const [albumResults, setAlbumResults] = useState([]);
   const [categoryResults, setCategoryResults] = useState([]);
 
@@ -265,7 +260,6 @@ export default function GallerySearchScreen({
     inputRef.current?.focus();
   }, []);
 
-  // Filter visibility
   const showPhotos = activeFilter === 'all' || activeFilter === 'image';
   const showAlbums = activeFilter === 'all' || activeFilter === 'album';
   const showCats = activeFilter === 'all' || activeFilter === 'category';
@@ -277,7 +271,6 @@ export default function GallerySearchScreen({
   return (
     <SafeAreaProvider style={{flex: 1}}>
       <SafeAreaView style={ss.root} edges={['top', 'bottom']}>
-        {/* Search bar */}
         <View style={ss.searchRow}>
           <View style={ss.searchBox}>
             <Text style={ss.searchIcon}>🔍</Text>
@@ -308,7 +301,6 @@ export default function GallerySearchScreen({
           </TouchableOpacity>
         </View>
 
-        {/* Filter tabs */}
         <View style={ss.tabRow}>
           {FILTER_TABS.map(tab => (
             <TouchableOpacity
@@ -329,13 +321,11 @@ export default function GallerySearchScreen({
 
         <View style={ss.divider} />
 
-        {/* Content */}
         {searching ? (
           <View style={ss.centred}>
             <ActivityIndicator color={COLORS.TITLECOLOR} />
           </View>
         ) : !hasQuery ? (
-          /* Recent searches — max 4 */
           <ScrollView
             keyboardShouldPersistTaps="handled"
             style={ss.recentScroll}>
@@ -365,7 +355,6 @@ export default function GallerySearchScreen({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             style={ss.resultScroll}>
-            {/* Photos */}
             {visPhotos.length > 0 && (
               <View style={ss.section}>
                 <View style={ss.sectionHeaderRow}>
@@ -390,7 +379,6 @@ export default function GallerySearchScreen({
               </View>
             )}
 
-            {/* Albums */}
             {visAlbums.length > 0 && (
               <View style={ss.section}>
                 <Text style={ss.sectionLabel}>ALBUMS</Text>
@@ -430,7 +418,6 @@ export default function GallerySearchScreen({
 
 const ss = StyleSheet.create({
   root: {flex: 1, backgroundColor: COLORS.PRIMARYWHITE},
-
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',

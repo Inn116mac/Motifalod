@@ -1,11 +1,8 @@
-// GalleryUploadQueue.js
-// Module-level upload queue — survives component unmount
-
 import {uploadFileToServer, saveMedia} from './GalleryAPI';
 
 const listeners = new Set();
 let state = {
-  queue: [], // [{asset, eventId, eventName, albumId, categoryId, caption}]
+  queue: [], 
   running: false,
   done: 0,
   total: 0,
@@ -43,7 +40,7 @@ export function enqueueUpload({
     categoryId,
     caption,
     onAllDone,
-    status: 'pending', // pending | uploading | done | error
+    status: 'pending', 
     uri: asset.uri,
   }));
 
@@ -79,7 +76,6 @@ export function isUploadRunning() {
 }
 
 export function cancelUpload() {
-  // Mark all pending items as cancelled, keep done/error as is
   const updatedQueue = state.queue.map(i =>
     i.status === 'pending' ? {...i, status: 'cancelled', asset: null} : i,
   );
@@ -102,7 +98,6 @@ async function runQueue() {
     const pendingIdx = state.queue.findIndex(i => i.status === 'pending');
     if (pendingIdx === -1) break;
 
-    // ← Check if cancelled before starting next file
     if (!state.running) break;
 
     const item = state.queue[pendingIdx];
@@ -157,18 +152,14 @@ async function runQueue() {
       notify();
     }
 
-    // ← Null out asset reference immediately after upload
-    // This is the key memory fix — don't hold 150 file references
     const q = [...state.queue];
     if (q[pendingIdx]) {
       q[pendingIdx] = {...q[pendingIdx], asset: null};
       state = {...state, queue: q};
     }
 
-    // Breathe between files
     await new Promise(r => setTimeout(r, 100));
 
-    // Every 10 files pause longer for iOS memory reclaim
     if (state.done > 0 && state.done % 10 === 0) {
       await new Promise(r => setTimeout(r, 500));
     }
@@ -177,6 +168,5 @@ async function runQueue() {
   state = {...state, running: false};
   notify();
 
-  // ← Single refresh after everything is done
   onAllDone?.();
 }

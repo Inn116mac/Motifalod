@@ -1,7 +1,6 @@
 import httpClient from '../../connection/httpClient';
 import httpClientV3 from '../../connection/httpClientV3';
 
-// ── Events dropdown ───────────────────────────────────────────────────────────
 export const fetchEvents = (configurationId = null) => {
   const q = configurationId ? `&configurationId=${configurationId}` : '';
   return httpClient
@@ -42,7 +41,6 @@ export async function deleteCategory(categoryId) {
   }
 }
 
-// ── Media ─────────────────────────────────────────────────────────────────────
 export const fetchMedia = ({
   pageNumber = 1,
   pageSize = 30,
@@ -76,22 +74,18 @@ export const fetchGalleryStats = eventId =>
     .get(eventId ? `gallery/stats?eventId=${eventId}` : 'gallery/stats')
     .then(r => r.data);
 
-// Single media — refresh counts after like/star/comment
 export const fetchSingleMedia = mediaId =>
   httpClientV3.get(`gallery/${mediaId}`).then(r => r.data);
 
 export const deleteMedia = mediaId =>
   httpClientV3.delete(`gallery/${mediaId}`).then(r => r.data);
 
-// ── Likes ─────────────────────────────────────────────────────────────────────
 export const toggleLike = mediaId =>
   httpClientV3.post(`gallery/${mediaId}/like`).then(r => r.data);
 
-// ── Star / Unstar (toggle) ────────────────────────────────────────────────────
 export const toggleStar = mediaId =>
   httpClientV3.post(`gallery/${mediaId}/star`).then(r => r.data);
 
-// ── Comments (paginated) ──────────────────────────────────────────────────────
 export const fetchComments = (mediaId, page = 1, pageSize = 10) =>
   httpClientV3
     .get(`gallery/${mediaId}/comments?PageNumber=${page}&PageSize=${pageSize}`)
@@ -107,7 +101,6 @@ export const deleteComment = (mediaId, commentId) =>
     .delete(`gallery/${mediaId}/comments/${commentId}`)
     .then(r => r.data);
 
-// ── Albums ────────────────────────────────────────────────────────────────────
 export const fetchAlbums = (eventId = null) =>
   httpClientV3
     .get(`gallery/albums${eventId ? `?eventId=${eventId}` : ''}`)
@@ -116,7 +109,6 @@ export const fetchAlbums = (eventId = null) =>
 export const createAlbum = dto =>
   httpClientV3.post('gallery/albums', dto).then(r => r.data);
 
-// Edit album — only { name, description, coverUrl }
 export const editAlbum = (albumId, dto) =>
   httpClientV3.put(`gallery/albums/${albumId}`, dto).then(r => r.data);
 
@@ -149,7 +141,7 @@ export const uploadFileToServer = async (asset, location = 'gallery') => {
       formData,
       {
         headers: {'Content-Type': 'multipart/form-data'},
-        timeout: 5 * 60 * 1000, // 5 min timeout for large videos
+        timeout: 5 * 60 * 1000, 
         onUploadProgress: e => {
           if (e.total) {
             const pct = Math.round((e.loaded / e.total) * 100);
@@ -168,7 +160,6 @@ export const uploadFileToServer = async (asset, location = 'gallery') => {
     }
 
     if (err.response) {
-      // Server responded with error status (413, 500, etc.)
       const status = err.response.status;
       const serverMsg = err.response.data?.message || err.response.data || '';
 
@@ -196,6 +187,5 @@ export const uploadFileToServer = async (asset, location = 'gallery') => {
   }
 };
 
-// ── Save media metadata — Step 2 ──────────────────────────────────────────────
 export const saveMedia = dto =>
   httpClientV3.post('gallery', dto).then(r => r.data);

@@ -62,6 +62,16 @@ const CustomDrawerContent = props => {
     item => item?.constantName == 'EVENT ADMIN',
   );
 
+  const hasRsvpPermission = drawerData.some(
+    item => item?.constantName?.toUpperCase() === 'RSVP',
+  );
+  const hasScanQrPermission = drawerData.some(
+    item => item?.constantName?.toUpperCase() === 'SCAN QR',
+  );
+  const hasSelfCheckInPermission = drawerData.some(
+    item => item?.constantName?.toUpperCase() === 'SELF CHECK-IN',
+  );
+
   useEffect(() => {
     checkEventAdminVerification();
   }, []);
@@ -200,7 +210,7 @@ const CustomDrawerContent = props => {
         setIsSendingOtp(true);
         httpClient
           .post(`member/forgetpassword?userName=${userIdentifier}`)
-          .then(response => {
+          .then(response => {            
             if (response.data.status) {
               NOTIFY_MESSAGE(
                 response?.data?.message || 'OTP sent to your email',
@@ -306,23 +316,20 @@ const CustomDrawerContent = props => {
 
   return (
     <View style={{flex: 1}}>
-      <DrawerContentScrollView {...props} contentContainerStyle={{flexGrow: 1}}>
+      <DrawerContentScrollView {...props} contentContainerStyle={{flexGrow: 1, paddingTop: 15}}>
         <View
           style={{
             backgroundColor: COLORS.BACKGROUNDCOLOR,
             justifyContent: 'center',
             alignItems: 'center',
-            marginTop: 10,
             marginBottom: 10,
           }}>
           <Image
-            source={require('../assets/images/avatar.png')}
+            source={require('../assets/images/Logo.png')}
             style={{
               width: 100,
               height: 100,
               borderRadius: 50,
-              borderColor: COLORS.PRIMARYWHITE,
-              borderWidth: 3,
               marginBottom: 14,
               backgroundColor: COLORS.PRIMARYWHITE,
             }}
@@ -372,6 +379,7 @@ const CustomDrawerContent = props => {
                 fontSize: FONTS.FONTSIZE.MEDIUM,
                 fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                 color: COLORS.PLACEHOLDERCOLOR,
+                includeFontPadding: false,
               }}>
               Dashboard
             </Text>
@@ -399,37 +407,40 @@ const CustomDrawerContent = props => {
                   fontSize: FONTS.FONTSIZE.MEDIUM,
                   fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                   color: COLORS.PLACEHOLDERCOLOR,
+                  includeFontPadding: false,
                 }}>
                 Members
               </Text>
             </TouchableOpacity>
           )}
-
-          <TouchableOpacity
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              padding: 10,
-              marginLeft: 10,
-            }}
-            onPress={() => {
-              navigation.navigate('RSVPScreen');
-            }}>
-            <Ionicons
-              name="calendar-outline"
-              color={COLORS.TITLECOLOR}
-              size={24}
-            />
-            <Text
+          {hasRsvpPermission && (
+            <TouchableOpacity
               style={{
-                marginLeft: 30,
-                fontSize: FONTS.FONTSIZE.MEDIUM,
-                fontFamily: FONTS.FONT_FAMILY.MEDIUM,
-                color: COLORS.PLACEHOLDERCOLOR,
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 10,
+                marginLeft: 10,
+              }}
+              onPress={() => {
+                navigation.navigate('RSVPScreen');
               }}>
-              RSVP
-            </Text>
-          </TouchableOpacity>
+              <Ionicons
+                name="calendar-outline"
+                color={COLORS.TITLECOLOR}
+                size={24}
+              />
+              <Text
+                style={{
+                  marginLeft: 30,
+                  fontSize: FONTS.FONTSIZE.MEDIUM,
+                  fontFamily: FONTS.FONT_FAMILY.MEDIUM,
+                  color: COLORS.PLACEHOLDERCOLOR,
+                  includeFontPadding: false,
+                }}>
+                RSVP
+              </Text>
+            </TouchableOpacity>
+          )}
 
           {isEventAdmin && isEventAdmin.read && (
             <TouchableOpacity
@@ -454,6 +465,7 @@ const CustomDrawerContent = props => {
                   fontSize: FONTS.FONTSIZE.MEDIUM,
                   fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                   color: COLORS.PLACEHOLDERCOLOR,
+                  includeFontPadding: false,
                 }}>
                 {isSendingOtp ? 'Sending OTP...' : 'EVENT ADMIN'}
               </Text>
@@ -472,7 +484,7 @@ const CustomDrawerContent = props => {
             </TouchableOpacity>
           )}
 
-          {userData?.role === 'member' && (
+          {hasSelfCheckInPermission && (
             <TouchableOpacity
               style={{
                 flexDirection: 'row',
@@ -496,14 +508,14 @@ const CustomDrawerContent = props => {
                   fontSize: FONTS.FONTSIZE.MEDIUM,
                   fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                   color: COLORS.PLACEHOLDERCOLOR,
+                  includeFontPadding: false,
                 }}>
                 Self Check-In
               </Text>
             </TouchableOpacity>
           )}
 
-          {(scanQrData?.constantName == 'SCAN QR' ||
-            userData?.role !== 'member') && (
+          {hasScanQrPermission && (
             <TouchableOpacity
               style={{
                 flexDirection: 'row',
@@ -527,6 +539,7 @@ const CustomDrawerContent = props => {
                   fontSize: FONTS.FONTSIZE.MEDIUM,
                   fontFamily: FONTS.FONT_FAMILY.MEDIUM,
                   color: COLORS.PLACEHOLDERCOLOR,
+                  includeFontPadding: false,
                 }}>
                 Scan Qr
               </Text>
@@ -554,6 +567,7 @@ const CustomDrawerContent = props => {
               fontSize: FONTS.FONTSIZE.MEDIUM,
               fontFamily: FONTS.FONT_FAMILY.MEDIUM,
               color: COLORS.PLACEHOLDERCOLOR,
+              includeFontPadding: false,
             }}>
             Logout
           </Text>
@@ -574,6 +588,7 @@ const CustomDrawerContent = props => {
               fontSize: FONTS.FONTSIZE.MEDIUM,
               fontFamily: FONTS.FONT_FAMILY.MEDIUM,
               color: COLORS.PLACEHOLDERCOLOR,
+              includeFontPadding: false,
             }}>
             Delete Account
           </Text>

@@ -339,22 +339,17 @@ const FamilyMemberList = ({route}) => {
   });
 
   const [allUserData, setAllUserData] = useState([]);
-
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
-
   const [pageNumber, setPageNumber] = useState(1);
-
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [openIndex, setOpenIndex] = useState(null);
   const [searchKeyword, setSearchKeyword] = useState('');
   const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
-
   const [formFields, setFormFields] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-
   const PAGE_SIZE = 20;
 
   const isMemberApproved = member =>
@@ -574,17 +569,14 @@ const FamilyMemberList = ({route}) => {
           text: 'OK',
           onPress: async () => {
             try {
-              // ✅ Set loading state for this specific item
               setLoadingItemId(item1.configurationId);
 
-              // Check network
               const netInfo = await NetInfo.fetch();
               if (!netInfo.isConnected) {
                 NOTIFY_MESSAGE('Please check your internet connectivity');
                 return;
               }
 
-              // Fetch configuration data
               const response = await httpClient.get(
                 `module/configuration/get/${item1.configurationId}`,
               );
@@ -596,7 +588,6 @@ const FamilyMemberList = ({route}) => {
                   throw new Error('Configuration data not found');
                 }
 
-                // Parse content safely
                 let parsedContent = {};
                 try {
                   parsedContent = JSON.parse(configurationData.content || '{}');
@@ -719,7 +710,6 @@ const FamilyMemberList = ({route}) => {
     const target = allApproved ? 'No' : 'Yes';
     const actionText = allApproved ? 'Disapprove' : 'Approve';
 
-    // ✅ Count only non-approved members
     const unapprovedMembers = parent.familyMembers.filter(
       m => !isMemberApproved(m),
     );
@@ -737,7 +727,6 @@ const FamilyMemberList = ({route}) => {
         {
           text: `${actionText} All`,
           onPress: () => {
-            // Get IDs of only unapproved members
             const ids = unapprovedMembers
               .map(m => String(m.configurationId))
               .filter(Boolean)
@@ -803,13 +792,11 @@ const FamilyMemberList = ({route}) => {
 
     const showApproveAllButton = hasApprovalField && !allApproved;
 
-    // Helper function to check if member is paid
     const isMemberPaid = member => {
       if (!member?.isPaid) return false;
       return member.isPaid.toLowerCase() === 'yes';
     };
 
-    // Calculate total unpaid amount
     const calculateUnpaidAmount = () => {
       if (!item1?.familyMembers) return 0;
       return item1.familyMembers.reduce((total, member) => {
@@ -821,7 +808,6 @@ const FamilyMemberList = ({route}) => {
       }, 0);
     };
 
-    // Check if all members are paid
     const allMembersPaid =
       item1?.familyMembers &&
       item1.familyMembers.length > 0 &&
@@ -832,17 +818,14 @@ const FamilyMemberList = ({route}) => {
 
     return (
       <View style={styles.cardContainer}>
-        {/* Card Header */}
         <TouchableOpacity
           onPress={() => handleToggle(index)}
           style={styles.cardHeader}>
           <View style={styles.headerLeft}>
-            {/* Number Badge */}
             <View style={styles.numberBadge}>
               <Text style={styles.numberText}>{number}</Text>
             </View>
 
-            {/* Member Info */}
             <View style={styles.memberInfo}>
               <Text numberOfLines={2} style={styles.memberName}>
                 {item1?.member || '-'}
@@ -862,20 +845,16 @@ const FamilyMemberList = ({route}) => {
               alignItems: 'center',
               gap: 10,
             }}>
-            {/* Show payment button only if there are unpaid members */}
             {showPaymentButton && (
               <TouchableOpacity
                 style={styles.approveAllButton}
                 onPress={() => {
-                  // Check if at least one member is approved
                   const hasAtLeastOneApproved =
                     item1?.familyMembers &&
                     item1.familyMembers.length > 0 &&
                     item1.familyMembers.some(member => {
-                      // Skip members without isApproved key
                       if (!member.hasOwnProperty('isApproved')) return true;
 
-                      // Check if isApproved is truthy and not empty
                       const isApprovedValueEmpty =
                         !member.isApproved ||
                         member.isApproved === null ||
@@ -920,10 +899,8 @@ const FamilyMemberList = ({route}) => {
           </View>
         </TouchableOpacity>
 
-        {/* Family Members Section - Only show when expanded */}
         {openIndex == index && (
           <View style={styles.familySection}>
-            {/* Section Header */}
             <View style={styles.familySectionHeader}>
               <Text style={styles.familyMembersLabel}>FAMILY MEMBERS</Text>
               <View
@@ -948,7 +925,6 @@ const FamilyMemberList = ({route}) => {
               </View>
             </View>
 
-            {/* Family Members List */}
             {item1?.familyMembers && item1.familyMembers.length > 0 && (
               <View>
                 {item1.familyMembers.map((familyMember, fmIndex) => {
@@ -956,24 +932,20 @@ const FamilyMemberList = ({route}) => {
                     loadingItemId === familyMember.configurationId;
                   const isLoadingDeleteItem =
                     deletingItemId === familyMember.configurationId;
-                  // ✅ Check if isApproved key exists
                   const hasIsApprovedKey =
                     familyMember.hasOwnProperty('isApproved');
 
-                  // ✅ Check if value is null/undefined/empty
                   const isApprovedValueEmpty =
                     !familyMember.isApproved ||
                     familyMember.isApproved === null ||
                     familyMember.isApproved === undefined ||
                     familyMember.isApproved === '';
 
-                  // ✅ Check if member is approved (has value and is Yes/true)
                   const memberApproved =
                     hasIsApprovedKey &&
                     !isApprovedValueEmpty &&
                     isMemberApproved(familyMember);
 
-                  // ✅ Check if member is disapproved (has value and is No/false)
                   const memberDisapproved =
                     hasIsApprovedKey &&
                     !isApprovedValueEmpty &&
@@ -1630,7 +1602,6 @@ const FamilyMemberList = ({route}) => {
                   />
                 </TouchableOpacity>
 
-                {/* Page number pills */}
                 {Array.from({length: totalPages}, (_, i) => i + 1)
                   .filter(p => {
                     if (totalPages <= 5) return true;
@@ -1692,7 +1663,6 @@ const FamilyMemberList = ({route}) => {
                     ),
                   )}
 
-                {/* Next arrow */}
                 <TouchableOpacity
                   disabled={pageNumber === totalPages}
                   onPress={() => {

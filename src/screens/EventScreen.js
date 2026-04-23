@@ -91,6 +91,11 @@ const EventScreen = ({route}) => {
 
   const {item} = route?.params?.data;
 
+  const hasRsvpPermission = route?.params?.hasRsvpPermission ?? true;
+  const hasEventDashboardPermission =
+    route?.params?.hasEventDashboardPermission ?? true;
+  const hasScanQrPermission = route?.params?.hasScanQrPermission ?? true;
+
   const [colors, setColors] = useState([
     'orange',
     'lightseagreen',
@@ -361,6 +366,9 @@ const EventScreen = ({route}) => {
             evnentObj: item,
             isUpcommingEvent: activeTab?.id === 0,
             item: item,
+            hasRsvpPermission,
+            hasEventDashboardPermission,
+            hasScanQrPermission,
           });
         }}>
         <View
@@ -435,6 +443,7 @@ const EventScreen = ({route}) => {
                 styles.txtTitle,
                 {
                   width:
+                    hasRsvpPermission &&
                     activeTab?.id === 0 &&
                     (item?.isRSVPEnable == '1' ||
                       item?.isRSVPEnable?.toLowerCase() == 'yes')
@@ -508,7 +517,8 @@ const EventScreen = ({route}) => {
               </Text>
             </View>
           </View>
-          {activeTab?.id === 0 &&
+          {hasRsvpPermission &&
+          activeTab?.id === 0 &&
           (item?.isRSVPEnable == '1' ||
             item?.isRSVPEnable?.toLowerCase() == 'yes') ? (
             <TouchableOpacity

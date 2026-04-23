@@ -461,6 +461,18 @@ const QrCodeScanScreen = ({route}) => {
                               setIsQrOpen(true);
                               setEventloading(true);
                             }
+                            //   if (event) {
+                            //   setSelectedEvent(event);
+                            //   navigation.navigate(
+                            //     'RegistrationPreviewAfterQrCode',
+                            //     {
+                            //       memberId: '8899',
+                            //       selectedEvent: item?.name,
+                            //       userData: userData,
+                            //       isSelfCheckIn: isSelfCheckIn,
+                            //     },
+                            //   );
+                            // }
                           }}>
                           <Text
                             numberOfLines={1}

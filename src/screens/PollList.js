@@ -28,7 +28,6 @@ import {
 } from 'react-native-responsive-screen';
 import {getData} from '../utils/Storage';
 
-// dot color per filter status
 const FILTER_DOT = {
   all: '#888888',
   active: '#1d8a55',
@@ -60,7 +59,6 @@ export default function PollList({route, navigation}) {
   const [allPolls, setAllPolls] = useState([]);
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  // counts per tab — updated each time that tab is fetched
   const [filterCounts, setFilterCounts] = useState({
     all: null,
     active: null,
@@ -85,7 +83,6 @@ export default function PollList({route, navigation}) {
     setUserData(user);
   };
 
-  // ── Build query params ────────────────────────────────
   const buildParams = useCallback(
     page => {
       const params = new URLSearchParams({
@@ -97,7 +94,6 @@ export default function PollList({route, navigation}) {
       if (debouncedSearch) params.append('Keyword', debouncedSearch);
       if (
         filter !== 'all'
-        // && filter !== 'voted'
       ) {
         params.append('Status', filter);
       }
@@ -106,7 +102,6 @@ export default function PollList({route, navigation}) {
     [debouncedSearch, filter],
   );
 
-  // ── Fetch polls ───────────────────────────────────────
   const fetchPolls = useCallback(
     (page = 1, isRefresh = false) => {
       if (isRefresh) {
@@ -137,8 +132,6 @@ export default function PollList({route, navigation}) {
                 filter === 'voted'
                   ? items.filter(p => p.userVotedOptionIds?.length > 0)
                   : items;
-
-              // setAllPolls(finalItems);
               setAllPolls(items);
               setPageNumber(page);
               setHasMore(page < totalPage && items.length > 0);
@@ -158,20 +151,15 @@ export default function PollList({route, navigation}) {
     [buildParams, filter],
   );
 
-  // Initial load
   useEffect(() => {
     fetchPolls(1);
     getUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Re-fetch on filter or search change
   useEffect(() => {
     fetchPolls(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, filter]);
 
-  // Fetch all counts at once for admin via stats API
   const fetchCounts = useCallback(() => {
     if (!isAdmin) return;
     httpClientV3
@@ -190,7 +178,6 @@ export default function PollList({route, navigation}) {
       .catch(() => {});
   }, [isAdmin]);
 
-  // Keep initial load
   useEffect(() => {
     fetchCounts();
   }, [fetchCounts]);
@@ -210,7 +197,6 @@ export default function PollList({route, navigation}) {
     fetchPolls(pageNumber - 1);
   }, [pageNumber, fetchPolls]);
 
-  // ── Create poll ───────────────────────────────────────
   const handlePublish = useCallback(
     data => {
       NetInfo.fetch().then(state => {
@@ -249,7 +235,6 @@ export default function PollList({route, navigation}) {
     [fetchPolls, fetchCounts],
   );
 
-  // ── Edit poll ─────────────────────────────────────────
   const handleEdit = useCallback(poll => {
     setEditingPoll(poll);
     setCreateVisible(true);
@@ -290,7 +275,6 @@ export default function PollList({route, navigation}) {
     [fetchPolls, pageNumber],
   );
 
-  // ── Delete poll ───────────────────────────────────────
   const handleDelete = useCallback(
     pollId => {
       NetInfo.fetch().then(state => {
@@ -321,7 +305,6 @@ export default function PollList({route, navigation}) {
     [fetchPolls, pageNumber, fetchCounts],
   );
 
-  // ── Vote ──────────────────────────────────────────────
   const handleVote = useCallback(
     (pollId, optionIds) => {
       NetInfo.fetch().then(state => {
@@ -351,7 +334,6 @@ export default function PollList({route, navigation}) {
     [fetchPolls, pageNumber],
   );
 
-  // ── Admin: Close poll ─────────────────────────────────
   const handleClosePoll = useCallback(
     pollId => {
       Alert.alert(
@@ -393,7 +375,6 @@ export default function PollList({route, navigation}) {
     [fetchPolls, pageNumber, fetchCounts],
   );
 
-  // ── Admin: Notify all ─────────────────────────────────
   const handleNotifyAll = useCallback(pollId => {
     Alert.alert(
       'Notify All',
@@ -428,7 +409,6 @@ export default function PollList({route, navigation}) {
     );
   }, []);
 
-  // ── Open comments screen ──────────────────────────────
   const handleOpenComments = useCallback(
     poll => {
       navigation.navigate('PollComments', {
@@ -438,7 +418,6 @@ export default function PollList({route, navigation}) {
     [navigation, isAdmin, item],
   );
 
-  // ── Render ────────────────────────────────────────────
   return (
     <KeyboardAvoidingView
       style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}
@@ -456,7 +435,6 @@ export default function PollList({route, navigation}) {
         title={item?.name || 'Community Polls'}
       />
 
-      {/* Search + add button */}
       <View style={styles.headerContainer}>
         <View style={styles.searchBox}>
           <TextInput
@@ -486,7 +464,6 @@ export default function PollList({route, navigation}) {
         )}
       </View>
 
-      {/* Filter chips — with counts for admin, without for members */}
       <View style={styles.chipsWrapper}>
         <FlatList
           horizontal
@@ -515,7 +492,6 @@ export default function PollList({route, navigation}) {
                   style={[styles.chipTxt, isActive && styles.chipTxtActive]}>
                   {f.label}
                 </Text>
-                {/* Count badge — admin only, shown after first fetch */}
                 {isAdmin && count != null && (
                   <View
                     style={[
@@ -537,7 +513,6 @@ export default function PollList({route, navigation}) {
         />
       </View>
 
-      {/* Poll list */}
       {isLoading ? (
         <View style={styles.centerLoader}>
           <ActivityIndicator size="large" color={COLORS.LABELCOLOR} />
@@ -584,7 +559,6 @@ export default function PollList({route, navigation}) {
             )}
           />
 
-          {/* Pagination */}
           <View style={styles.paginationRow}>
             {pageNumber > 1 && (
               <TouchableOpacity onPress={loadPrevious}>
@@ -600,7 +574,6 @@ export default function PollList({route, navigation}) {
         </>
       )}
 
-      {/* Create / Edit sheet */}
       <CreatePollSheet
         visible={createVisible}
         editingPoll={editingPoll}
@@ -663,8 +636,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  // ── Filter chips ──
   chipsWrapper: {height: 40, marginBottom: 4},
   chipsContent: {paddingHorizontal: 12, alignItems: 'center'},
   chip: {

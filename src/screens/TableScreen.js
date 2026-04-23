@@ -116,10 +116,8 @@ const TableScreen = ({route}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
-
   const [pageNumber, setPageNumber] = useState(1);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [openIndex, setOpenIndex] = useState(null);

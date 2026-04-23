@@ -240,7 +240,6 @@ export default function GalleryLightbox({
     .runOnJS(true)
     .onEnd(e => {
       if (isZoomedIn) {
-        // Zoom out — use scrollResponderZoomTo with full dimensions
         scrollViewRef.current?.scrollResponderZoomTo({
           x: 0,
           y: 0,
@@ -250,7 +249,6 @@ export default function GalleryLightbox({
         });
         setTimeout(() => setIsZoomedIn(false), 300);
       } else {
-        // Zoom in to tapped point
         const tapX = e.absoluteX;
         const tapY = e.absoluteY;
         const zoomScale = 2.5;
@@ -315,10 +313,8 @@ export default function GalleryLightbox({
           ...prev,
           isStarred: newIsStarred,
         }));
-        // ← Notify parent about star change
         onStarToggled?.(item.mediaId, newIsStarred);
 
-        // ← If unstarred while in starred filter, close lightbox
         if (filterType === 'starred' && !newIsStarred) {
           onClose();
         }
@@ -471,7 +467,6 @@ export default function GalleryLightbox({
           <View style={cs.root}>
             <StatusBar barStyle="light-content" backgroundColor="#000" />
 
-            {/* Top bar */}
             <SafeAreaView
               edges={['top']}
               style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
@@ -514,7 +509,6 @@ export default function GalleryLightbox({
               </View>
             </SafeAreaView>
 
-            {/* Media viewer */}
             <GestureDetector gesture={swipeGesture}>
               <View style={cs.mediaContainer}>
                 {mediaState === 'loading' && (
@@ -659,7 +653,6 @@ export default function GalleryLightbox({
               </View>
             </GestureDetector>
 
-            {/* Bottom info */}
             <SafeAreaView
               edges={['bottom']}
               style={{backgroundColor: 'rgba(0,0,0,0.92)'}}>
@@ -734,7 +727,6 @@ export default function GalleryLightbox({
               </View>
             </SafeAreaView>
 
-            {/* Comments panel — Animated.View INSIDE the modal, NOT a nested Modal */}
             {commentsOpen && (
               <Animated.View
                 style={[
@@ -818,7 +810,7 @@ export default function GalleryLightbox({
                       cs.commentInputRow,
                       {
                         paddingBottom:
-                          keyboardOpen && Platform.OS == 'ios' ? 50 : 10,
+                          keyboardOpen && Platform.OS == 'ios' ? 50 : 20,
                       },
                     ]}>
                     <View style={cs.commentInputAvatar}>

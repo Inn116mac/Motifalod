@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import AppNavigation from './src/navigation/AppNavigation';
 import {LogBox, PermissionsAndroid, Platform} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -9,6 +9,8 @@ import DeviceInfo from 'react-native-device-info';
 import {DrawerProvider} from './src/utils/DrawerContext';
 import COLORS from './src/theme/Color';
 import ZoomableView from './src/components/root/ZoomableView';
+import UpdateModal from './src/components/root/UpdateModal';
+import httpClient from './src/connection/httpClient';
 let PushNotification;
 let PushNotificationIOS;
 if (Platform.OS === 'android') {
@@ -20,7 +22,59 @@ if (Platform.OS === 'android') {
 }
 LogBox.ignoreAllLogs();
 messaging().setBackgroundMessageHandler(async remoteMessage => {});
+
+const compareVersions = (v1, v2) => {
+  const p1 = v1.split('.').map(Number);
+  const p2 = v2.split('.').map(Number);
+  for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+    const a = p1[i] || 0;
+    const b = p2[i] || 0;
+    if (a < b) return -1;
+    if (a > b) return 1;
+  }
+  return 0;
+};
 const App = () => {
+  const [updateModal, setUpdateModal] = useState(null);
+
+  const checkAppVersion = async () => {
+    try {
+      const currentVersion = DeviceInfo.getVersion();
+
+      const response = await httpClient.get('app/version');
+      if (response?.data?.status) {
+        const result = response.data.result;
+
+        // Pick the platform-specific block (android / ios)
+        const platformData = result[Platform.OS];
+        if (!platformData) return;
+
+        const {latestVersion, forceUpdate, storeUrl} = platformData;
+        const {message, updatedDate, appName} = result;
+
+        const versionBehind =
+          compareVersions(currentVersion, latestVersion) < 0;
+        const isForced = versionBehind && forceUpdate;
+
+        if (versionBehind) {
+          setUpdateModal({
+            visible: true,
+            forceUpdate: isForced,
+            latestVersion,
+            message,
+            storeUrl,
+            updatedDate,
+            appName,
+          });
+        }
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    checkAppVersion();
+  }, []);
+
   const getDeviceId = async () => {
     const deviceId = await DeviceInfo.getUniqueId();
     await storeData('deviceId', deviceId);
@@ -121,13 +175,27 @@ const App = () => {
       <GestureHandlerRootView
         style={{flex: 1, backgroundColor: COLORS.BACKGROUNDCOLOR}}>
         {Platform.OS === 'android' ? (
-          <ZoomableView>
+          <ZoomableView disabled={!!updateModal}>
             <AppNavigation />
           </ZoomableView>
         ) : (
           <AppNavigation />
         )}
       </GestureHandlerRootView>
+      {updateModal && (
+        <UpdateModal
+          visible={updateModal.visible}
+          forceUpdate={updateModal.forceUpdate}
+          latestVersion={updateModal.latestVersion}
+          message={updateModal.message}
+          storeUrl={updateModal.storeUrl}
+          updatedDate={updateModal.updatedDate}
+          appName={updateModal.appName}
+          onDismiss={
+            updateModal.forceUpdate ? undefined : () => setUpdateModal(null)
+          }
+        />
+      )}
     </DrawerProvider>
   );
 };

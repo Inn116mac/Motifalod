@@ -174,6 +174,7 @@ export default function CreatePollSheet({
 
           <ScrollView
             style={styles.body}
+             contentContainerStyle={{paddingBottom:20}}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled">
             {/* Title */}

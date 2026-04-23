@@ -25,7 +25,11 @@ const clamp = (value, min, max) => {
   return Math.min(Math.max(value, min), max);
 };
 
-export default function ZoomableView({children, simultaneousHandlers}) {
+export default function ZoomableView({
+  children,
+  simultaneousHandlers,
+  disabled,
+}) {
   const externalRefs = simultaneousHandlers
     ? Array.isArray(simultaneousHandlers)
       ? simultaneousHandlers.filter(r => r != null && r.current != null)
@@ -159,15 +163,20 @@ export default function ZoomableView({children, simultaneousHandlers}) {
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
-      {translateX: translateX.value},
-      {translateY: translateY.value},
-      {scale: scale.value},
+      {translateX: disabled ? 0 : translateX.value},
+      {translateY: disabled ? 0 : translateY.value},
+      {scale: disabled ? 1 : scale.value},
     ],
   }));
+
+  if (disabled) {
+    return <View style={styles.container}>{children}</View>;
+  }
 
   return (
     <View style={styles.container}>
       <TapGestureHandler
+        enabled={!disabled}
         onGestureEvent={doubleTapHandler}
         numberOfTaps={2}
         maxDelayMs={250}
@@ -177,7 +186,7 @@ export default function ZoomableView({children, simultaneousHandlers}) {
         }>
         <Animated.View style={{flex: 1}}>
           <PanGestureHandler
-            enabled={isZoomed}
+            enabled={!disabled && isZoomed}
             onGestureEvent={panHandler}
             minPointers={1}
             maxPointers={2}
@@ -185,6 +194,7 @@ export default function ZoomableView({children, simultaneousHandlers}) {
             simultaneousHandlers={[pinchRef, doubleTapRef, ...externalRefs]}>
             <Animated.View style={{flex: 1}}>
               <PinchGestureHandler
+                enabled={!disabled}
                 onGestureEvent={pinchHandler}
                 ref={pinchRef}
                 simultaneousHandlers={[panRef, doubleTapRef, ...externalRefs]}>
