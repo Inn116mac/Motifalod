@@ -1,11 +1,132 @@
+# require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
+# # Resolve react_native_pods.rb with node to allow for hoisting
+# require Pod::Executable.execute_command('node', ['-p',
+#   'require.resolve(
+#     "react-native/scripts/react_native_pods.rb",
+#     {paths: [process.argv[1]]},
+#   )', __dir__]).strip
+
+# platform :ios, min_ios_version_supported
+# prepare_react_native_project!
+# codegen_enabled = false
+
+# linkage = ENV['USE_FRAMEWORKS']
+# if linkage != nil
+#   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+#   use_frameworks! :linkage => linkage.to_sym
+# end
+
+# target 'Motifalod' do
+#   # Manual pod specifications for packages that need it
+#   pod 'react-native-fbsdk-next', :path => '../node_modules/react-native-fbsdk-next'
+#   # pod 'react-native-nodemediaclient', :path => '../node_modules/react-native-nodemediaclient'
+  
+#   use_expo_modules!
+  
+#   # Video caching support for react-native-video
+#   if ENV['RNV_SAMPLE_VIDEO_CACHING']
+#     $RNVideoUseVideoCaching = true
+#   end
+  
+#   # Expo modules post integration
+#   post_integrate do |installer|
+#     begin
+#       expo_patch_react_imports!(installer)
+#     rescue => e
+#       Pod::UI.warn e
+#     end
+#   end
+
+#   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
+#     config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
+#   else
+#     config_command = [
+#       'node',
+#       '--no-warnings',
+#       '--eval',
+#       'require(require.resolve(\'expo-modules-autolinking\', { paths: [require.resolve(\'expo/package.json\')] }))(process.argv.slice(1))',
+#       'react-native-config',
+#       '--json',
+#       '--platform',
+#       'ios'
+#     ]
+#   end
+
+#   config = use_native_modules!(config_command)
+#   use_frameworks! :linkage => :static
+#   use_react_native!(
+#     :path => config[:reactNativePath],
+#     # An absolute path to your application root.
+#     :app_path => "#{Pod::Config.instance.installation_root}/.."
+#   )
+
+#   # post_install do |installer|
+#   #   # MapLibre post install (for @maplibre/maplibre-react-native)
+#   #   $MLRN.post_install(installer) if defined?($MLRN)
+  
+#   #   # Ensure DEBUG_INFORMATION_FORMAT is set for all pods
+#   #   installer.pods_project.targets.each do |target|
+#   #     target.build_configurations.each do |config|
+#   #       config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
+#   #     end
+#   #   end
+  
+#   #   # React Native post install
+#   #   react_native_post_install(
+#   #     installer,
+#   #     config[:reactNativePath],
+#   #     :mac_catalyst_enabled => false,
+#   #     # :ccache_enabled => true
+#   #   )
+#   # end
+
+# post_install do |installer|
+#   $MLRN.post_install(installer)
+
+#   # Disable bitcode + Strip CardinalMobile (CRITICAL FIX)
+#   installer.pods_project.targets.each do |target|
+#     target.build_configurations.each do |config|
+#       config.build_settings['ENABLE_BITCODE'] = 'NO'                    # ← ADD THIS
+#       config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
+      
+#       if target.name == 'Braintree' || target.name.start_with?('Braintree')
+#         config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+#       end
+#     end
+#   end
+
+#   # Strip CardinalMobile from ALL possible Braintree paths
+#   bitcode_strip_path = `xcrun --find bitcode_strip`.chop!
+#   framework_paths = [
+#     "Pods/Braintree/Frameworks/XCFrameworks/CardinalMobile.xcframework/ios-arm64_armv7/CardinalMobile.framework/CardinalMobile",
+#     "Pods/Braintree/Frameworks/XCFrameworks/CardinalMobile.xcframework/ios-arm64_i386_x86_64-simulator/CardinalMobile.framework/CardinalMobile",
+#     "Pods/CardinalMobile/CardinalMobile.framework/CardinalMobile"     # ← Your existing path
+#   ]
+
+#   framework_paths.each do |framework_relative_path|
+#     framework_path = File.join(Dir.pwd, framework_relative_path)
+#     if File.exist?(framework_path)
+#       system("#{bitcode_strip_path} #{framework_path} -r -o #{framework_path}")
+#       puts "✅ Stripped bitcode from #{framework_relative_path}"
+#     end
+#   end
+
+#   # React Native post install (keep at bottom)
+#   react_native_post_install(
+#     installer,
+#     config[:reactNativePath],
+#     :mac_catalyst_enabled => false
+#   )
+# end
+# end
+
+
 require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
-# Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
     "react-native/scripts/react_native_pods.rb",
     {paths: [process.argv[1]]},
   )', __dir__]).strip
-
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 codegen_enabled = false
@@ -17,18 +138,13 @@ if linkage != nil
 end
 
 target 'Motifalod' do
-  # Manual pod specifications for packages that need it
   pod 'react-native-fbsdk-next', :path => '../node_modules/react-native-fbsdk-next'
-  # pod 'react-native-nodemediaclient', :path => '../node_modules/react-native-nodemediaclient'
-  
+
   use_expo_modules!
-  
-  # Video caching support for react-native-video
   if ENV['RNV_SAMPLE_VIDEO_CACHING']
     $RNVideoUseVideoCaching = true
   end
-  
-  # Expo modules post integration
+
   post_integrate do |installer|
     begin
       expo_patch_react_imports!(installer)
@@ -56,66 +172,74 @@ target 'Motifalod' do
   use_frameworks! :linkage => :static
   use_react_native!(
     :path => config[:reactNativePath],
-    # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  # post_install do |installer|
-  #   # MapLibre post install (for @maplibre/maplibre-react-native)
-  #   $MLRN.post_install(installer) if defined?($MLRN)
-  
-  #   # Ensure DEBUG_INFORMATION_FORMAT is set for all pods
-  #   installer.pods_project.targets.each do |target|
-  #     target.build_configurations.each do |config|
-  #       config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
-  #     end
-  #   end
-  
-  #   # React Native post install
-  #   react_native_post_install(
-  #     installer,
-  #     config[:reactNativePath],
-  #     :mac_catalyst_enabled => false,
-  #     # :ccache_enabled => true
-  #   )
-  # end
+  post_install do |installer|
+    $MLRN.post_install(installer)
 
-post_install do |installer|
-  $MLRN.post_install(installer)
+installer.pods_project.targets.each do |target|
+  target.build_configurations.each do |config|
+    config.build_settings['ENABLE_BITCODE'] = 'NO'
+    config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
 
-  # Disable bitcode + Strip CardinalMobile (CRITICAL FIX)
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['ENABLE_BITCODE'] = 'NO'                    # ← ADD THIS
-      config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
-      
-      if target.name == 'Braintree' || target.name.start_with?('Braintree')
-        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+    # Fix fmt
+    if target.name == 'fmt'
+      config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -DFMT_USE_CONSTEVAL=0 -DFMT_COMPILE_TIME_CHECKS=0'
+      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+    end
+
+    # Fix libwebp
+    if target.name == 'libwebp'
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+    end
+
+    if target.name == 'Braintree' || target.name.start_with?('Braintree')
+      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+    end
+  end
+end
+
+# ✅ fmt/base.h patch OUTSIDE the loop
+fmt_base_h = File.join(installer.sandbox.root, 'fmt/include/fmt/base.h')
+if File.exist?(fmt_base_h)
+  File.chmod(0644, fmt_base_h)
+  content = File.read(fmt_base_h)
+  old_guard = "// Detect consteval, C++20 constexpr extensions and std::is_constant_evaluated.\n#if !defined(__cpp_lib_is_constant_evaluated)"
+  new_guard = "// Detect consteval, C++20 constexpr extensions and std::is_constant_evaluated.\n#ifndef FMT_USE_CONSTEVAL\n#  if !defined(__cpp_lib_is_constant_evaluated)"
+  if content.include?(old_guard)
+    patched = content
+      .gsub(old_guard, new_guard)
+      .gsub("#elif defined(__cpp_consteval)\n#  define FMT_USE_CONSTEVAL 1\n#elif FMT_GCC_VERSION >= 1002 || FMT_CLANG_VERSION >= 1101\n#  define FMT_USE_CONSTEVAL 1\n#else\n#  define FMT_USE_CONSTEVAL 0\n#endif",
+            "#  elif defined(__cpp_consteval)\n#    define FMT_USE_CONSTEVAL 1\n#  elif FMT_GCC_VERSION >= 1002 || FMT_CLANG_VERSION >= 1101\n#    define FMT_USE_CONSTEVAL 1\n#  else\n#    define FMT_USE_CONSTEVAL 0\n#  endif\n#endif")
+    File.write(fmt_base_h, patched)
+    puts "✅ Patched fmt/base.h"
+  end
+end
+
+    # Strip CardinalMobile from ALL possible Braintree paths
+    bitcode_strip_path = `xcrun --find bitcode_strip`.chop!
+    framework_paths = [
+      "Pods/Braintree/Frameworks/XCFrameworks/CardinalMobile.xcframework/ios-arm64_armv7/CardinalMobile.framework/CardinalMobile",
+      "Pods/Braintree/Frameworks/XCFrameworks/CardinalMobile.xcframework/ios-arm64_i386_x86_64-simulator/CardinalMobile.framework/CardinalMobile",
+      "Pods/CardinalMobile/CardinalMobile.framework/CardinalMobile"
+    ]
+
+    framework_paths.each do |framework_relative_path|
+      framework_path = File.join(Dir.pwd, framework_relative_path)
+      if File.exist?(framework_path)
+        system("#{bitcode_strip_path} #{framework_path} -r -o #{framework_path}")
+        puts "✅ Stripped bitcode from #{framework_relative_path}"
       end
     end
+
+    # React Native post install (keep at bottom)
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false
+    )
   end
 
-  # Strip CardinalMobile from ALL possible Braintree paths
-  bitcode_strip_path = `xcrun --find bitcode_strip`.chop!
-  framework_paths = [
-    "Pods/Braintree/Frameworks/XCFrameworks/CardinalMobile.xcframework/ios-arm64_armv7/CardinalMobile.framework/CardinalMobile",
-    "Pods/Braintree/Frameworks/XCFrameworks/CardinalMobile.xcframework/ios-arm64_i386_x86_64-simulator/CardinalMobile.framework/CardinalMobile",
-    "Pods/CardinalMobile/CardinalMobile.framework/CardinalMobile"     # ← Your existing path
-  ]
-
-  framework_paths.each do |framework_relative_path|
-    framework_path = File.join(Dir.pwd, framework_relative_path)
-    if File.exist?(framework_path)
-      system("#{bitcode_strip_path} #{framework_path} -r -o #{framework_path}")
-      puts "✅ Stripped bitcode from #{framework_relative_path}"
-    end
-  end
-
-  # React Native post install (keep at bottom)
-  react_native_post_install(
-    installer,
-    config[:reactNativePath],
-    :mac_catalyst_enabled => false
-  )
-end
 end
